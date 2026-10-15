@@ -1,36 +1,70 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Penguin Transcription Studio 🐧🎙️
 
-## Getting Started
+A modern, high-accuracy AI speech-to-text transcription studio built with Next.js 16, React 19, and Tailwind CSS. Supports real-time microphone recording, multi-format audio uploads, audio playback with waveforms, speaker diarization, interactive transcript editing, and exports to TXT, SRT, VTT, and JSON.
 
-First, run the development server:
+---
+
+## 🚀 Features
+
+- **Multi-Engine AI Transcription**:
+  - **Google Gemini 2.0 Flash**: Multimodal speech recognition and intelligence.
+  - **Groq Whisper**: Blazing fast `whisper-large-v3-turbo` inference.
+  - **OpenAI Whisper**: Industry-standard `whisper-1` model.
+- **Interactive Transcript Editor**:
+  - Real-time timestamp syncing with audio player.
+  - Editable text segments and speaker tags.
+  - Copy to clipboard & one-click export (TXT, SRT, VTT, JSON).
+- **Audio Studio**:
+  - Live microphone recording with level meter.
+  - Drag-and-drop file upload (MP3, WAV, M4A, FLAC, OGG, WebM).
+  - Built-in audio samples and synthetic tone generation for instant testing.
+
+---
+
+## 🌐 Deploy to Vercel
+
+### Step 1: Create a GitHub Repository
+1. Go to [github.com/new](https://github.com/new).
+2. Enter a repository name (e.g., `penguin-transcription`).
+3. Keep it **Public** or **Private**, do **NOT** check "Initialize with README".
+4. Click **Create repository**.
+
+### Step 2: Link and Push to GitHub
+From your terminal inside the `Transcription/Transcription` folder, run:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git remote add origin https://github.com/<YOUR_GITHUB_USERNAME>/penguin-transcription.git
+git branch -M main
+git push -u origin main
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Step 3: Deploy on Vercel
+1. Log in to [vercel.com](https://vercel.com).
+2. Click **Add New...** > **Project**.
+3. Under **Import Git Repository**, find your `penguin-transcription` repository and click **Import**.
+4. The framework will automatically be detected as **Next.js**.
+5. *(Optional)* Expand **Environment Variables** and add any keys you'd like to provide globally:
+   - `GEMINI_API_KEY`: Your Google AI Studio API key
+   - `GROQ_API_KEY`: Your Groq Console API key
+   - `OPENAI_API_KEY`: Your OpenAI API key
+6. Click **Deploy**.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Vercel will build and launch your application on a live HTTPS domain (e.g. `https://penguin-transcription.vercel.app`).
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+---
 
-## Learn More
+## 💻 Local Development
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+npm install
+npm run dev
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Open [http://localhost:3000](http://localhost:3000) to view the application.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 🛠️ Production Build
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+npm run build
+npm run start
+```

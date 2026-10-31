@@ -21,12 +21,14 @@ interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
   defaultMode?: 'signin' | 'signup';
+  onSuccess?: () => void;
 }
 
 export const AuthModal: React.FC<AuthModalProps> = ({
   isOpen,
   onClose,
   defaultMode = 'signin',
+  onSuccess,
 }) => {
   const { signInWithEmail, signUpWithEmail, resetPassword, isConfigured } = useAuth();
   const [mode, setMode] = useState<'signin' | 'signup' | 'forgot'>(defaultMode);
@@ -73,6 +75,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           setSuccessMessage('Successfully signed in!');
           setTimeout(() => {
             onClose();
+            onSuccess?.();
           }, 800);
         }
       } else if (mode === 'signup') {
@@ -90,6 +93,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           setSuccessMessage('Account created and signed in successfully!');
           setTimeout(() => {
             onClose();
+            onSuccess?.();
           }, 800);
         }
       } else if (mode === 'forgot') {

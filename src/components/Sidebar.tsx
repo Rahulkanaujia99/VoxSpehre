@@ -1,0 +1,213 @@
+'use client';
+
+import React from 'react';
+import {
+  Plus,
+  LayoutDashboard,
+  FileText,
+  User,
+  LogOut,
+  Cloud,
+  Sparkles,
+  ChevronRight,
+  ShieldCheck,
+  CheckCircle2,
+} from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
+
+export type SidebarTab = 'dashboard' | 'recordings' | 'profile';
+
+interface SidebarProps {
+  activeTab: SidebarTab;
+  onTabChange: (tab: SidebarTab) => void;
+  onNewTranscription: () => void;
+  recordingsCount?: number;
+  isOpenMobile?: boolean;
+  onCloseMobile?: () => void;
+}
+
+export const Sidebar: React.FC<SidebarProps> = ({
+  activeTab,
+  onTabChange,
+  onNewTranscription,
+  recordingsCount = 0,
+  isOpenMobile = false,
+  onCloseMobile,
+}) => {
+  const { user, profile, signOut, isConfigured } = useAuth();
+
+  const userDisplayName =
+    profile?.full_name ||
+    user?.user_metadata?.full_name ||
+    user?.email?.split('@')[0] ||
+    'Rahul';
+
+  const userInitial = userDisplayName.charAt(0).toUpperCase();
+
+  return (
+    <>
+      {/* Mobile Backdrop */}
+      {isOpenMobile && (
+        <div
+          onClick={onCloseMobile}
+          className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-40 lg:hidden animate-fade-in"
+        />
+      )}
+
+      {/* Sidebar Container */}
+      <aside
+        className={`fixed lg:sticky top-0 lg:top-20 h-screen lg:h-[calc(100vh-5rem)] w-64 bg-white border-r border-slate-200/90 flex flex-col justify-between p-4 z-50 transition-transform duration-300 ease-in-out ${
+          isOpenMobile ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+        }`}
+      >
+        <div className="space-y-6">
+          {/* Top: + New Transcription Button */}
+          <button
+            onClick={() => {
+              onNewTranscription();
+              if (onCloseMobile) onCloseMobile();
+            }}
+            className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-gradient-to-r from-indigo-600 via-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 active:scale-[0.98] text-white font-bold text-sm rounded-2xl shadow-md shadow-indigo-200/80 transition-all cursor-pointer"
+          >
+            <Plus className="w-4 h-4 stroke-[2.5]" />
+            <span>New Transcription</span>
+          </button>
+
+          {/* Primary Navigation Menu */}
+          <div className="space-y-1.5">
+            <div className="px-3 pb-2 text-[11px] font-bold tracking-wider text-slate-400 uppercase">
+              TRANSCRIBE
+            </div>
+
+            {/* 1. Dashboard */}
+            <button
+              onClick={() => {
+                onTabChange('dashboard');
+                if (onCloseMobile) onCloseMobile();
+              }}
+              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all cursor-pointer ${
+                activeTab === 'dashboard'
+                  ? 'bg-indigo-50 text-indigo-700 font-bold shadow-2xs'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+              }`}
+            >
+              <LayoutDashboard
+                className={`w-4 h-4 ${
+                  activeTab === 'dashboard' ? 'text-indigo-600' : 'text-slate-400'
+                }`}
+              />
+              <span className="flex-1 text-left">Dashboard</span>
+              {activeTab === 'dashboard' && (
+                <div className="w-1.5 h-1.5 rounded-full bg-indigo-600" />
+              )}
+            </button>
+
+            {/* 2. Recordings */}
+            <button
+              onClick={() => {
+                onTabChange('recordings');
+                if (onCloseMobile) onCloseMobile();
+              }}
+              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all cursor-pointer ${
+                activeTab === 'recordings'
+                  ? 'bg-indigo-50 text-indigo-700 font-bold shadow-2xs'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+              }`}
+            >
+              <FileText
+                className={`w-4 h-4 ${
+                  activeTab === 'recordings' ? 'text-indigo-600' : 'text-slate-400'
+                }`}
+              />
+              <span className="flex-1 text-left">Recordings</span>
+              {recordingsCount > 0 && (
+                <span className="text-[11px] font-bold px-1.5 py-0.5 rounded-full bg-indigo-100 text-indigo-800">
+                  {recordingsCount}
+                </span>
+              )}
+              {activeTab === 'recordings' && (
+                <div className="w-1.5 h-1.5 rounded-full bg-indigo-600" />
+              )}
+            </button>
+
+            {/* 3. User Profile */}
+            <button
+              onClick={() => {
+                onTabChange('profile');
+                if (onCloseMobile) onCloseMobile();
+              }}
+              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all cursor-pointer ${
+                activeTab === 'profile'
+                  ? 'bg-indigo-50 text-indigo-700 font-bold shadow-2xs'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+              }`}
+            >
+              <User
+                className={`w-4 h-4 ${
+                  activeTab === 'profile' ? 'text-indigo-600' : 'text-slate-400'
+                }`}
+              />
+              <span className="flex-1 text-left">User Profile</span>
+              {activeTab === 'profile' && (
+                <div className="w-1.5 h-1.5 rounded-full bg-indigo-600" />
+              )}
+            </button>
+          </div>
+        </div>
+
+        {/* Bottom Section: Plan card and User pill */}
+        <div className="space-y-3 pt-4 border-t border-slate-100">
+          {/* Upgrade Plan & Quota Card (Matching Screenshot 5) */}
+          <button
+            onClick={() => onTabChange('profile')}
+            className="w-full flex items-center justify-center gap-2 py-2.5 px-3 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white font-bold text-xs rounded-xl shadow-xs transition-all cursor-pointer"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-indigo-200" />
+            <span>Upgrade Plan</span>
+          </button>
+
+          <div className="p-3 rounded-2xl bg-white border border-slate-200 shadow-2xs">
+            <div className="flex items-center justify-between text-xs font-bold text-slate-800 mb-1">
+              <span>4 min left</span>
+              <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
+            </div>
+            <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+              <div className="bg-indigo-600 h-1.5 rounded-full w-1/5" />
+            </div>
+            <div className="text-[10px] text-slate-400 mt-1.5 font-medium">
+              1 of 5 min used
+            </div>
+          </div>
+
+          {/* User Profile Mini Bar (Matching Screenshot 5) */}
+          <div className="flex items-center justify-between p-2 rounded-xl bg-white border border-slate-200/90 shadow-2xs">
+            <div
+              onClick={() => onTabChange('profile')}
+              className="flex items-center gap-2.5 min-w-0 cursor-pointer group flex-1"
+            >
+              <div className="w-8 h-8 rounded-full bg-indigo-500 text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-2xs">
+                {userInitial}
+              </div>
+              <div className="min-w-0 flex flex-col">
+                <span className="text-xs font-bold text-slate-900 group-hover:text-indigo-600 truncate">
+                  {userDisplayName}
+                </span>
+                <span className="text-[10px] text-slate-600 bg-slate-100 border border-slate-200 rounded-full px-2 py-0.2 w-fit font-semibold mt-0.5 flex items-center gap-1">
+                  <span className="text-amber-500 text-[9px]">★</span> Free
+                </span>
+              </div>
+            </div>
+
+            <button
+              onClick={() => signOut()}
+              title="Sign Out"
+              className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-slate-50 rounded-lg transition-colors cursor-pointer shrink-0 ml-1"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      </aside>
+    </>
+  );
+};

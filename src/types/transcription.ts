@@ -18,11 +18,25 @@ export interface AudioMetadata {
   speakersCount: number;
 }
 
+export type TranscriptionStyle =
+  | 'standard'
+  | 'verbatim'
+  | 'clean_readable'
+  | 'unclear_audio'
+  | 'interview_qa'
+  | 'customer_support'
+  | 'technical'
+  | 'legal'
+  | 'medical'
+  | 'financial'
+  | 'bilingual';
+
 export interface ComprehensiveSummaries {
   executive?: string;
   detailed?: string;
   minutes?: string;
   keyPoints?: string[];
+  importantInsights?: string[];
   actionItems?: string[];
   decisions?: string[];
 }
@@ -32,6 +46,7 @@ export type SummarizationMode =
   | 'detailed'
   | 'minutes'
   | 'key_points'
+  | 'important_insights'
   | 'action_items'
   | 'decisions';
 

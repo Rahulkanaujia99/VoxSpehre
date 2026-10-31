@@ -394,3 +394,193 @@ export function exportToPDF(result: TranscriptionResult) {
   printWindow.document.write(html);
   printWindow.document.close();
 }
+
+/**
+ * Export ONLY the Transcript (DOCX, PDF, or TXT)
+ */
+export function exportTranscript(result: TranscriptionResult, format: 'docx' | 'pdf' | 'txt') {
+  const safeName = result.metadata.fileName.replace(/\.[^/.]+$/, '');
+  
+  if (format === 'txt') {
+    let content = `====================================================\n`;
+    content += `VOXSPHERE • AUDIO TRANSCRIPT\n`;
+    content += `====================================================\n\n`;
+    content += `FILE: ${result.metadata.fileName}\n`;
+    content += `DURATION: ${Math.round(result.metadata.duration)}s | WORDS: ${result.metadata.wordCount}\n\n`;
+    result.segments.forEach((seg) => {
+      content += `[${formatTime(seg.startTime)} - ${formatTime(seg.endTime)}] ${seg.speaker}:\n${seg.text}\n\n`;
+    });
+    downloadFile(content, `${safeName}_transcript.txt`, 'text/plain;charset=utf-8');
+    return;
+  }
+
+  if (format === 'docx') {
+    let html = `
+      <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+      <head>
+        <meta charset="utf-8">
+        <title>Transcript - ${result.metadata.fileName}</title>
+        <style>
+          body { font-family: 'Segoe UI', Calibri, Arial, sans-serif; margin: 40px; color: #1e293b; }
+          .header { border-bottom: 3px solid #4f46e5; padding-bottom: 12px; margin-bottom: 20px; }
+          .title { font-size: 20pt; font-weight: bold; color: #0f172a; margin: 0; }
+          .meta { font-size: 10pt; color: #64748b; margin-top: 6px; }
+          .segment { margin-bottom: 16px; padding-bottom: 10px; border-bottom: 1px solid #f1f5f9; }
+          .seg-meta { font-size: 9pt; color: #4f46e5; font-weight: bold; }
+          .speaker { font-weight: bold; color: #0f172a; font-size: 11pt; margin: 2px 0; }
+          .text { font-size: 11pt; line-height: 1.6; color: #334155; }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h1 class="title">VoxSphere Audio Transcript</h1>
+          <div class="meta">File: <b>${result.metadata.fileName}</b> • Duration: ${Math.round(result.metadata.duration)}s • Speakers: ${result.metadata.speakersCount}</div>
+        </div>
+        ${result.segments.map(seg => `
+          <div class="segment">
+            <div class="seg-meta">${formatTime(seg.startTime)} - ${formatTime(seg.endTime)}</div>
+            <div class="speaker">${seg.speaker}</div>
+            <div class="text">${seg.text}</div>
+          </div>
+        `).join('')}
+      </body>
+      </html>
+    `;
+    downloadFile(html, `${safeName}_transcript.docx`, 'application/vnd.ms-word;charset=utf-8');
+    return;
+  }
+
+  if (format === 'pdf') {
+    if (typeof window === 'undefined') return;
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+    const html = `
+      <!DOCTYPE html><html><head><meta charset="utf-8"><title>Transcript - ${result.metadata.fileName}</title>
+      <style>
+        body { font-family: system-ui, sans-serif; padding: 24px; color: #0f172a; }
+        h1 { font-size: 22px; color: #4f46e5; border-bottom: 2px solid #4f46e5; padding-bottom: 8px; }
+        .meta { color: #64748b; font-size: 12px; margin-bottom: 20px; }
+        .seg { margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px solid #e2e8f0; }
+        .time { color: #6366f1; font-size: 11px; font-weight: bold; }
+        .speaker { font-weight: bold; font-size: 13px; }
+        .text { font-size: 13px; line-height: 1.5; color: #334155; margin-top: 4px; }
+      </style></head><body>
+      <h1>VoxSphere Audio Transcript</h1>
+      <div class="meta">File: ${result.metadata.fileName} | Duration: ${Math.round(result.metadata.duration)}s | Words: ${result.metadata.wordCount}</div>
+      ${result.segments.map(s => `<div class="seg"><div class="time">[${formatTime(s.startTime)} - ${formatTime(s.endTime)}]</div><div class="speaker">${s.speaker}</div><div class="text">${s.text}</div></div>`).join('')}
+      <script>window.addEventListener('load', () => setTimeout(() => window.print(), 300));</script>
+      </body></html>
+    `;
+    printWindow.document.open();
+    printWindow.document.write(html);
+    printWindow.document.close();
+  }
+}
+
+/**
+ * Export ONLY the AI Summary (DOCX, PDF, or TXT)
+ */
+export function exportSummary(result: TranscriptionResult, format: 'docx' | 'pdf' | 'txt') {
+  const safeName = result.metadata.fileName.replace(/\.[^/.]+$/, '');
+  const cs = result.comprehensiveSummaries;
+
+  if (format === 'txt') {
+    let content = `====================================================\n`;
+    content += `VOXSPHERE • AI STRATEGIC INTELLIGENCE & SUMMARY\n`;
+    content += `====================================================\n\n`;
+    content += `FILE: ${result.metadata.fileName}\n`;
+    content += `GENERATED: ${new Date().toLocaleString()}\n\n`;
+    content += `1. EXECUTIVE SUMMARY:\n${cs?.executive || result.summary}\n\n`;
+    if (cs?.detailed) content += `2. DETAILED SUMMARY:\n${cs.detailed}\n\n`;
+    if (cs?.keyPoints?.length) content += `3. KEY DISCUSSION POINTS:\n${cs.keyPoints.map(p => `• ${p}`).join('\n')}\n\n`;
+    if (cs?.importantInsights?.length) content += `4. IMPORTANT INSIGHTS:\n${cs.importantInsights.map(i => `• ${i}`).join('\n')}\n\n`;
+    if (cs?.actionItems?.length) content += `5. ACTION ITEMS:\n${cs.actionItems.map(a => `• [ ] ${a}`).join('\n')}\n\n`;
+    if (cs?.decisions?.length) content += `6. IMPORTANT DECISIONS:\n${cs.decisions.map(d => `• ${d}`).join('\n')}\n\n`;
+    if (cs?.minutes) content += `7. MEETING MINUTES:\n${cs.minutes}\n\n`;
+
+    downloadFile(content, `${safeName}_summary.txt`, 'text/plain;charset=utf-8');
+    return;
+  }
+
+  if (format === 'docx') {
+    let html = `
+      <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+      <head>
+        <meta charset="utf-8">
+        <title>AI Summary - ${result.metadata.fileName}</title>
+        <style>
+          body { font-family: 'Segoe UI', Calibri, Arial, sans-serif; margin: 40px; color: #1e293b; }
+          .header { border-bottom: 3px solid #0d9488; padding-bottom: 12px; margin-bottom: 20px; }
+          .title { font-size: 20pt; font-weight: bold; color: #0f172a; margin: 0; }
+          .section { margin-top: 24px; margin-bottom: 8px; font-weight: bold; font-size: 13pt; color: #0f172a; border-bottom: 1px solid #cbd5e1; padding-bottom: 4px; }
+          .content { font-size: 11pt; line-height: 1.6; color: #334155; }
+          .box { background: #f0fdfa; border-left: 4px solid #0d9488; padding: 12px 16px; margin: 16px 0; font-size: 11pt; color: #134e4a; }
+          ul { margin: 8px 0 16px 20px; line-height: 1.6; font-size: 11pt; color: #334155; }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h1 class="title">VoxSphere AI Strategic Summary</h1>
+          <div style="font-size: 10pt; color: #64748b; margin-top: 4px;">File: <b>${result.metadata.fileName}</b> • Generated on ${new Date().toLocaleDateString()}</div>
+        </div>
+        <div class="box">
+          <b>Executive Briefing:</b><br/>${cs?.executive || result.summary}
+        </div>
+        ${cs?.detailed ? `<div class="section">Detailed Analysis</div><div class="content">${cs.detailed.replace(/\n/g, '<br/>')}</div>` : ''}
+        ${cs?.keyPoints?.length ? `<div class="section">Key Discussion Points</div><ul>${cs.keyPoints.map(p => `<li>${p}</li>`).join('')}</ul>` : ''}
+        ${cs?.importantInsights?.length ? `<div class="section">Important Insights</div><ul>${cs.importantInsights.map(i => `<li>${i}</li>`).join('')}</ul>` : ''}
+        ${cs?.actionItems?.length ? `<div class="section">Action Items</div><ul>${cs.actionItems.map(a => `<li>${a}</li>`).join('')}</ul>` : ''}
+        ${cs?.decisions?.length ? `<div class="section">Important Decisions</div><ul>${cs.decisions.map(d => `<li>${d}</li>`).join('')}</ul>` : ''}
+        ${cs?.minutes ? `<div class="section">Meeting Minutes</div><div class="content" style="background:#f8fafc; padding:12px; border-radius:6px;">${cs.minutes.replace(/\n/g, '<br/>')}</div>` : ''}
+      </body>
+      </html>
+    `;
+    downloadFile(html, `${safeName}_summary.docx`, 'application/vnd.ms-word;charset=utf-8');
+    return;
+  }
+
+  if (format === 'pdf') {
+    if (typeof window === 'undefined') return;
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+    const html = `
+      <!DOCTYPE html><html><head><meta charset="utf-8"><title>Summary - ${result.metadata.fileName}</title>
+      <style>
+        body { font-family: system-ui, sans-serif; padding: 24px; color: #0f172a; line-height: 1.6; }
+        h1 { font-size: 22px; color: #0d9488; border-bottom: 2px solid #0d9488; padding-bottom: 8px; }
+        .meta { color: #64748b; font-size: 12px; margin-bottom: 20px; }
+        .box { background: #f0fdfa; border-left: 4px solid #0d9488; padding: 12px 16px; margin: 16px 0; border-radius: 4px; color: #134e4a; font-size: 13px; }
+        h2 { font-size: 15px; color: #0f172a; margin-top: 20px; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px; }
+        ul { margin: 8px 0 16px 20px; font-size: 13px; color: #334155; }
+        p { font-size: 13px; color: #334155; }
+      </style></head><body>
+      <h1>VoxSphere AI Executive Summary</h1>
+      <div class="meta">File: ${result.metadata.fileName} | Generated: ${new Date().toLocaleDateString()}</div>
+      <div class="box"><b>Executive Briefing:</b><br/>${cs?.executive || result.summary}</div>
+      ${cs?.detailed ? `<h2>Detailed Analysis</h2><p>${cs.detailed.replace(/\n/g, '<br/>')}</p>` : ''}
+      ${cs?.keyPoints?.length ? `<h2>Key Discussion Points</h2><ul>${cs.keyPoints.map(p => `<li>${p}</li>`).join('')}</ul>` : ''}
+      ${cs?.importantInsights?.length ? `<h2>Important Insights</h2><ul>${cs.importantInsights.map(i => `<li>${i}</li>`).join('')}</ul>` : ''}
+      ${cs?.actionItems?.length ? `<h2>Action Items</h2><ul>${cs.actionItems.map(a => `<li>${a}</li>`).join('')}</ul>` : ''}
+      ${cs?.decisions?.length ? `<h2>Important Decisions</h2><ul>${cs.decisions.map(d => `<li>${d}</li>`).join('')}</ul>` : ''}
+      ${cs?.minutes ? `<h2>Meeting Minutes</h2><p style="background:#f8fafc; padding:10px; border-radius:6px;">${cs.minutes.replace(/\n/g, '<br/>')}</p>` : ''}
+      <script>window.addEventListener('load', () => setTimeout(() => window.print(), 300));</script>
+      </body></html>
+    `;
+    printWindow.document.open();
+    printWindow.document.write(html);
+    printWindow.document.close();
+  }
+}
+
+/**
+ * Export COMBINED Transcript + Summary (DOCX, PDF, or TXT)
+ */
+export function exportCombined(result: TranscriptionResult, format: 'docx' | 'pdf' | 'txt') {
+  if (format === 'docx') {
+    exportToDOCX(result);
+  } else if (format === 'pdf') {
+    exportToPDF(result);
+  } else {
+    exportToTXT(result);
+  }
+}

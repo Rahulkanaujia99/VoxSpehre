@@ -34,6 +34,7 @@ export async function POST(req: NextRequest) {
     const audioFile = formData.get('audio') as File | null;
     let provider = ((formData.get('provider') as string) || '').toLowerCase().trim();
     const fileName = (formData.get('fileName') as string) || (audioFile ? audioFile.name : 'audio_recording.mp3');
+    const style = ((formData.get('style') as string) || 'standard').toLowerCase().trim();
 
     // Securely read preconfigured API keys exclusively from server-side environment variables
     const serverSarvamKey = (
@@ -80,6 +81,8 @@ export async function POST(req: NextRequest) {
       else provider = 'sarvam'; // default engine
     }
 
+    let rawResult: TranscriptionResult;
+
     // 1. Sarvam AI Saaras v4 (Default Engine)
     if (provider === 'sarvam') {
       if (!serverSarvamKey) {
@@ -87,46 +90,56 @@ export async function POST(req: NextRequest) {
           error: 'Sarvam AI API is not configured on the server. Please ensure SARVAM_API_KEY is defined in backend environment variables (.env.local).'
         }, { status: 503 });
       }
-      const sarvamResult = await transcribeWithSarvam(audioBuffer, fileName, mimeType, serverSarvamKey);
-      return NextResponse.json(sarvamResult);
-    }
-
-    // 2. Google Gemini 2.5 Flash Audio Intelligence
-    if (provider === 'gemini') {
+      rawResult = await transcribeWithSarvam(audioBuffer, fileName, mimeType, serverSarvamKey);
+    } else if (provider === 'gemini') {
+      // 2. Google Gemini 2.5 Flash Audio Intelligence
       if (!serverGeminiKey) {
         return NextResponse.json({
           error: 'Google Gemini API is not configured on the server. Please ensure GEMINI_API_KEY is defined in backend environment variables (.env.local).'
         }, { status: 503 });
       }
-      const geminiResult = await transcribeWithGemini(audioBuffer, mimeType, fileName, serverGeminiKey);
-      return NextResponse.json(geminiResult);
-    }
-
-    // 3. OpenAI Whisper
-    if (provider === 'openai') {
-      if (!serverOpenaiKey) {
+      rawResult = await transcribeWithGemini(audioBuffer, mimeType, fileName, serverGeminiKey);
+    } else if (provider === 'openai') {
+      // 3. OpenAI Whisper / gpt-transcribe with graceful failover
+      if (!serverOpenaiKey && !serverSarvamKey && !serverGeminiKey) {
         return NextResponse.json({
-          error: 'OpenAI API is not configured on the server. Please ensure OPENAI_API_KEY is defined in backend environment variables (.env.local).'
+          error: 'No transcription AI provider configured. Please check .env.local.'
         }, { status: 503 });
       }
-      const openaiResult = await transcribeWithOpenAI(audioBuffer, fileName, mimeType, serverOpenaiKey);
-      return NextResponse.json(openaiResult);
-    }
 
-    // 4. Groq Whisper
-    if (provider === 'groq') {
+      try {
+        if (serverOpenaiKey) {
+          rawResult = await transcribeWithOpenAI(audioBuffer, fileName, mimeType, serverOpenaiKey);
+        } else {
+          throw new Error('OpenAI key not configured');
+        }
+      } catch (openaiErr) {
+        console.warn('OpenAI transcribe returned error, falling back to Sarvam AI / Gemini:', openaiErr);
+        if (serverSarvamKey) {
+          rawResult = await transcribeWithSarvam(audioBuffer, fileName, mimeType, serverSarvamKey);
+        } else if (serverGeminiKey) {
+          rawResult = await transcribeWithGemini(audioBuffer, mimeType, fileName, serverGeminiKey);
+        } else {
+          throw openaiErr;
+        }
+      }
+    } else if (provider === 'groq') {
+      // 4. Groq Whisper
       if (!serverGroqKey) {
         return NextResponse.json({
           error: 'Groq API is not configured on the server. Please ensure GROQ_API_KEY is defined in backend environment variables (.env.local).'
         }, { status: 503 });
       }
-      const groqResult = await transcribeWithGroq(audioBuffer, fileName, mimeType, serverGroqKey);
-      return NextResponse.json(groqResult);
+      rawResult = await transcribeWithGroq(audioBuffer, fileName, mimeType, serverGroqKey);
+    } else {
+      return NextResponse.json({
+        error: `Unsupported AI transcription provider: "${provider}". Supported providers: sarvam, gemini, openai, groq.`
+      }, { status: 400 });
     }
 
-    return NextResponse.json({
-      error: `Unsupported AI transcription provider: "${provider}". Supported providers: sarvam, gemini, openai, groq.`
-    }, { status: 400 });
+    // Apply the user's selected transcription style
+    const finalResult = await applyTranscriptionStyle(rawResult, style, serverOpenaiKey);
+    return NextResponse.json(finalResult);
 
   } catch (error: unknown) {
     // Sanitize error logging to ensure credentials are never leaked
@@ -821,4 +834,114 @@ Do NOT include markdown backticks or extra explanation. Return only valid raw JS
     keyTopics: parsed.keyTopics || ['Audio Transcription', 'Verbatim Output', 'VoxSphere'],
     sentiment: parsed.sentiment || 'neutral',
   };
+}
+
+/**
+ * Applies the user-selected transcription style to the segments & metadata
+ */
+async function applyTranscriptionStyle(
+  result: TranscriptionResult,
+  style: string,
+  openaiKey?: string
+): Promise<TranscriptionResult> {
+  const normalizedStyle = (style || 'standard').toLowerCase().replace(/\s+/g, '_');
+  if (normalizedStyle === 'standard') {
+    return result;
+  }
+
+  // Preserve originalSegments untouched
+  if (!result.originalSegments || result.originalSegments.length === 0) {
+    result.originalSegments = JSON.parse(JSON.stringify(result.segments));
+  }
+
+  const styleDescriptions: Record<string, string> = {
+    verbatim:
+      'Strict verbatim: retain every spoken word, verbal filler (um, uh, like, you know), stutter, restart, and audible utterance exactly as uttered.',
+    clean_readable:
+      'Clean & readable: eliminate conversational filler words (e.g. um, uh, like, you know, sort of, ah), remove false starts and stumbles, smoothing sentences into crisp, professional business prose while preserving exact meaning.',
+    unclear_audio:
+      'Acoustic enhancement for unclear audio: infer and clarify low-audibility or muffled words from context, mark completely unintelligible syllables with [unclear], and maintain high readability.',
+    interview_qa:
+      'Interview / Q&A format: clearly distinguish questions and answers, formatting interviewer prompts (Q:) and subject responses (A:) with conversational clarity.',
+    customer_support:
+      'Customer Support Call: structure dialogue between Support Agent and Customer, highlighting user issues, diagnostics, steps taken, and resolution statements.',
+    technical:
+      'Technical dialogue: preserve precise technical terminology, programming languages, API names, protocols, architecture concepts, and engineering jargon with standard capitalization.',
+    legal:
+      'Legal / Deposition style: formal legal transcript styling, strict verbatim accuracy, formal phrasing, accurate legal terminology, and solemn presentation.',
+    medical:
+      'Medical / Clinical style: clinical terminology precision, medical abbreviations, pharmacological terms, symptoms, and clinical observations.',
+    financial:
+      'Financial / Fiscal style: accurately format monetary sums ($/€/£), percentages (%), fiscal quarters (Q1-Q4), revenue, EBITDA, valuation multiples, and financial metrics.',
+    bilingual:
+      'Bilingual / Code-Switching: preserve multilingual vocabulary, code-switching phrases, and non-English expressions accurately without forcing English translation.',
+  };
+
+  const styleRule = styleDescriptions[normalizedStyle] || styleDescriptions['standard'];
+
+  // If OpenAI key is available, use fast gpt-4o-mini pass to style the segments cleanly
+  if (openaiKey && result.segments && result.segments.length > 0) {
+    try {
+      const segmentsInput = result.segments.map((s, idx) => ({
+        index: idx,
+        speaker: s.speaker,
+        text: s.text,
+      }));
+
+      const res = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${openaiKey}`,
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o-mini',
+          messages: [
+            {
+              role: 'system',
+              content: `You are an expert transcript styling processor for VoxSphere. Apply this style rule: "${styleRule}".
+You will receive an array of transcript segments with { index, speaker, text }.
+Return a JSON object { "segments": [{ "index": number, "speaker": string, "text": string }] } where text is adjusted to match the requested style.
+Preserve the exact same number of items and indices. Do not change speaker names. Return raw JSON only.`,
+            },
+            {
+              role: 'user',
+              content: JSON.stringify(segmentsInput),
+            },
+          ],
+          response_format: { type: 'json_object' },
+        }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        const content = JSON.parse(data.choices?.[0]?.message?.content || '{}');
+        const styledList = content.segments || [];
+        if (Array.isArray(styledList) && styledList.length === result.segments.length) {
+          result.segments = result.segments.map((seg, idx) => ({
+            ...seg,
+            text: styledList[idx]?.text || seg.text,
+            speaker: styledList[idx]?.speaker || seg.speaker,
+          }));
+        }
+      }
+    } catch (err) {
+      console.warn('OpenAI style processing fallback to local rules:', err);
+    }
+  }
+
+  // Fallback local cleanup for clean_readable if needed
+  if (normalizedStyle === 'clean_readable') {
+    result.segments = result.segments.map((seg) => ({
+      ...seg,
+      text: seg.text
+        .replace(/\b(um|uh|er|ah|you know|sort of|kind of|like,?\s*(?=[a-z]))\b/gi, '')
+        .replace(/\s{2,}/g, ' ')
+        .trim(),
+    }));
+  }
+
+  // Update format tag
+  result.metadata.format = `${result.metadata.format} • ${normalizedStyle.replace(/_/g, ' ').toUpperCase()}`;
+  return result;
 }

@@ -13,6 +13,7 @@ interface AuthContextType {
   isConfigured: boolean;
   signInWithEmail: (email: string, password: string) => Promise<{ error: Error | null }>;
   signUpWithEmail: (email: string, password: string, fullName?: string) => Promise<{ error: Error | null; needsEmailConfirmation?: boolean }>;
+  signInAsGuest: (email?: string, name?: string) => void;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ error: Error | null }>;
 }
@@ -25,6 +26,7 @@ const AuthContext = createContext<AuthContextType>({
   isConfigured: false,
   signInWithEmail: async () => ({ error: null }),
   signUpWithEmail: async () => ({ error: null }),
+  signInAsGuest: () => {},
   signOut: async () => {},
   resetPassword: async () => ({ error: null }),
 });
@@ -120,10 +122,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return { error, needsEmailConfirmation };
   };
 
+  const signInAsGuest = (email?: string, name?: string) => {
+    const demoUser = {
+      id: 'demo-user-id',
+      app_metadata: {},
+      user_metadata: { full_name: name || 'Rahul Kanaujia' },
+      aud: 'authenticated',
+      created_at: new Date().toISOString(),
+      email: email || 'rahul@voxsphere.ai',
+    } as unknown as User;
+
+    setUser(demoUser);
+    setProfile({
+      id: 'demo-user-id',
+      full_name: name || 'Rahul Kanaujia',
+      company: 'Penguin International',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    });
+  };
+
   const signOut = async () => {
-    if (!configured) return;
-    const supabase = createClient();
-    await supabase.auth.signOut();
+    if (configured) {
+      try {
+        const supabase = createClient();
+        await supabase.auth.signOut();
+      } catch {}
+    }
     setUser(null);
     setSession(null);
     setProfile(null);
@@ -150,6 +175,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isConfigured: configured,
         signInWithEmail,
         signUpWithEmail,
+        signInAsGuest,
         signOut,
         resetPassword,
       }}

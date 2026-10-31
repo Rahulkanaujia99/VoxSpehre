@@ -200,6 +200,7 @@ export const Navbar: React.FC<NavbarProps> = ({
         isOpen={showAuthModal}
         onClose={() => setShowAuthModal(false)}
         defaultMode={authModalMode}
+        onSuccess={() => onOpenStudio()}
       />
     </>
   );

@@ -26,6 +26,8 @@ import {
   FileSpreadsheet,
   Layers,
   HelpCircle,
+  Lightbulb,
+  ChevronDown,
 } from 'lucide-react';
 import {
   TranscriptionResult,
@@ -35,6 +37,9 @@ import {
 } from '@/types/transcription';
 import { formatTime } from '@/lib/audioToneGenerator';
 import {
+  exportTranscript,
+  exportSummary,
+  exportCombined,
   exportToTXT,
   exportToDOCX,
   exportToPDF,
@@ -76,9 +81,10 @@ export const TranscriptEditor: React.FC<TranscriptEditorProps> = ({
   // Original Transcript preservation toggle
   const [isViewingOriginal, setIsViewingOriginal] = useState(false);
 
-  // 6 Summarization Modes State
+  // 7 Summarization Modes State
   const [activeSummaryTab, setActiveSummaryTab] = useState<SummarizationMode>('executive');
   const [isSummarizing, setIsSummarizing] = useState(false);
+  const [showExportMenu, setShowExportMenu] = useState(false);
 
   // Tavily AI Research state
   const [researchQuery, setResearchQuery] = useState('');
@@ -401,6 +407,134 @@ export const TranscriptEditor: React.FC<TranscriptEditorProps> = ({
               </>
             )}
           </button>
+
+          {/* Export Document Dropdown */}
+          <div className="relative">
+            <button
+              onClick={() => setShowExportMenu(!showExportMenu)}
+              className="p-2 sm:px-3.5 sm:py-2 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
+              title="Export Document Options"
+            >
+              <Download className="w-3.5 h-3.5" />
+              <span>Export</span>
+              <ChevronDown className="w-3.5 h-3.5 opacity-80" />
+            </button>
+
+            {showExportMenu && (
+              <div
+                className="absolute right-0 mt-2 w-72 bg-white rounded-2xl shadow-xl border border-slate-200 py-3 px-2 z-50 animate-fade-in text-xs space-y-2.5"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {/* 1. Transcript Only */}
+                <div>
+                  <div className="px-2 text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
+                    Transcript Only
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => {
+                        exportTranscript(data, 'docx');
+                        setShowExportMenu(false);
+                      }}
+                      className="flex-1 py-1 px-2 rounded-lg bg-slate-50 hover:bg-indigo-50 hover:text-indigo-700 text-slate-700 font-semibold text-center border border-slate-200 transition-colors"
+                    >
+                      DOCX
+                    </button>
+                    <button
+                      onClick={() => {
+                        exportTranscript(data, 'pdf');
+                        setShowExportMenu(false);
+                      }}
+                      className="flex-1 py-1 px-2 rounded-lg bg-slate-50 hover:bg-indigo-50 hover:text-indigo-700 text-slate-700 font-semibold text-center border border-slate-200 transition-colors"
+                    >
+                      PDF
+                    </button>
+                    <button
+                      onClick={() => {
+                        exportTranscript(data, 'txt');
+                        setShowExportMenu(false);
+                      }}
+                      className="flex-1 py-1 px-2 rounded-lg bg-slate-50 hover:bg-indigo-50 hover:text-indigo-700 text-slate-700 font-semibold text-center border border-slate-200 transition-colors"
+                    >
+                      TXT
+                    </button>
+                  </div>
+                </div>
+
+                {/* 2. AI Summary Only */}
+                <div>
+                  <div className="px-2 text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
+                    AI Summary Only
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => {
+                        exportSummary(data, 'docx');
+                        setShowExportMenu(false);
+                      }}
+                      className="flex-1 py-1 px-2 rounded-lg bg-slate-50 hover:bg-teal-50 hover:text-teal-700 text-slate-700 font-semibold text-center border border-slate-200 transition-colors"
+                    >
+                      DOCX
+                    </button>
+                    <button
+                      onClick={() => {
+                        exportSummary(data, 'pdf');
+                        setShowExportMenu(false);
+                      }}
+                      className="flex-1 py-1 px-2 rounded-lg bg-slate-50 hover:bg-teal-50 hover:text-teal-700 text-slate-700 font-semibold text-center border border-slate-200 transition-colors"
+                    >
+                      PDF
+                    </button>
+                    <button
+                      onClick={() => {
+                        exportSummary(data, 'txt');
+                        setShowExportMenu(false);
+                      }}
+                      className="flex-1 py-1 px-2 rounded-lg bg-slate-50 hover:bg-teal-50 hover:text-teal-700 text-slate-700 font-semibold text-center border border-slate-200 transition-colors"
+                    >
+                      TXT
+                    </button>
+                  </div>
+                </div>
+
+                {/* 3. Combined Transcript + Summary */}
+                <div className="pt-1 border-t border-slate-100">
+                  <div className="px-2 text-[10px] font-bold uppercase tracking-wider text-indigo-600 mb-1">
+                    Combined (Transcript + Summary)
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => {
+                        exportCombined(data, 'docx');
+                        setShowExportMenu(false);
+                      }}
+                      className="flex-1 py-1.5 px-2 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-800 font-bold text-center border border-indigo-200 transition-colors"
+                    >
+                      DOCX
+                    </button>
+                    <button
+                      onClick={() => {
+                        exportCombined(data, 'pdf');
+                        setShowExportMenu(false);
+                      }}
+                      className="flex-1 py-1.5 px-2 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-800 font-bold text-center border border-indigo-200 transition-colors"
+                    >
+                      PDF
+                    </button>
+                    <button
+                      onClick={() => {
+                        exportCombined(data, 'txt');
+                        setShowExportMenu(false);
+                      }}
+                      className="flex-1 py-1.5 px-2 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-800 font-bold text-center border border-indigo-200 transition-colors"
+                    >
+                      TXT
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -475,15 +609,16 @@ export const TranscriptEditor: React.FC<TranscriptEditorProps> = ({
           </button>
         </div>
 
-        {/* 6 Summarization Tab Selectors */}
+        {/* 7 Summarization Tab Selectors */}
         <div className="flex flex-wrap items-center gap-1.5">
           {[
             { id: 'executive', label: 'Executive Summary', icon: Sparkles },
             { id: 'detailed', label: 'Detailed Summary', icon: FileText },
-            { id: 'minutes', label: 'Meeting Minutes', icon: FileSpreadsheet },
             { id: 'key_points', label: 'Key Discussion Points', icon: Layers },
+            { id: 'important_insights', label: 'Important Insights', icon: Lightbulb },
             { id: 'action_items', label: 'Action Items', icon: ListTodo },
             { id: 'decisions', label: 'Important Decisions', icon: CheckCircle },
+            { id: 'minutes', label: 'Meeting Minutes', icon: FileSpreadsheet },
           ].map((tab) => {
             const Icon = tab.icon;
             const isActive = activeSummaryTab === tab.id;
@@ -555,6 +690,29 @@ export const TranscriptEditor: React.FC<TranscriptEditorProps> = ({
                       {idx + 1}
                     </span>
                     <span className="leading-relaxed">{point}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {activeSummaryTab === 'important_insights' && (
+            <div className="space-y-2">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-teal-600 flex items-center gap-1">
+                <Lightbulb className="w-3 h-3" />
+                Important Insights & Strategic Observations
+              </span>
+              <div className="space-y-2 pt-1">
+                {(cs?.importantInsights && cs.importantInsights.length > 0 ? cs.importantInsights : [
+                  'Strategic operational consolidation delivers primary timeline acceleration',
+                  'Key stakeholder consensus achieved on risk allocation and governance',
+                  'High-value knowledge transfer mechanisms identified for scaled adoption',
+                ]).map((insight, idx) => (
+                  <div key={idx} className="flex items-start gap-2.5 p-2.5 bg-teal-50/60 rounded-xl border border-teal-200/80 text-xs text-slate-800">
+                    <span className="w-5 h-5 rounded-md bg-teal-100 text-teal-700 font-bold flex items-center justify-center shrink-0 text-[10px]">
+                      {idx + 1}
+                    </span>
+                    <span className="leading-relaxed font-medium">{insight}</span>
                   </div>
                 ))}
               </div>

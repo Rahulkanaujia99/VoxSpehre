@@ -1,9 +1,8 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Upload,
-  Mic,
   Sparkles,
   Loader2,
   AlertCircle,
@@ -11,27 +10,32 @@ import {
   FileAudio,
   ShieldCheck,
   RefreshCw,
-  Cpu,
   Clock,
   History,
-  ListOrdered,
   CheckCircle2,
   XCircle,
   Trash2,
-  Play,
-  RotateCcw,
   Download,
   ChevronRight,
-  ExternalLink,
+  Search,
+  User,
+  LogOut,
+  Cloud,
+  Lock,
+  Plus,
+  Menu,
+  X,
+  FileText,
+  Volume2,
 } from 'lucide-react';
 import {
   TranscriptionResult,
-  QueueItem,
+  TranscriptSegment,
   HistoryItem,
+  TranscriptionStyle,
 } from '@/types/transcription';
-import { DEMO_SAMPLES } from '@/lib/sampleAudios';
-import { createSyntheticAudioBlob } from '@/lib/audioToneGenerator';
-import { exportToDOCX, exportToPDF, exportToTXT } from '@/lib/exportUtils';
+import { exportToDOCX, exportToPDF, exportToTXT, exportCombined } from '@/lib/exportUtils';
+import { formatDuration } from '@/lib/audioToneGenerator';
 import { useAuth } from '@/context/AuthContext';
 import {
   fetchCloudTranscriptions,
@@ -39,9 +43,8 @@ import {
   updateCloudTranscription,
   deleteCloudTranscription,
 } from '@/lib/supabase/transcriptionService';
-import { Cloud, Lock, UserCheck } from 'lucide-react';
+import { Sidebar, SidebarTab } from './Sidebar';
 import { AudioUploader } from './AudioUploader';
-import { AudioRecorder } from './AudioRecorder';
 import { AudioWaveformPlayer } from './AudioWaveformPlayer';
 import { TranscriptEditor } from './TranscriptEditor';
 import { AuthModal } from './AuthModal';
@@ -52,35 +55,32 @@ interface TranscriptionStudioProps {
 }
 
 export const TranscriptionStudio: React.FC<TranscriptionStudioProps> = ({
-  initialSampleId = 'sample-pe-due-diligence',
   onBackToHome,
 }) => {
-  const [activeTab, setActiveTab] = useState<'upload' | 'record'>('upload');
-  const activeEngine = 'sarvam'; // Sarvam AI Saaras Default Engine
+  // Navigation & Layout
+  const [sidebarTab, setSidebarTab] = useState<SidebarTab>('dashboard');
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+
+  // Active Transcription Result (Starts strictly as NULL for clean initial upload dashboard)
   const [transcriptionData, setTranscriptionData] = useState<TranscriptionResult | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [audioDuration, setAudioDuration] = useState<number>(0);
   const [currentTime, setCurrentTime] = useState<number>(0);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
-  const [currentSampleId, setCurrentSampleId] = useState<string>(initialSampleId || 'sample-pe-due-diligence');
-
-  // Processing Queue State
-  const [queue, setQueue] = useState<QueueItem[]>([]);
-  const [isProcessingQueue, setIsProcessingQueue] = useState(false);
-  const isProcessingQueueRef = useRef(false);
-
-  // Document History State & Supabase Cloud Sync
-  const [history, setHistory] = useState<HistoryItem[]>([]);
-  const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [activeDocumentId, setActiveDocumentId] = useState<string | null>(null);
-  const [isSyncingCloud, setIsSyncingCloud] = useState<boolean>(false);
-  const [showStudioAuthModal, setShowStudioAuthModal] = useState<boolean>(false);
-  const { user, isConfigured } = useAuth();
 
   // Active status & errors
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
+  const [transcriptionProgress, setTranscriptionProgress] = useState<number>(0);
   const [processingStage, setProcessingStage] = useState<string>('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  // Document History State & Supabase Cloud Sync
+  const [history, setHistory] = useState<HistoryItem[]>([]);
+  const [searchRecordingsQuery, setSearchRecordingsQuery] = useState('');
+  const [isSyncingCloud, setIsSyncingCloud] = useState<boolean>(false);
+  const [showStudioAuthModal, setShowStudioAuthModal] = useState<boolean>(false);
+  const { user, profile, signOut, isConfigured } = useAuth();
 
   // Load History from Supabase (or localStorage fallback when not logged in)
   const refreshHistory = useCallback(async () => {
@@ -139,7 +139,7 @@ export const TranscriptionStudio: React.FC<TranscriptionStudioProps> = ({
       };
 
       setHistory((prev) => {
-        const updated = [newItem, ...prev.filter((h) => h.id !== docId && h.fileName !== res.metadata.fileName)].slice(0, 30);
+        const updated = [newItem, ...prev.filter((h) => h.id !== docId && h.fileName !== res.metadata.fileName)].slice(0, 50);
         if (!user) {
           try {
             localStorage.setItem('voxsphere_history', JSON.stringify(updated));
@@ -175,557 +175,330 @@ export const TranscriptionStudio: React.FC<TranscriptionStudioProps> = ({
     }
   };
 
-  // Load demo sample (Does not deduct trial minutes)
-  const loadSampleById = useCallback((sampleId: string) => {
-    setCurrentSampleId(sampleId);
+  // Start Transcription process triggered from AudioUploader
+  const handleStartTranscription = async (file: File, style: TranscriptionStyle) => {
     setErrorMessage(null);
-
-    const sample = DEMO_SAMPLES.find((s) => s.id === sampleId) || DEMO_SAMPLES[1] || DEMO_SAMPLES[0];
-    setTranscriptionData(sample.data);
-    setAudioDuration(sample.durationSeconds);
-    setCurrentTime(0);
-    setIsPlaying(false);
-
-    // Create synthesized audio URL so waveform is playable immediately
-    const synthUrl = createSyntheticAudioBlob(sample.durationSeconds);
-    setAudioUrl(synthUrl);
-  }, []);
-
-  // Load sample on mount or when initialSampleId changes
-  useEffect(() => {
-    const targetId = initialSampleId || 'sample-pe-due-diligence';
-    loadSampleById(targetId);
-  }, [initialSampleId, loadSampleById]);
-
-  // Execute transcription API call for an individual file/blob
-  const executeTranscription = async (
-    audioInput: File | Blob,
-    engine: 'sarvam' | 'gemini' | 'openai' | 'groq',
-    customFileName?: string,
-    onProgressUpdate?: (percent: number, stage: string) => void
-  ): Promise<TranscriptionResult> => {
-    const resolvedFileName =
-      customFileName ||
-      (audioInput instanceof File ? audioInput.name : 'recorded_audio.wav');
-
-    onProgressUpdate?.(15, 'Preparing audio payload & acoustic headers...');
-
-    const formData = new FormData();
-    formData.append('audio', audioInput);
-    formData.append('fileName', resolvedFileName);
-    formData.append('provider', engine);
-
-    onProgressUpdate?.(35, `Transcribing via ${engine === 'sarvam' ? 'Sarvam AI Saaras' : engine === 'openai' ? 'OpenAI gpt-transcribe' : engine === 'gemini' ? 'Google Gemini' : 'Groq Whisper Turbo'}...`);
-
-    const res = await fetch('/api/transcribe', {
-      method: 'POST',
-      body: formData,
-    });
-
-    onProgressUpdate?.(75, 'Receiving verbatim timestamps & synthesizing initial briefing...');
-
-    const data = await res.json().catch(() => null);
-
-    if (!res.ok) {
-      throw new Error(data?.error || data?.message || `Transcription failed (${res.status})`);
-    }
-
-    onProgressUpdate?.(100, 'Completed');
-    return data as TranscriptionResult;
-  };
-
-  // Process next item in the queue
-  const processQueueNext = useCallback(async (currentQueue: QueueItem[]) => {
-    if (isProcessingQueueRef.current) return;
-    const nextItem = currentQueue.find((item) => item.status === 'queued');
-    if (!nextItem || !nextItem.file) return;
-
-    isProcessingQueueRef.current = true;
-    setIsProcessingQueue(true);
-
-    // Update status to uploading / transcribing
-    setQueue((prev) =>
-      prev.map((item) =>
-        item.id === nextItem.id
-          ? { ...item, status: 'transcribing', progress: 20 }
-          : item
-      )
-    );
-
-    try {
-      const result = await executeTranscription(
-        nextItem.file,
-        activeEngine,
-        nextItem.fileName,
-        (percent) => {
-          setQueue((prev) =>
-            prev.map((item) =>
-              item.id === nextItem.id ? { ...item, progress: percent } : item
-            )
-          );
-        }
-      );
-
-      // Add to Document History & Supabase
-      addToHistory(result, nextItem.file);
-
-      // Mark queue item as completed
-      setQueue((prev) =>
-        prev.map((item) =>
-          item.id === nextItem.id
-            ? { ...item, status: 'completed', progress: 100, result }
-            : item
-        )
-      );
-
-      // Automatically display in editor if it's the active focus
-      setTranscriptionData(result);
-      if (result.metadata?.duration) {
-        setAudioDuration(result.metadata.duration);
-      }
-      const localUrl = URL.createObjectURL(nextItem.file);
-      setAudioUrl(localUrl);
-      setCurrentTime(0);
-      setCurrentSampleId(`queue-${nextItem.id}`);
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Transcription failed';
-      setQueue((prev) =>
-        prev.map((item) =>
-          item.id === nextItem.id
-            ? { ...item, status: 'failed', error: msg, progress: 0 }
-            : item
-        )
-      );
-    } finally {
-      isProcessingQueueRef.current = false;
-      setIsProcessingQueue(false);
-    }
-  }, [activeEngine, addToHistory]);
-
-  // Trigger next queue item whenever queue changes
-  useEffect(() => {
-    const hasQueued = queue.some((i) => i.status === 'queued');
-    if (hasQueued && !isProcessingQueueRef.current) {
-      processQueueNext(queue);
-    }
-  }, [queue, processQueueNext]);
-
-  // Handle multiple files selected/dropped
-  const handleFilesSelected = (files: File[]) => {
-    setErrorMessage(null);
-
-    const newQueueItems: QueueItem[] = files.map((file) => ({
-      id: `q-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
-      file,
-      fileName: file.name,
-      fileSize: (file.size / (1024 * 1024)).toFixed(2) + ' MB',
-      durationEstimate: Math.round(file.size / (32 * 1024)), // rough initial estimate
-      status: 'queued',
-      progress: 0,
-      addedAt: Date.now(),
-    }));
-
-    setQueue((prev) => [...prev, ...newQueueItems]);
-  };
-
-  // Retry a failed item in the queue
-  const handleRetryQueueItem = (id: string) => {
-    setQueue((prev) =>
-      prev.map((item) =>
-        item.id === id ? { ...item, status: 'queued', error: undefined, progress: 0 } : item
-      )
-    );
-  };
-
-  // Remove item from queue
-  const handleRemoveQueueItem = (id: string) => {
-    setQueue((prev) => prev.filter((item) => item.id !== id));
-  };
-
-  // Handle single file selected (backwards compatibility)
-  const handleSingleFileSelected = (file: File) => {
-    handleFilesSelected([file]);
-  };
-
-  // Handle mic recording completed
-  const handleRecordingComplete = async (audioBlob: Blob, duration: number) => {
-    setErrorMessage(null);
-    setCurrentSampleId('custom-recording');
-
-    const localUrl = URL.createObjectURL(audioBlob);
-    setAudioUrl(localUrl);
-    setAudioDuration(duration || 15);
-
     setIsProcessing(true);
-    setProcessingStage('Transcribing live microphone audio with Sarvam AI...');
+    setTranscriptionProgress(15);
+    setProcessingStage(`Validating and preparing "${file.name}"...`);
 
     try {
-      const recName = `Live_Recording_${new Date().toISOString().slice(11, 19).replace(/:/g, '')}.wav`;
-      const result = await executeTranscription(audioBlob, activeEngine, recName);
+      const formData = new FormData();
+      formData.append('audio', file);
+      formData.append('fileName', file.name);
+      formData.append('style', style);
+      formData.append('provider', 'openai');
 
-      // Add to history & Supabase
-      addToHistory(result, audioBlob);
+      setTranscriptionProgress(35);
+      setProcessingStage(`Transcribing audio with OpenAI speech recognition and applying ${style.replace(/_/g, ' ')} style...`);
 
-      setTranscriptionData(result);
-      if (result.metadata?.duration) {
-        setAudioDuration(result.metadata.duration);
+      const res = await fetch('/api/transcribe', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await res.json().catch(() => null);
+
+      if (!res.ok) {
+        throw new Error(data?.error || data?.message || `Transcription failed with status ${res.status}`);
       }
+
+      setTranscriptionProgress(75);
+      setProcessingStage('Generating 7-dimension AI Summarization & Strategic Intelligence...');
+
+      // Extract text for AI Summarization
+      const fullTranscriptText = (data.segments || [])
+        .map((s: TranscriptSegment) => `${s.speaker}: ${s.text}`)
+        .join('\n');
+
+      let finalResult: TranscriptionResult = data;
+
+      try {
+        const sumRes = await fetch('/api/summarize', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: fullTranscriptText, engine: 'openai' }),
+        });
+
+        if (sumRes.ok) {
+          const sumData = await sumRes.json();
+          finalResult = {
+            ...data,
+            summary: sumData.summary || data.summary,
+            keyTopics: sumData.keyTopics || data.keyTopics,
+            sentiment: sumData.sentiment || data.sentiment,
+            actionItems: sumData.actionItems || data.actionItems,
+            comprehensiveSummaries: sumData.comprehensiveSummaries || data.comprehensiveSummaries,
+          };
+        }
+      } catch (sumErr) {
+        console.warn('Summarization fallback notice:', sumErr);
+      }
+
+      setTranscriptionProgress(100);
+      setProcessingStage('Transcription and Summarization Complete!');
+
+      // Set active result and audio
+      setTranscriptionData(finalResult);
+      if (finalResult.metadata?.duration) {
+        setAudioDuration(finalResult.metadata.duration);
+      }
+      const localAudioUrl = URL.createObjectURL(file);
+      setAudioUrl(localAudioUrl);
       setCurrentTime(0);
+      setIsPlaying(false);
+
+      // Save to History & Supabase
+      await addToHistory(finalResult, file);
+
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Transcription failed';
+      const msg = err instanceof Error ? err.message : 'Transcription failed. Please check audio format and try again.';
       setErrorMessage(msg);
     } finally {
       setIsProcessing(false);
     }
   };
 
-  // Load a historical transcript into the editor
-  const handleLoadFromHistory = (item: HistoryItem) => {
-    setActiveDocumentId(item.id);
-    setTranscriptionData(item.result);
-    setAudioDuration(item.result.metadata.duration);
+  // Reset to initial clean upload state
+  const handleNewTranscription = () => {
+    setTranscriptionData(null);
+    setAudioUrl(null);
+    setAudioDuration(0);
     setCurrentTime(0);
-    setCurrentSampleId(`history-${item.id}`);
-
-    const synthUrl = createSyntheticAudioBlob(item.result.metadata.duration);
-    setAudioUrl(synthUrl);
-    setShowHistoryModal(false);
+    setIsPlaying(false);
+    setErrorMessage(null);
+    setSidebarTab('dashboard');
   };
 
-  const activeFileName =
-    transcriptionData?.metadata.fileName ||
-    (queue.length > 0 ? queue[0].fileName : 'Penguin_PE_DueDiligence_Review.m4a');
+  // Filtered recordings for the Recordings tab
+  const filteredRecordings = useMemo(() => {
+    if (!searchRecordingsQuery.trim()) return history;
+    const q = searchRecordingsQuery.toLowerCase();
+    return history.filter(
+      (item) =>
+        item.fileName.toLowerCase().includes(q) ||
+        item.result.summary.toLowerCase().includes(q)
+    );
+  }, [history, searchRecordingsQuery]);
+
+  const userDisplayName =
+    profile?.full_name ||
+    user?.user_metadata?.full_name ||
+    user?.email?.split('@')[0] ||
+    'Rahul';
 
   return (
-    <section id="studio" className="relative py-8 md:py-14 scroll-mt-20">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
-        {/* Top Back to Home Breadcrumb Bar */}
-        {onBackToHome && (
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2">
+    <div className="min-h-screen bg-slate-50 flex flex-col lg:flex-row">
+      {/* Primary Sidebar (Accessible throughout authenticated application) */}
+      <Sidebar
+        activeTab={sidebarTab}
+        onTabChange={(tab) => {
+          setSidebarTab(tab);
+          setIsMobileSidebarOpen(false);
+        }}
+        onNewTranscription={handleNewTranscription}
+        recordingsCount={history.length}
+        isOpenMobile={isMobileSidebarOpen}
+        onCloseMobile={() => setIsMobileSidebarOpen(false)}
+      />
+
+      {/* Main Content Area */}
+      <div className="flex-1 min-w-0 flex flex-col justify-between">
+        {/* Top Header Bar */}
+        <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200/80 px-4 sm:px-8 py-3.5 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            {/* Mobile Hamburger Menu Toggle */}
             <button
-              onClick={onBackToHome}
-              className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-white border border-slate-200 text-xs font-bold text-slate-700 hover:text-indigo-600 hover:border-indigo-300 shadow-2xs transition-all cursor-pointer w-fit"
+              onClick={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
+              className="lg:hidden p-2 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+              title="Open Navigation Menu"
             >
-              <ArrowLeft className="w-4 h-4 text-indigo-600" />
-              <span>← Back to Landing Page</span>
+              {isMobileSidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
 
-            <div className="flex items-center gap-3">
-              {/* Document History Trigger Button */}
+            {onBackToHome && (
               <button
-                onClick={() => setShowHistoryModal(true)}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-xs font-bold text-slate-700 hover:text-indigo-600 hover:border-indigo-300 shadow-2xs transition-all cursor-pointer"
+                onClick={onBackToHome}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-xs font-bold text-slate-700 hover:text-indigo-600 transition-all cursor-pointer"
               >
-                <History className="w-3.5 h-3.5 text-indigo-600" />
-                <span>Transcribed History ({history.length})</span>
+                <ArrowLeft className="w-4 h-4 text-indigo-600" />
+                <span className="hidden sm:inline">← Back to Landing Page</span>
               </button>
+            )}
 
-              <div className="flex items-center gap-2 text-xs text-slate-500 font-medium">
-                <span>VoxSphere</span>
-                <span>•</span>
-                <span className="text-teal-700 font-semibold">OpenAI gpt-transcribe Suite</span>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Section Header */}
-        <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4 pb-4 border-b border-slate-200">
-          <div>
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-700 text-xs font-bold mb-2">
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>VOXSPHERE AI AUDIO STUDIO</span>
-            </div>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
-              AI Audio Transcription & Intelligence
-            </h2>
-            <p className="text-sm text-slate-500 mt-1 max-w-2xl">
-              Upload MP3, WAV, M4A or record live. Powered by OpenAI <code className="text-indigo-700 font-mono font-bold bg-indigo-50 px-1.5 py-0.5 rounded">gpt-transcribe</code> with intelligent audio splitting and executive summaries.
-            </p>
-
-            {/* Currently Active Audio File Pill */}
-            <div className="flex flex-wrap items-center gap-2 pt-3">
-              <span className="text-xs font-semibold text-slate-500">Active Document:</span>
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-indigo-50 border border-indigo-200 text-indigo-900 text-xs font-bold font-mono">
-                <FileAudio className="w-3.5 h-3.5 text-indigo-600" />
-                {activeFileName}
-              </span>
-              <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                ACTIVE
-              </span>
+            <div className="hidden sm:flex items-center gap-2 text-xs text-slate-500 font-medium border-l border-slate-200 pl-3">
+              <span>VoxSphere</span>
+              <span>•</span>
+              <span className="text-teal-700 font-semibold">OpenAI gpt-transcribe Suite</span>
             </div>
           </div>
 
-          {/* Quick Demo Sample Switchers */}
-          <div className="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs font-medium">
-              <span className="text-[11px] text-slate-500 font-semibold px-2">Demo:</span>
+          <div className="flex items-center gap-2.5">
+            {/* Active Document Indicator if Transcribed */}
+            {transcriptionData && sidebarTab === 'dashboard' && (
               <button
-                onClick={() => loadSampleById('sample-pe-due-diligence')}
-                className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                  currentSampleId === 'sample-pe-due-diligence'
-                    ? 'bg-indigo-600 text-white shadow-2xs'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
-                }`}
-                title="Private Equity Due Diligence (.m4a)"
+                onClick={handleNewTranscription}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-50 border border-indigo-200 text-xs font-bold text-indigo-700 hover:bg-indigo-100 transition-colors cursor-pointer"
               >
-                PE Review (.m4a)
+                <Plus className="w-3.5 h-3.5" />
+                <span>+ New Audio File</span>
               </button>
+            )}
+
+            {/* Supabase Cloud Sync Badge */}
+            {user ? (
+              <div className="hidden sm:inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
+                <Cloud className="w-3.5 h-3.5 text-emerald-600" />
+                <span>Cloud Connected</span>
+              </div>
+            ) : (
               <button
-                onClick={() => loadSampleById('sample-strategic-intelligence')}
-                className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                  currentSampleId === 'sample-strategic-intelligence'
-                    ? 'bg-indigo-600 text-white shadow-2xs'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
-                }`}
-                title="Strategic Intelligence Call (.wav)"
+                onClick={() => setShowStudioAuthModal(true)}
+                className="inline-flex items-center gap-1.5 text-xs font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 px-3 py-1 rounded-full border border-indigo-200 cursor-pointer"
               >
-                Strategic (.wav)
+                <User className="w-3.5 h-3.5" />
+                <span>Sign In / Sync</span>
               </button>
-            </div>
-        </div>
-
-        {/* Input Switcher (Upload vs Mic) */}
-        <div className="bg-white rounded-3xl border border-slate-200/90 shadow-sm p-6 sm:p-7 space-y-6">
-          <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
-            <button
-              onClick={() => setActiveTab('upload')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                activeTab === 'upload'
-                  ? 'bg-indigo-600 text-white shadow-sm'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-              }`}
-            >
-              <Upload className="w-4 h-4" />
-              <span>Upload Audio Files</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('record')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                activeTab === 'record'
-                  ? 'bg-indigo-600 text-white shadow-sm'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-              }`}
-            >
-              <Mic className="w-4 h-4" />
-              <span>Record Live Microphone</span>
-            </button>
-          </div>
-
-          {/* Tab Content */}
-          {activeTab === 'upload' ? (
-            <AudioUploader
-              onFileSelected={handleSingleFileSelected}
-              onFilesSelected={handleFilesSelected}
-              onSelectSample={loadSampleById}
-              isTranscribing={isProcessing || isProcessingQueue}
-            />
-          ) : (
-            <AudioRecorder
-              onRecordingComplete={handleRecordingComplete}
-              onCancel={() => setActiveTab('upload')}
-            />
-          )}
-
-          {/* Live Processing Queue Panel (Required Feature) */}
-          {queue.length > 0 && (
-            <div className="mt-4 p-5 bg-slate-50 rounded-2xl border border-slate-200 space-y-3">
-              <div className="flex items-center justify-between pb-2 border-b border-slate-200">
-                <div className="flex items-center gap-2">
-                  <ListOrdered className="w-4 h-4 text-indigo-600" />
-                  <span className="text-xs font-bold text-slate-900 uppercase tracking-wider">
-                    Audio Processing Queue ({queue.length} Files)
-                  </span>
-                </div>
-                <button
-                  onClick={() => setQueue([])}
-                  className="text-[11px] font-semibold text-slate-400 hover:text-red-600 cursor-pointer"
-                >
-                  Clear Queue
-                </button>
-              </div>
-
-              <div className="space-y-2.5">
-                {queue.map((item) => (
-                  <div
-                    key={item.id}
-                    className="p-3 bg-white rounded-xl border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
-                        <FileAudio className="w-4 h-4" />
-                      </div>
-                      <div>
-                        <div className="text-xs font-bold text-slate-900 flex items-center gap-2">
-                          <span className="truncate max-w-[240px] sm:max-w-[340px]">{item.fileName}</span>
-                          <span className="text-[10px] text-slate-400 font-mono">({item.fileSize})</span>
-                        </div>
-                        <div className="text-[11px] text-slate-500 flex items-center gap-1.5 mt-0.5">
-                          {item.status === 'queued' && (
-                            <span className="text-slate-500 font-semibold flex items-center gap-1">
-                              <Clock className="w-3 h-3 text-slate-400" /> Queued in batch
-                            </span>
-                          )}
-                          {item.status === 'transcribing' && (
-                            <span className="text-indigo-600 font-semibold flex items-center gap-1">
-                              <Loader2 className="w-3 h-3 animate-spin" /> Transcribing with OpenAI... ({item.progress}%)
-                            </span>
-                          )}
-                          {item.status === 'completed' && (
-                            <span className="text-emerald-600 font-semibold flex items-center gap-1">
-                              <CheckCircle2 className="w-3 h-3" /> Transcribed & Verified
-                            </span>
-                          )}
-                          {item.status === 'failed' && (
-                            <span className="text-red-600 font-semibold flex items-center gap-1">
-                              <XCircle className="w-3 h-3" /> {item.error || 'Transcription Failed'}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-2 self-end sm:self-auto">
-                      {item.status === 'completed' && item.result && (
-                        <button
-                          onClick={() => {
-                            setTranscriptionData(item.result!);
-                            setAudioDuration(item.result!.metadata.duration);
-                            if (item.file) {
-                              setAudioUrl(URL.createObjectURL(item.file));
-                            }
-                            setCurrentTime(0);
-                          }}
-                          className="px-3 py-1 text-xs font-bold bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg transition-colors cursor-pointer"
-                        >
-                          Open in Studio →
-                        </button>
-                      )}
-
-                      {item.status === 'failed' && (
-                        <button
-                          onClick={() => handleRetryQueueItem(item.id)}
-                          className="flex items-center gap-1 px-3 py-1 text-xs font-bold bg-red-50 hover:bg-red-100 text-red-700 rounded-lg transition-colors cursor-pointer"
-                        >
-                          <RotateCcw className="w-3 h-3" />
-                          <span>Retry</span>
-                        </button>
-                      )}
-
-                      <button
-                        onClick={() => handleRemoveQueueItem(item.id)}
-                        className="p-1 text-slate-300 hover:text-slate-500 cursor-pointer"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Loading Indicator for mic recording */}
-          {isProcessing && (
-            <div className="p-6 bg-indigo-50/70 border border-indigo-200 rounded-2xl flex flex-col items-center justify-center text-center space-y-3">
-              <Loader2 className="w-8 h-8 text-indigo-600 animate-spin" />
-              <div className="space-y-1">
-                <div className="text-sm font-bold text-indigo-950">
-                  Processing Audio Stream with OpenAI gpt-transcribe...
-                </div>
-                <div className="text-xs text-indigo-700 font-medium">
-                  {processingStage || 'Decoding acoustic frames...'}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Error Alert */}
-          {errorMessage && (
-            <div className="p-4 bg-red-50 border border-red-200 rounded-2xl text-xs text-red-800 flex items-start gap-3">
-              <AlertCircle className="w-4 h-4 shrink-0 text-red-600 mt-0.5" />
-              <div className="space-y-1">
-                <div className="font-bold text-red-900">Transcription Notification</div>
-                <p>{errorMessage}</p>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Audio Waveform Player */}
-        {audioUrl && (
-          <div className="space-y-6">
-            <AudioWaveformPlayer
-              audioUrl={audioUrl}
-              duration={audioDuration}
-              currentTime={currentTime}
-              isPlaying={isPlaying}
-              onTimeUpdate={(t) => setCurrentTime(t)}
-              onPlayPause={(p) => setIsPlaying(p)}
-              onSeek={(t) => setCurrentTime(t)}
-            />
-
-            {/* Transcript Editor, 6 Summarization Modes & Export */}
-            {transcriptionData && (
-              <TranscriptEditor
-                data={transcriptionData}
-                currentTime={currentTime}
-                activeEngine={activeEngine}
-                onSeekAudio={(time) => {
-                  setCurrentTime(time);
-                  setIsPlaying(true);
-                }}
-                onUpdateResult={(updated) => {
-                  setTranscriptionData(updated);
-                  if (activeDocumentId) {
-                    setHistory((prev) =>
-                      prev.map((item) =>
-                        item.id === activeDocumentId
-                          ? { ...item, result: updated, wordCount: updated.metadata.wordCount }
-                          : item
-                      )
-                    );
-                    if (user && isConfigured && !activeDocumentId.startsWith('doc-')) {
-                      updateCloudTranscription(activeDocumentId, updated);
-                    }
-                  }
-                }}
-              />
             )}
           </div>
-        )}
+        </header>
 
-        {/* Document History Modal / Drawer */}
-        {showHistoryModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200">
-            <div className="bg-white rounded-3xl max-w-2xl w-full p-6 sm:p-7 shadow-2xl border border-slate-200 space-y-5 max-h-[85vh] flex flex-col">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
-                    <History className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h3 className="text-lg font-bold text-slate-900">
-                        Transcribed Documents History
-                      </h3>
-                      {user ? (
-                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-                          <Cloud className="w-3 h-3" />
-                          <span>Supabase Cloud</span>
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-full border border-slate-200">
-                          <span>Local Guest</span>
-                        </span>
-                      )}
+        {/* Main Viewport depending on sidebarTab */}
+        <main className="flex-1 p-4 sm:p-8 max-w-7xl mx-auto w-full space-y-6">
+          {/* ======================================================== */}
+          {/* TAB 1: DASHBOARD (AUDIO UPLOAD -> TRANSCRIPTION -> SUMMARY) */}
+          {/* ======================================================== */}
+          {sidebarTab === 'dashboard' && (
+            <div className="space-y-6 animate-fade-in">
+              {/* If transcriptionData is NULL: Show Section Header + Audio Upload Section ONLY */}
+              {!transcriptionData ? (
+                <>
+                  {/* Dashboard Header (Matching Screenshot 1) */}
+                  <div className="space-y-2 pb-2">
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-700 text-xs font-bold">
+                      <Sparkles className="w-3.5 h-3.5" />
+                      <span>VOXSPHERE AI AUDIO STUDIO</span>
                     </div>
-                    <p className="text-xs text-slate-500">
-                      {user
-                        ? `Synced to Supabase account (${user.email})`
-                        : 'Stored in browser storage. Sign in for private cloud sync.'}
+                    <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
+                      AI Audio Transcription & Intelligence
+                    </h2>
+                    <p className="text-sm text-slate-500 max-w-2xl leading-relaxed">
+                      Upload MP3, WAV, M4A or record live. Powered by OpenAI <code className="text-indigo-700 font-mono font-bold bg-indigo-50 px-1.5 py-0.5 rounded">gpt-transcribe</code> with intelligent audio splitting and executive summaries.
                     </p>
                   </div>
+
+                  {/* Clean Initial Audio Upload Section (No Demo samples, No AI Summary, No Segments) */}
+                  <AudioUploader
+                    onStartTranscription={handleStartTranscription}
+                    isTranscribing={isProcessing}
+                    transcriptionProgress={transcriptionProgress}
+                    transcriptionStage={processingStage}
+                  />
+
+                  {/* Error Notification */}
+                  {errorMessage && (
+                    <div className="p-4 bg-rose-50 border border-rose-200 rounded-2xl text-xs text-rose-800 flex items-start gap-3">
+                      <AlertCircle className="w-4 h-4 shrink-0 text-rose-600 mt-0.5" />
+                      <div className="space-y-1">
+                        <div className="font-bold text-rose-900">Transcription Error</div>
+                        <p>{errorMessage}</p>
+                      </div>
+                    </div>
+                  )}
+                </>
+              ) : (
+                /* Once Transcribed: Display Audio Player + Transcript Editor + 7-Dimension AI Summarization */
+                <div className="space-y-6 animate-fade-in">
+                  {/* Active Document Banner */}
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 bg-white rounded-2xl border border-slate-200 shadow-2xs">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+                        <FileAudio className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-bold text-slate-900 font-mono">
+                            {transcriptionData.metadata.fileName}
+                          </span>
+                          <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                            TRANSCRIBED
+                          </span>
+                        </div>
+                        <div className="text-xs text-slate-500 flex items-center gap-2 mt-0.5">
+                          <span>{Math.round(transcriptionData.metadata.duration)}s</span>
+                          <span>•</span>
+                          <span>{transcriptionData.metadata.wordCount} words</span>
+                          <span>•</span>
+                          <span>{transcriptionData.metadata.speakersCount} speakers</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={handleNewTranscription}
+                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 shadow-xs transition-all cursor-pointer self-start sm:self-auto"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Transcribe Another File</span>
+                    </button>
+                  </div>
+
+                  {/* Audio Waveform Player */}
+                  {audioUrl && (
+                    <AudioWaveformPlayer
+                      audioUrl={audioUrl}
+                      duration={audioDuration}
+                      currentTime={currentTime}
+                      isPlaying={isPlaying}
+                      onTimeUpdate={(t) => setCurrentTime(t)}
+                      onPlayPause={(p) => setIsPlaying(p)}
+                      onSeek={(t) => setCurrentTime(t)}
+                    />
+                  )}
+
+                  {/* Complete Transcript + 7-Dimension AI Summarization + 9 Export Formats */}
+                  <TranscriptEditor
+                    data={transcriptionData}
+                    currentTime={currentTime}
+                    activeEngine="openai"
+                    onSeekAudio={(time) => {
+                      setCurrentTime(time);
+                      setIsPlaying(true);
+                    }}
+                    onUpdateResult={(updated) => {
+                      setTranscriptionData(updated);
+                      if (activeDocumentId) {
+                        setHistory((prev) =>
+                          prev.map((item) =>
+                            item.id === activeDocumentId
+                              ? { ...item, result: updated, wordCount: updated.metadata.wordCount }
+                              : item
+                          )
+                        );
+                        if (user && isConfigured && !activeDocumentId.startsWith('doc-')) {
+                          updateCloudTranscription(activeDocumentId, updated);
+                        }
+                      }
+                    }}
+                  />
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ======================================================== */}
+          {/* TAB 2: RECORDINGS (RECORDING HISTORY & EXPORTS)           */}
+          {/* ======================================================== */}
+          {sidebarTab === 'recordings' && (
+            <div className="space-y-6 animate-fade-in">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200">
+                <div>
+                  <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+                    Transcribed Recordings
+                  </h2>
+                  <p className="text-xs sm:text-sm text-slate-500 mt-1">
+                    Manage, search, export and review all audio transcripts and strategic summaries.
+                  </p>
                 </div>
 
                 <div className="flex items-center gap-2">
@@ -733,90 +506,110 @@ export const TranscriptionStudio: React.FC<TranscriptionStudioProps> = ({
                     <button
                       onClick={refreshHistory}
                       disabled={isSyncingCloud}
-                      className="p-1.5 rounded-lg text-slate-500 hover:text-indigo-600 hover:bg-slate-100 transition-colors cursor-pointer"
-                      title="Sync / Refresh from Supabase"
+                      className="p-2 rounded-xl bg-white border border-slate-200 text-slate-600 hover:text-indigo-600 hover:bg-slate-50 transition-colors cursor-pointer"
+                      title="Sync with Supabase"
                     >
                       <RefreshCw className={`w-4 h-4 ${isSyncingCloud ? 'animate-spin text-indigo-600' : ''}`} />
                     </button>
                   )}
                   <button
-                    onClick={() => setShowHistoryModal(false)}
-                    className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 cursor-pointer"
+                    onClick={handleNewTranscription}
+                    className="flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-xs transition-all cursor-pointer"
                   >
-                    <XCircle className="w-5 h-5" />
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>New Transcription</span>
                   </button>
                 </div>
               </div>
 
-              {/* Cloud Sync Callout Banner for Guest Users */}
-              {!user && (
-                <div className="p-3.5 rounded-2xl bg-gradient-to-r from-indigo-50 to-teal-50 border border-indigo-100 flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-2 text-xs text-slate-700">
-                    <Cloud className="w-4 h-4 text-indigo-600 shrink-0" />
-                    <span>Want your transcripts & audio securely saved across all devices?</span>
-                  </div>
-                  <button
-                    onClick={() => setShowStudioAuthModal(true)}
-                    className="px-3 py-1.5 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-xs shrink-0 cursor-pointer"
-                  >
-                    Sign In with Supabase
-                  </button>
-                </div>
-              )}
+              {/* Search Bar */}
+              <div className="relative">
+                <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  placeholder="Search recordings by file name or key summary points..."
+                  value={searchRecordingsQuery}
+                  onChange={(e) => setSearchRecordingsQuery(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2.5 text-xs sm:text-sm bg-white border border-slate-200 rounded-2xl focus:outline-hidden focus:ring-2 focus:ring-indigo-500 shadow-2xs"
+                />
+              </div>
 
-              {/* History Items List */}
-              <div className="flex-1 overflow-y-auto space-y-3 pr-1">
-                {history.length === 0 ? (
-                  <div className="py-12 text-center text-slate-400 space-y-2">
-                    <FileAudio className="w-10 h-10 mx-auto text-slate-300" />
-                    <p className="text-xs">No saved transcripts yet. Transcribe an audio file to save it to history.</p>
+              {/* Recordings List */}
+              <div className="space-y-3">
+                {filteredRecordings.length === 0 ? (
+                  <div className="bg-white rounded-3xl border border-slate-200 p-12 text-center space-y-3">
+                    <FileAudio className="w-12 h-12 text-slate-300 mx-auto" />
+                    <h3 className="text-base font-bold text-slate-800">No recordings found</h3>
+                    <p className="text-xs text-slate-500 max-w-sm mx-auto">
+                      {searchRecordingsQuery
+                        ? 'No transcripts matched your search terms.'
+                        : 'Upload an audio file on the dashboard to transcribe and store recordings.'}
+                    </p>
+                    <button
+                      onClick={handleNewTranscription}
+                      className="mt-2 inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 text-white font-bold text-xs rounded-xl shadow-xs hover:bg-indigo-700 cursor-pointer"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Start Your First Transcription</span>
+                    </button>
                   </div>
                 ) : (
-                  history.map((doc) => (
+                  filteredRecordings.map((doc) => (
                     <div
                       key={doc.id}
-                      className="p-4 bg-slate-50 hover:bg-indigo-50/40 rounded-2xl border border-slate-200 hover:border-indigo-300 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 group"
+                      className="p-5 bg-white hover:bg-indigo-50/30 rounded-2xl border border-slate-200 hover:border-indigo-300 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-2xs group"
                     >
-                      <div className="space-y-1">
-                        <div className="text-xs font-bold text-slate-900 group-hover:text-indigo-900 flex items-center gap-2">
-                          <span>{doc.fileName}</span>
-                          <span className="text-[10px] text-slate-400 font-normal">({doc.date})</span>
+                      <div className="space-y-1.5 min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="text-sm font-bold text-slate-900 group-hover:text-indigo-900 font-mono">
+                            {doc.fileName}
+                          </span>
+                          <span className="text-[10px] text-slate-400">({doc.date})</span>
                           {!doc.id.startsWith('doc-') && (
-                            <span className="text-[9px] font-bold text-teal-700 bg-teal-50 px-1.5 py-0.2 rounded border border-teal-200">
+                            <span className="text-[9px] font-bold text-teal-700 bg-teal-50 px-2 py-0.5 rounded-full border border-teal-200">
                               CLOUD
                             </span>
                           )}
                         </div>
-                        <div className="flex items-center gap-2 text-[11px] text-slate-500">
+
+                        <div className="flex items-center gap-2.5 text-xs text-slate-500 font-medium">
                           <span>Duration: {Math.round(doc.duration)}s</span>
                           <span>•</span>
                           <span>{doc.wordCount} words</span>
                           <span>•</span>
                           <span>{doc.speakersCount} speakers</span>
                         </div>
-                        <p className="text-[11px] text-slate-600 line-clamp-1 italic">
+
+                        <p className="text-xs text-slate-600 line-clamp-1 italic max-w-2xl">
                           &ldquo;{doc.result.summary}&rdquo;
                         </p>
                       </div>
 
                       <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
                         <button
-                          onClick={() => handleLoadFromHistory(doc)}
-                          className="px-3 py-1.5 rounded-xl text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 shadow-2xs transition-all cursor-pointer"
+                          onClick={() => {
+                            setTranscriptionData(doc.result);
+                            setAudioDuration(doc.result.metadata.duration);
+                            setCurrentTime(0);
+                            setSidebarTab('dashboard');
+                          }}
+                          className="px-3.5 py-2 rounded-xl text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 shadow-2xs transition-all cursor-pointer"
                         >
-                          Open in Editor
+                          Open in Studio →
                         </button>
+
                         <button
-                          onClick={() => exportToDOCX(doc.result)}
-                          className="p-1.5 rounded-xl bg-white border border-slate-200 text-slate-600 hover:text-blue-600 hover:border-blue-300 cursor-pointer"
+                          onClick={() => exportCombined(doc.result, 'docx')}
+                          className="p-2 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 transition-colors cursor-pointer"
                           title="Download DOCX"
                         >
                           <Download className="w-3.5 h-3.5" />
                         </button>
+
                         <button
                           onClick={() => handleDeleteHistoryItem(doc.id)}
-                          className="p-1.5 rounded-xl text-slate-400 hover:text-red-500 cursor-pointer"
-                          title="Delete from history"
+                          className="p-2 rounded-xl bg-slate-50 hover:bg-rose-50 border border-slate-200 text-slate-400 hover:text-rose-600 transition-colors cursor-pointer"
+                          title="Delete Recording"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
@@ -825,31 +618,104 @@ export const TranscriptionStudio: React.FC<TranscriptionStudioProps> = ({
                   ))
                 )}
               </div>
-
-              {history.length > 0 && (
-                <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
-                  <span className="text-slate-400">
-                    {history.length} {user ? 'documents stored in Supabase' : 'documents stored locally'}
-                  </span>
-                  <button
-                    onClick={handleClearHistory}
-                    className="font-semibold text-red-600 hover:underline cursor-pointer"
-                  >
-                    Clear All History
-                  </button>
-                </div>
-              )}
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Studio-triggered Supabase Auth Modal */}
-        <AuthModal
-          isOpen={showStudioAuthModal}
-          onClose={() => setShowStudioAuthModal(false)}
-        />
+          {/* ======================================================== */}
+          {/* TAB 3: USER PROFILE (ACCOUNT, QUOTAS & SUPABASE SYNC)   */}
+          {/* ======================================================== */}
+          {sidebarTab === 'profile' && (
+            <div className="space-y-6 max-w-3xl animate-fade-in">
+              <div className="pb-4 border-b border-slate-200">
+                <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+                  User Profile & Account
+                </h2>
+                <p className="text-xs sm:text-sm text-slate-500 mt-1">
+                  Manage your VoxSphere credentials, enterprise subscription, and Supabase cloud sync.
+                </p>
+              </div>
+
+              {/* Profile Card */}
+              <div className="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200/90 shadow-sm space-y-6">
+                <div className="flex items-center gap-4">
+                  <div className="w-16 h-16 rounded-full bg-indigo-600 text-white font-extrabold text-2xl flex items-center justify-center shadow-md">
+                    {userDisplayName.charAt(0).toUpperCase()}
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-slate-900">{userDisplayName}</h3>
+                    <p className="text-xs text-slate-500 font-mono">{user?.email || 'Guest User'}</p>
+                    <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded-full mt-1.5">
+                      <span className="text-amber-500 text-[10px]">★</span> Free Plan
+                    </span>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-slate-100 text-xs">
+                  <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200">
+                    <span className="text-slate-400 font-medium">Account Status</span>
+                    <p className="font-bold text-slate-800 mt-0.5">Active</p>
+                  </div>
+                  <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200">
+                    <span className="text-slate-400 font-medium">Cloud Storage</span>
+                    <p className="font-bold text-slate-800 mt-0.5">
+                      {user ? 'Supabase Synchronized' : 'Local Browser Storage'}
+                    </p>
+                  </div>
+                  <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200">
+                    <span className="text-slate-400 font-medium">Free Quota Remaining</span>
+                    <p className="font-bold text-indigo-700 mt-0.5">4 minutes left (1 of 5 used)</p>
+                  </div>
+                  <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200">
+                    <span className="text-slate-400 font-medium">Total Saved Transcripts</span>
+                    <p className="font-bold text-slate-800 mt-0.5">{history.length} Documents</p>
+                  </div>
+                </div>
+
+                {/* Cloud Sync Information */}
+                <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-start gap-3">
+                  <ShieldCheck className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+                  <div className="text-xs text-emerald-900 space-y-1">
+                    <p className="font-bold">Enterprise Cloud Privacy & RLS</p>
+                    <p className="text-[11px] text-emerald-800 leading-relaxed">
+                      All audio files, verbatim transcripts, and AI summaries are encrypted with Supabase Row-Level Security. Only you can access your documents.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="pt-2 flex items-center justify-between">
+                  {user ? (
+                    <button
+                      onClick={() => signOut()}
+                      className="px-4 py-2 text-xs font-bold text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-xl border border-rose-200 transition-colors flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <LogOut className="w-3.5 h-3.5" />
+                      <span>Sign Out from VoxSphere</span>
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => setShowStudioAuthModal(true)}
+                      className="px-5 py-2.5 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <User className="w-3.5 h-3.5" />
+                      <span>Sign In with Supabase</span>
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+        </main>
       </div>
-    </section>
+
+      {/* Supabase Authentication Modal */}
+      <AuthModal
+        isOpen={showStudioAuthModal}
+        onClose={() => {
+          setShowStudioAuthModal(false);
+          refreshHistory();
+        }}
+      />
+    </div>
   );
 };
-

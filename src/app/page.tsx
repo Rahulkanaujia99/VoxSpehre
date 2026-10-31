@@ -7,21 +7,33 @@ import { TranscriptionStudio } from '@/components/TranscriptionStudio';
 import { FeaturesSection } from '@/components/FeaturesSection';
 import { Footer } from '@/components/Footer';
 import { PenguinInfoModal } from '@/components/PenguinInfoModal';
+import { AuthView } from '@/components/AuthView';
+import { useAuth } from '@/context/AuthContext';
 
 export default function Home() {
-  const [currentView, setCurrentView] = useState<'home' | 'app'>('home');
+  const [currentView, setCurrentView] = useState<'home' | 'app' | 'auth'>('home');
   const [isPenguinInfoOpen, setIsPenguinInfoOpen] = useState(false);
   const [penguinSection, setPenguinSection] = useState('about');
-  const [selectedSampleId, setSelectedSampleId] = useState<string>('sample-pe-due-diligence');
+  const { user } = useAuth();
 
   // Sync with browser URL hash & history
   useEffect(() => {
     const handleUrlState = () => {
       const hash = window.location.hash;
       const search = new URLSearchParams(window.location.search);
-      if (hash === '#studio' || hash === '#app' || search.get('app') === 'true' || search.get('view') === 'studio') {
-        setCurrentView('app');
-        setSelectedSampleId('sample-pe-due-diligence');
+      if (hash === '#login' || hash === '#signin' || search.get('auth') === 'true') {
+        setCurrentView('auth');
+      } else if (
+        hash === '#studio' ||
+        hash === '#app' ||
+        search.get('app') === 'true' ||
+        search.get('view') === 'studio'
+      ) {
+        if (!user) {
+          setCurrentView('auth');
+        } else {
+          setCurrentView('app');
+        }
       } else {
         setCurrentView('home');
       }
@@ -34,11 +46,23 @@ export default function Home() {
       window.removeEventListener('popstate', handleUrlState);
       window.removeEventListener('hashchange', handleUrlState);
     };
-  }, []);
+  }, [user]);
 
-  // Open Studio specifically with Penguin_PE_DueDiligence_Review.m4a by default
-  const handleOpenStudio = (sampleId: string = 'sample-pe-due-diligence') => {
-    setSelectedSampleId(sampleId);
+  // Handle clicking "Start Transcribing" from Home page
+  // Redirects to Sign In / Sign Up if not logged in, otherwise opens dashboard
+  const handleStartTranscribing = () => {
+    if (!user) {
+      setCurrentView('auth');
+      window.history.pushState(null, '', '#login');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      setCurrentView('app');
+      window.history.pushState(null, '', '#studio');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  const handleAuthSuccess = () => {
     setCurrentView('app');
     window.history.pushState(null, '', '#studio');
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -61,22 +85,19 @@ export default function Home() {
       <Navbar
         isAppView={currentView === 'app'}
         onBackToHome={handleBackToHome}
-        onOpenStudio={(sampleId) => handleOpenStudio(sampleId || 'sample-pe-due-diligence')}
+        onOpenStudio={handleStartTranscribing}
         onOpenPenguinInfo={handleOpenPenguinInfo}
       />
 
-      {currentView === 'home' ? (
+      {currentView === 'home' && (
         /* ======================================================== */
-        /* LANDING PAGE (Only Home Page content rendered here)      */
+        /* LANDING PAGE (Home Page)                                 */
         /* ======================================================== */
         <div className="flex-1 flex flex-col justify-between animate-fadeIn">
-          {/* Hero Section with Open the app CTAs and Interactive Preview */}
+          {/* Hero Section with Start Transcribing CTA */}
           <HeroSection
-            onOpenStudio={(sampleId) => handleOpenStudio(sampleId || 'sample-pe-due-diligence')}
-            onLoadSample={(id) => {
-              setSelectedSampleId(id);
-              handleOpenStudio(id);
-            }}
+            onOpenStudio={handleStartTranscribing}
+            onLoadSample={handleStartTranscribing}
           />
 
           {/* Pipeline & Intelligence Features Section */}
@@ -84,24 +105,42 @@ export default function Home() {
 
           {/* Landing Page Footer */}
           <Footer
-            onOpenStudio={(sampleId) => handleOpenStudio(sampleId || 'sample-pe-due-diligence')}
+            onOpenStudio={handleStartTranscribing}
             onOpenPenguinInfo={handleOpenPenguinInfo}
           />
         </div>
-      ) : (
+      )}
+
+      {currentView === 'auth' && (
         /* ======================================================== */
-        /* AI SPEECH INTELLIGENCE STUDIO (Opens when clicking App)  */
-        /* Pre-loaded with Penguin_PE_DueDiligence_Review.m4a       */
+        /* SIGN IN / SIGN UP PAGE (Expected User Journey Step 3)    */
         /* ======================================================== */
         <div className="flex-1 flex flex-col justify-between animate-fadeIn">
-          <TranscriptionStudio
-            initialSampleId={selectedSampleId}
+          <AuthView
+            initialMode="signin"
+            onSuccess={handleAuthSuccess}
             onBackToHome={handleBackToHome}
           />
 
-          {/* Studio Footer */}
           <Footer
-            onOpenStudio={(sampleId) => handleOpenStudio(sampleId || 'sample-pe-due-diligence')}
+            onOpenStudio={handleStartTranscribing}
+            onOpenPenguinInfo={handleOpenPenguinInfo}
+          />
+        </div>
+      )}
+
+      {currentView === 'app' && (
+        /* ======================================================== */
+        /* AUDIO TRANSCRIPTION DASHBOARD                            */
+        /* Initially displays ONLY the audio upload section         */
+        /* ======================================================== */
+        <div className="flex-1 flex flex-col justify-between animate-fadeIn">
+          <TranscriptionStudio
+            onBackToHome={handleBackToHome}
+          />
+
+          <Footer
+            onOpenStudio={handleStartTranscribing}
             onOpenPenguinInfo={handleOpenPenguinInfo}
           />
         </div>

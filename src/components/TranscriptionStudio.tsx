@@ -32,10 +32,19 @@ import {
 import { DEMO_SAMPLES } from '@/lib/sampleAudios';
 import { createSyntheticAudioBlob } from '@/lib/audioToneGenerator';
 import { exportToDOCX, exportToPDF, exportToTXT } from '@/lib/exportUtils';
+import { useAuth } from '@/context/AuthContext';
+import {
+  fetchCloudTranscriptions,
+  saveCloudTranscription,
+  updateCloudTranscription,
+  deleteCloudTranscription,
+} from '@/lib/supabase/transcriptionService';
+import { Cloud, Lock, UserCheck } from 'lucide-react';
 import { AudioUploader } from './AudioUploader';
 import { AudioRecorder } from './AudioRecorder';
 import { AudioWaveformPlayer } from './AudioWaveformPlayer';
 import { TranscriptEditor } from './TranscriptEditor';
+import { AuthModal } from './AuthModal';
 
 interface TranscriptionStudioProps {
   initialSampleId?: string;
@@ -60,54 +69,99 @@ export const TranscriptionStudio: React.FC<TranscriptionStudioProps> = ({
   const [isProcessingQueue, setIsProcessingQueue] = useState(false);
   const isProcessingQueueRef = useRef(false);
 
-  // Document History State
+  // Document History State & Supabase Cloud Sync
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [activeDocumentId, setActiveDocumentId] = useState<string | null>(null);
+  const [isSyncingCloud, setIsSyncingCloud] = useState<boolean>(false);
+  const [showStudioAuthModal, setShowStudioAuthModal] = useState<boolean>(false);
+  const { user, isConfigured } = useAuth();
 
   // Active status & errors
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [processingStage, setProcessingStage] = useState<string>('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // Load History from localStorage on client mount
-  useEffect(() => {
-    try {
-      const savedHistory = localStorage.getItem('voxsphere_history');
-      if (savedHistory) {
-        setHistory(JSON.parse(savedHistory));
-      }
-    } catch (e) {
-      console.warn('Could not read user history from localStorage:', e);
-    }
-  }, []);
-
-  // Add Item to Document History
-  const addToHistory = useCallback((res: TranscriptionResult) => {
-    const newItem: HistoryItem = {
-      id: `doc-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
-      fileName: res.metadata.fileName,
-      date: new Date().toLocaleString(),
-      duration: res.metadata.duration,
-      wordCount: res.metadata.wordCount,
-      speakersCount: res.metadata.speakersCount,
-      result: res,
-    };
-
-    setHistory((prev) => {
-      const updated = [newItem, ...prev.filter((h) => h.fileName !== res.metadata.fileName)].slice(0, 20);
+  // Load History from Supabase (or localStorage fallback when not logged in)
+  const refreshHistory = useCallback(async () => {
+    if (user && isConfigured) {
+      setIsSyncingCloud(true);
       try {
-        localStorage.setItem('voxsphere_history', JSON.stringify(updated));
-      } catch {}
-      return updated;
-    });
-  }, []);
+        const cloudDocs = await fetchCloudTranscriptions();
+        setHistory(cloudDocs);
+      } catch (e) {
+        console.warn('Could not read cloud history from Supabase:', e);
+      } finally {
+        setIsSyncingCloud(false);
+      }
+    } else {
+      try {
+        const savedHistory = localStorage.getItem('voxsphere_history');
+        if (savedHistory) {
+          setHistory(JSON.parse(savedHistory));
+        }
+      } catch (e) {
+        console.warn('Could not read user history from localStorage:', e);
+      }
+    }
+  }, [user, isConfigured]);
 
-  const handleDeleteHistoryItem = (id: string) => {
+  useEffect(() => {
+    refreshHistory();
+  }, [refreshHistory]);
+
+  // Add Item to Document History (Auto-saves to Supabase when logged in)
+  const addToHistory = useCallback(
+    async (res: TranscriptionResult, audioBlobOrFile?: Blob | File | null) => {
+      let cloudId: string | null = null;
+      if (user && isConfigured) {
+        try {
+          setIsSyncingCloud(true);
+          cloudId = await saveCloudTranscription(res, audioBlobOrFile);
+        } catch (err) {
+          console.warn('Failed to save to Supabase:', err);
+        } finally {
+          setIsSyncingCloud(false);
+        }
+      }
+
+      const docId = cloudId || `doc-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+      setActiveDocumentId(docId);
+
+      const newItem: HistoryItem = {
+        id: docId,
+        fileName: res.metadata.fileName,
+        date: new Date().toLocaleString(),
+        duration: res.metadata.duration,
+        wordCount: res.metadata.wordCount,
+        speakersCount: res.metadata.speakersCount,
+        result: res,
+      };
+
+      setHistory((prev) => {
+        const updated = [newItem, ...prev.filter((h) => h.id !== docId && h.fileName !== res.metadata.fileName)].slice(0, 30);
+        if (!user) {
+          try {
+            localStorage.setItem('voxsphere_history', JSON.stringify(updated));
+          } catch {}
+        }
+        return updated;
+      });
+    },
+    [user, isConfigured]
+  );
+
+  const handleDeleteHistoryItem = async (id: string) => {
+    if (user && isConfigured && !id.startsWith('doc-')) {
+      await deleteCloudTranscription(id);
+    }
     setHistory((prev) => {
       const updated = prev.filter((item) => item.id !== id);
-      try {
-        localStorage.setItem('voxsphere_history', JSON.stringify(updated));
-      } catch {}
+      if (!user) {
+        try {
+          localStorage.setItem('voxsphere_history', JSON.stringify(updated));
+        } catch {}
+      }
       return updated;
     });
   };
@@ -212,8 +266,8 @@ export const TranscriptionStudio: React.FC<TranscriptionStudioProps> = ({
         }
       );
 
-      // Add to Document History
-      addToHistory(result);
+      // Add to Document History & Supabase
+      addToHistory(result, nextItem.file);
 
       // Mark queue item as completed
       setQueue((prev) =>
@@ -309,8 +363,8 @@ export const TranscriptionStudio: React.FC<TranscriptionStudioProps> = ({
       const recName = `Live_Recording_${new Date().toISOString().slice(11, 19).replace(/:/g, '')}.wav`;
       const result = await executeTranscription(audioBlob, activeEngine, recName);
 
-      // Add to history
-      addToHistory(result);
+      // Add to history & Supabase
+      addToHistory(result, audioBlob);
 
       setTranscriptionData(result);
       if (result.metadata?.duration) {
@@ -327,6 +381,7 @@ export const TranscriptionStudio: React.FC<TranscriptionStudioProps> = ({
 
   // Load a historical transcript into the editor
   const handleLoadFromHistory = (item: HistoryItem) => {
+    setActiveDocumentId(item.id);
     setTranscriptionData(item.result);
     setAudioDuration(item.result.metadata.duration);
     setCurrentTime(0);
@@ -620,7 +675,21 @@ export const TranscriptionStudio: React.FC<TranscriptionStudioProps> = ({
                   setCurrentTime(time);
                   setIsPlaying(true);
                 }}
-                onUpdateResult={(updated) => setTranscriptionData(updated)}
+                onUpdateResult={(updated) => {
+                  setTranscriptionData(updated);
+                  if (activeDocumentId) {
+                    setHistory((prev) =>
+                      prev.map((item) =>
+                        item.id === activeDocumentId
+                          ? { ...item, result: updated, wordCount: updated.metadata.wordCount }
+                          : item
+                      )
+                    );
+                    if (user && isConfigured && !activeDocumentId.startsWith('doc-')) {
+                      updateCloudTranscription(activeDocumentId, updated);
+                    }
+                  }
+                }}
               />
             )}
           </div>
@@ -636,22 +705,64 @@ export const TranscriptionStudio: React.FC<TranscriptionStudioProps> = ({
                     <History className="w-5 h-5" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-bold text-slate-900">
-                      Transcribed Documents History
-                    </h3>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-lg font-bold text-slate-900">
+                        Transcribed Documents History
+                      </h3>
+                      {user ? (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                          <Cloud className="w-3 h-3" />
+                          <span>Supabase Cloud</span>
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-full border border-slate-200">
+                          <span>Local Guest</span>
+                        </span>
+                      )}
+                    </div>
                     <p className="text-xs text-slate-500">
-                      Re-open past transcripts, view summaries, or download DOCX/PDF/TXT
+                      {user
+                        ? `Synced to Supabase account (${user.email})`
+                        : 'Stored in browser storage. Sign in for private cloud sync.'}
                     </p>
                   </div>
                 </div>
 
-                <button
-                  onClick={() => setShowHistoryModal(false)}
-                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 cursor-pointer"
-                >
-                  <XCircle className="w-5 h-5" />
-                </button>
+                <div className="flex items-center gap-2">
+                  {user && (
+                    <button
+                      onClick={refreshHistory}
+                      disabled={isSyncingCloud}
+                      className="p-1.5 rounded-lg text-slate-500 hover:text-indigo-600 hover:bg-slate-100 transition-colors cursor-pointer"
+                      title="Sync / Refresh from Supabase"
+                    >
+                      <RefreshCw className={`w-4 h-4 ${isSyncingCloud ? 'animate-spin text-indigo-600' : ''}`} />
+                    </button>
+                  )}
+                  <button
+                    onClick={() => setShowHistoryModal(false)}
+                    className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 cursor-pointer"
+                  >
+                    <XCircle className="w-5 h-5" />
+                  </button>
+                </div>
               </div>
+
+              {/* Cloud Sync Callout Banner for Guest Users */}
+              {!user && (
+                <div className="p-3.5 rounded-2xl bg-gradient-to-r from-indigo-50 to-teal-50 border border-indigo-100 flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2 text-xs text-slate-700">
+                    <Cloud className="w-4 h-4 text-indigo-600 shrink-0" />
+                    <span>Want your transcripts & audio securely saved across all devices?</span>
+                  </div>
+                  <button
+                    onClick={() => setShowStudioAuthModal(true)}
+                    className="px-3 py-1.5 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-xs shrink-0 cursor-pointer"
+                  >
+                    Sign In with Supabase
+                  </button>
+                </div>
+              )}
 
               {/* History Items List */}
               <div className="flex-1 overflow-y-auto space-y-3 pr-1">
@@ -670,6 +781,11 @@ export const TranscriptionStudio: React.FC<TranscriptionStudioProps> = ({
                         <div className="text-xs font-bold text-slate-900 group-hover:text-indigo-900 flex items-center gap-2">
                           <span>{doc.fileName}</span>
                           <span className="text-[10px] text-slate-400 font-normal">({doc.date})</span>
+                          {!doc.id.startsWith('doc-') && (
+                            <span className="text-[9px] font-bold text-teal-700 bg-teal-50 px-1.5 py-0.2 rounded border border-teal-200">
+                              CLOUD
+                            </span>
+                          )}
                         </div>
                         <div className="flex items-center gap-2 text-[11px] text-slate-500">
                           <span>Duration: {Math.round(doc.duration)}s</span>
@@ -712,7 +828,9 @@ export const TranscriptionStudio: React.FC<TranscriptionStudioProps> = ({
 
               {history.length > 0 && (
                 <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
-                  <span className="text-slate-400">{history.length} documents stored locally</span>
+                  <span className="text-slate-400">
+                    {history.length} {user ? 'documents stored in Supabase' : 'documents stored locally'}
+                  </span>
                   <button
                     onClick={handleClearHistory}
                     className="font-semibold text-red-600 hover:underline cursor-pointer"
@@ -724,7 +842,14 @@ export const TranscriptionStudio: React.FC<TranscriptionStudioProps> = ({
             </div>
           </div>
         )}
+
+        {/* Studio-triggered Supabase Auth Modal */}
+        <AuthModal
+          isOpen={showStudioAuthModal}
+          onClose={() => setShowStudioAuthModal(false)}
+        />
       </div>
     </section>
   );
 };
+

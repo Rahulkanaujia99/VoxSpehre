@@ -47,29 +47,32 @@ export function exportToTXT(result: TranscriptionResult) {
 }
 
 /**
- * Export as Word (.doc)
+ * Export as Word Document (.docx)
  * Formatted with corporate HTML compliant with Microsoft Word / Office 365
  */
-export function exportToWord(result: TranscriptionResult) {
+export function exportToDOCX(result: TranscriptionResult) {
   const safeName = result.metadata.fileName.replace(/\.[^/.]+$/, '');
+  const cs = result.comprehensiveSummaries;
   
   let html = `
   <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
   <head>
     <meta charset="utf-8">
-    <title>Penguin International Transcript - ${result.metadata.fileName}</title>
+    <title>VoxSphere Transcript - ${result.metadata.fileName}</title>
     <style>
       body { font-family: 'Segoe UI', Calibri, Arial, sans-serif; margin: 40px; color: #1e293b; }
-      .header { border-bottom: 3px solid #0284c7; padding-bottom: 15px; margin-bottom: 25px; }
+      .header { border-bottom: 3px solid #4f46e5; padding-bottom: 15px; margin-bottom: 25px; }
       .title { font-size: 24pt; font-weight: bold; color: #0f172a; margin: 0; }
-      .brand { font-size: 11pt; color: #0284c7; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+      .brand { font-size: 11pt; color: #4f46e5; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
       .meta-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px; margin: 20px 0; }
       .meta-table { width: 100%; border-collapse: collapse; }
       .meta-table td { padding: 6px 10px; font-size: 10pt; }
       .meta-label { font-weight: bold; color: #64748b; width: 25%; }
-      .summary-box { background: #eff6ff; border-left: 4px solid #3b82f6; padding: 12px 16px; margin: 20px 0; font-size: 11pt; color: #1e3a8a; }
+      .summary-box { background: #eef2ff; border-left: 4px solid #6366f1; padding: 14px 18px; margin: 20px 0; font-size: 11pt; color: #312e81; }
+      .section-heading { font-size: 13pt; color: #0f172a; margin-top: 24px; margin-bottom: 8px; font-weight: bold; border-bottom: 1px solid #cbd5e1; padding-bottom: 4px; }
+      .bullet-list { margin: 8px 0 16px 20px; font-size: 10.5pt; color: #334155; line-height: 1.6; }
       .segment { margin-bottom: 18px; padding-bottom: 12px; border-bottom: 1px solid #f1f5f9; }
-      .segment-meta { font-size: 9pt; color: #0284c7; font-weight: bold; margin-bottom: 4px; }
+      .segment-meta { font-size: 9pt; color: #4f46e5; font-weight: bold; margin-bottom: 4px; }
       .speaker { font-weight: bold; color: #0f172a; font-size: 11pt; }
       .text { font-size: 11pt; line-height: 1.6; color: #334155; margin-top: 4px; }
       .footer { margin-top: 40px; border-top: 1px solid #cbd5e1; padding-top: 15px; font-size: 9pt; color: #94a3b8; text-align: center; }
@@ -77,8 +80,8 @@ export function exportToWord(result: TranscriptionResult) {
   </head>
   <body>
     <div class="header">
-      <div class="brand">VoxSphere • Penguin International Speech Intelligence Engine</div>
-      <h1 class="title">Official Audio Transcription</h1>
+      <div class="brand">VoxSphere • AI Audio Transcription & Intelligence Suite</div>
+      <h1 class="title">Official Audio Transcription & Summary</h1>
       <div style="font-size: 10pt; color: #64748b;">Acoustic verification score: ${result.metadata.detectedConfidence}% • Zero-loss fidelity</div>
     </div>
 
@@ -105,12 +108,49 @@ export function exportToWord(result: TranscriptionResult) {
       </table>
     </div>
 
+    <!-- 1. Executive Summary -->
     <div class="summary-box">
-      <b>Executive Summary:</b><br/>
-      ${result.summary}
+      <b>1. Executive Summary:</b><br/>
+      ${cs?.executive || result.summary}
     </div>
 
-    <h2 style="font-size: 14pt; color: #0f172a; margin-top: 30px; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px;">Verbatim Transcript</h2>
+    <!-- 2. Detailed Summary -->
+    ${cs?.detailed ? `
+    <div class="section-heading">2. Detailed Summary</div>
+    <div style="font-size: 10.5pt; color: #334155; line-height: 1.6;">${cs.detailed.replace(/\n/g, '<br/>')}</div>
+    ` : ''}
+
+    <!-- 3. Meeting Minutes -->
+    ${cs?.minutes ? `
+    <div class="section-heading">3. Meeting Minutes</div>
+    <div style="font-size: 10.5pt; color: #334155; line-height: 1.6; background: #f8fafc; padding: 12px; border-radius: 6px;">${cs.minutes.replace(/\n/g, '<br/>')}</div>
+    ` : ''}
+
+    <!-- 4. Key Discussion Points -->
+    ${cs?.keyPoints && cs.keyPoints.length > 0 ? `
+    <div class="section-heading">4. Key Discussion Points</div>
+    <ul class="bullet-list">
+      ${cs.keyPoints.map(p => `<li>${p}</li>`).join('')}
+    </ul>
+    ` : ''}
+
+    <!-- 5. Action Items -->
+    ${cs?.actionItems && cs.actionItems.length > 0 ? `
+    <div class="section-heading">5. Action Items & Deliverables</div>
+    <ul class="bullet-list">
+      ${cs.actionItems.map(a => `<li><b>ACTION:</b> ${a}</li>`).join('')}
+    </ul>
+    ` : ''}
+
+    <!-- 6. Important Decisions -->
+    ${cs?.decisions && cs.decisions.length > 0 ? `
+    <div class="section-heading">6. Important Decisions Reached</div>
+    <ul class="bullet-list">
+      ${cs.decisions.map(d => `<li><b>DECISION:</b> ${d}</li>`).join('')}
+    </ul>
+    ` : ''}
+
+    <h2 style="font-size: 14pt; color: #0f172a; margin-top: 30px; border-bottom: 2px solid #e2e8f0; padding-bottom: 6px;">Verbatim Transcript</h2>
   `;
 
   result.segments.forEach(seg => {
@@ -125,14 +165,16 @@ export function exportToWord(result: TranscriptionResult) {
 
   html += `
     <div class="footer">
-      Generated securely via VoxSphere by Penguin International • www.penguin-international.com
+      Generated securely via VoxSphere Audio Intelligence Suite • Confidential
     </div>
   </body>
   </html>
   `;
 
-  downloadFile(html, `${safeName}_transcript.doc`, 'application/msword;charset=utf-8');
+  downloadFile(html, `${safeName}_transcript.docx`, 'application/vnd.ms-word;charset=utf-8');
 }
+
+export const exportToWord = exportToDOCX;
 
 /**
  * Export as SubRip (.srt)

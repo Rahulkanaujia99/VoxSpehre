@@ -18,21 +18,87 @@ export interface AudioMetadata {
   speakersCount: number;
 }
 
+export interface ComprehensiveSummaries {
+  executive?: string;
+  detailed?: string;
+  minutes?: string;
+  keyPoints?: string[];
+  actionItems?: string[];
+  decisions?: string[];
+}
+
+export type SummarizationMode =
+  | 'executive'
+  | 'detailed'
+  | 'minutes'
+  | 'key_points'
+  | 'action_items'
+  | 'decisions';
+
 export interface TranscriptionResult {
   metadata: AudioMetadata;
   segments: TranscriptSegment[];
+  originalSegments?: TranscriptSegment[];
   summary: string;
   keyTopics: string[];
   sentiment: 'positive' | 'neutral' | 'analytical' | 'critical';
+  comprehensiveSummaries?: ComprehensiveSummaries;
 }
 
 export interface AISettings {
-  provider: 'gemini' | 'openai' | 'groq' | 'builtin';
-  geminiKey?: string;
-  openaiKey?: string;
-  groqKey?: string;
+  provider: 'sarvam' | 'gemini' | 'openai' | 'groq';
   modelName?: string;
   enableDiarization: boolean;
   enableTimestamps: boolean;
   customVocabulary?: string;
+}
+
+export interface QueueItem {
+  id: string;
+  file?: File;
+  fileName: string;
+  fileSize: string;
+  durationEstimate: number; // in seconds
+  status: 'queued' | 'uploading' | 'transcribing' | 'completed' | 'failed';
+  progress: number;
+  error?: string;
+  result?: TranscriptionResult;
+  addedAt: number;
+}
+
+export interface HistoryItem {
+  id: string;
+  fileName: string;
+  date: string;
+  duration: number;
+  wordCount: number;
+  speakersCount: number;
+  result: TranscriptionResult;
+}
+
+export interface UserCreditState {
+  totalMinutes: number;
+  usedMinutes: number;
+  remainingMinutes: number;
+}
+
+export interface TavilySearchResult {
+  title: string;
+  url: string;
+  content: string;
+  score?: number;
+}
+
+export interface ResearchEnrichment {
+  query: string;
+  answer?: string;
+  results: TavilySearchResult[];
+}
+
+export interface SummarizationResult {
+  summary: string;
+  keyTopics: string[];
+  sentiment: 'positive' | 'neutral' | 'analytical' | 'critical';
+  actionItems?: string[];
+  comprehensiveSummaries?: ComprehensiveSummaries;
 }

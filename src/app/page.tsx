@@ -6,23 +6,13 @@ import { HeroSection } from '@/components/HeroSection';
 import { TranscriptionStudio } from '@/components/TranscriptionStudio';
 import { FeaturesSection } from '@/components/FeaturesSection';
 import { Footer } from '@/components/Footer';
-import { SettingsModal } from '@/components/SettingsModal';
 import { PenguinInfoModal } from '@/components/PenguinInfoModal';
-import { AISettings } from '@/types/transcription';
-
-const DEFAULT_SETTINGS: AISettings = {
-  provider: 'builtin',
-  enableDiarization: true,
-  enableTimestamps: true,
-};
 
 export default function Home() {
   const [currentView, setCurrentView] = useState<'home' | 'app'>('home');
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isPenguinInfoOpen, setIsPenguinInfoOpen] = useState(false);
   const [penguinSection, setPenguinSection] = useState('about');
   const [selectedSampleId, setSelectedSampleId] = useState<string>('sample-pe-due-diligence');
-  const [aiSettings, setAiSettings] = useState<AISettings>(DEFAULT_SETTINGS);
 
   // Sync with browser URL hash & history
   useEffect(() => {
@@ -45,27 +35,6 @@ export default function Home() {
       window.removeEventListener('hashchange', handleUrlState);
     };
   }, []);
-
-  // Load saved settings from localStorage on client mount
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem('penguin_ai_settings');
-      if (saved) {
-        setAiSettings(JSON.parse(saved));
-      }
-    } catch (e) {
-      console.warn('Could not load settings from localStorage', e);
-    }
-  }, []);
-
-  const handleSaveSettings = (newSettings: AISettings) => {
-    setAiSettings(newSettings);
-    try {
-      localStorage.setItem('penguin_ai_settings', JSON.stringify(newSettings));
-    } catch (e) {
-      console.warn('Could not save settings to localStorage', e);
-    }
-  };
 
   // Open Studio specifically with Penguin_PE_DueDiligence_Review.m4a by default
   const handleOpenStudio = (sampleId: string = 'sample-pe-due-diligence') => {
@@ -92,7 +61,6 @@ export default function Home() {
       <Navbar
         isAppView={currentView === 'app'}
         onBackToHome={handleBackToHome}
-        onOpenSettings={() => setIsSettingsOpen(true)}
         onOpenStudio={(sampleId) => handleOpenStudio(sampleId || 'sample-pe-due-diligence')}
         onOpenPenguinInfo={handleOpenPenguinInfo}
       />
@@ -116,7 +84,6 @@ export default function Home() {
 
           {/* Landing Page Footer */}
           <Footer
-            onOpenSettings={() => setIsSettingsOpen(true)}
             onOpenStudio={(sampleId) => handleOpenStudio(sampleId || 'sample-pe-due-diligence')}
             onOpenPenguinInfo={handleOpenPenguinInfo}
           />
@@ -129,28 +96,16 @@ export default function Home() {
         <div className="flex-1 flex flex-col justify-between animate-fadeIn">
           <TranscriptionStudio
             initialSampleId={selectedSampleId}
-            onOpenSettings={() => setIsSettingsOpen(true)}
-            aiSettings={aiSettings}
             onBackToHome={handleBackToHome}
-            onUpdateSettings={handleSaveSettings}
           />
 
           {/* Studio Footer */}
           <Footer
-            onOpenSettings={() => setIsSettingsOpen(true)}
             onOpenStudio={(sampleId) => handleOpenStudio(sampleId || 'sample-pe-due-diligence')}
             onOpenPenguinInfo={handleOpenPenguinInfo}
           />
         </div>
       )}
-
-      {/* Settings Modal */}
-      <SettingsModal
-        isOpen={isSettingsOpen}
-        onClose={() => setIsSettingsOpen(false)}
-        settings={aiSettings}
-        onSaveSettings={handleSaveSettings}
-      />
 
       {/* Penguin International Information Modal */}
       <PenguinInfoModal

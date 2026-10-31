@@ -4,13 +4,11 @@ import React from 'react';
 import { ExternalLink, ShieldCheck, Mail, Phone, MapPin } from 'lucide-react';
 
 interface FooterProps {
-  onOpenSettings: () => void;
   onOpenStudio: (sampleId?: string) => void;
   onOpenPenguinInfo: (section?: string) => void;
 }
 
 export const Footer: React.FC<FooterProps> = ({
-  onOpenSettings,
   onOpenStudio,
   onOpenPenguinInfo,
 }) => {

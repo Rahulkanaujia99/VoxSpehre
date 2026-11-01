@@ -44,7 +44,7 @@ import {
   deleteCloudTranscription,
 } from '@/lib/supabase/transcriptionService';
 import { Sidebar, SidebarTab } from './Sidebar';
-import { AudioUploader } from './AudioUploader';
+import { AudioUploader, formatReadableDuration } from './AudioUploader';
 import { AudioWaveformPlayer } from './AudioWaveformPlayer';
 import { TranscriptEditor } from './TranscriptEditor';
 import { AuthModal } from './AuthModal';
@@ -303,7 +303,7 @@ export const TranscriptionStudio: React.FC<TranscriptionStudioProps> = ({
       />
 
       {/* Main Content Area */}
-      <div className="flex-1 min-w-0 flex flex-col justify-between">
+      <div className="flex-1 min-w-0 flex flex-col">
         {/* Top Header Bar */}
         <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200/80 px-4 sm:px-8 py-3.5 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -325,12 +325,6 @@ export const TranscriptionStudio: React.FC<TranscriptionStudioProps> = ({
                 <span className="hidden sm:inline">← Back to Landing Page</span>
               </button>
             )}
-
-            <div className="hidden sm:flex items-center gap-2 text-xs text-slate-500 font-medium border-l border-slate-200 pl-3">
-              <span>VoxSphere</span>
-              <span>•</span>
-              <span className="text-teal-700 font-semibold">OpenAI gpt-transcribe Suite</span>
-            </div>
           </div>
 
           <div className="flex items-center gap-2.5">
@@ -364,7 +358,7 @@ export const TranscriptionStudio: React.FC<TranscriptionStudioProps> = ({
         </header>
 
         {/* Main Viewport depending on sidebarTab */}
-        <main className="flex-1 p-4 sm:p-8 max-w-7xl mx-auto w-full space-y-6">
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 2xl:px-12 max-w-7xl 2xl:max-w-[1600px] mx-auto w-full space-y-6">
           {/* ======================================================== */}
           {/* TAB 1: DASHBOARD (AUDIO UPLOAD -> TRANSCRIPTION -> SUMMARY) */}
           {/* ======================================================== */}
@@ -425,7 +419,7 @@ export const TranscriptionStudio: React.FC<TranscriptionStudioProps> = ({
                           </span>
                         </div>
                         <div className="text-xs text-slate-500 flex items-center gap-2 mt-0.5">
-                          <span>{Math.round(transcriptionData.metadata.duration)}s</span>
+                          <span>{formatReadableDuration(transcriptionData.metadata.duration)}</span>
                           <span>•</span>
                           <span>{transcriptionData.metadata.wordCount} words</span>
                           <span>•</span>
@@ -573,7 +567,7 @@ export const TranscriptionStudio: React.FC<TranscriptionStudioProps> = ({
                         </div>
 
                         <div className="flex items-center gap-2.5 text-xs text-slate-500 font-medium">
-                          <span>Duration: {Math.round(doc.duration)}s</span>
+                          <span>Duration: {formatReadableDuration(doc.duration)}</span>
                           <span>•</span>
                           <span>{doc.wordCount} words</span>
                           <span>•</span>

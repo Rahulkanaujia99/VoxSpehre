@@ -91,7 +91,7 @@ export default function Home() {
 
       {currentView === 'home' && (
         /* ======================================================== */
-        /* LANDING PAGE (Home Page)                                 */
+        /* LANDING PAGE (Home Page) - Public View with Footer       */
         /* ======================================================== */
         <div className="flex-1 flex flex-col justify-between animate-fadeIn">
           {/* Hero Section with Start Transcribing CTA */}
@@ -113,7 +113,7 @@ export default function Home() {
 
       {currentView === 'auth' && (
         /* ======================================================== */
-        /* SIGN IN / SIGN UP PAGE (Expected User Journey Step 3)    */
+        /* SIGN IN / SIGN UP PAGE - Public View with Footer         */
         /* ======================================================== */
         <div className="flex-1 flex flex-col justify-between animate-fadeIn">
           <AuthView
@@ -131,17 +131,12 @@ export default function Home() {
 
       {currentView === 'app' && (
         /* ======================================================== */
-        /* AUDIO TRANSCRIPTION DASHBOARD                            */
-        /* Initially displays ONLY the audio upload section         */
+        /* AUDIO TRANSCRIPTION DASHBOARD (AUTHENTICATED)            */
+        /* Footer is hidden on authenticated dashboard pages        */
         /* ======================================================== */
-        <div className="flex-1 flex flex-col justify-between animate-fadeIn">
+        <div className="flex-1 flex flex-col animate-fadeIn">
           <TranscriptionStudio
             onBackToHome={handleBackToHome}
-          />
-
-          <Footer
-            onOpenStudio={handleStartTranscribing}
-            onOpenPenguinInfo={handleOpenPenguinInfo}
           />
         </div>
       )}

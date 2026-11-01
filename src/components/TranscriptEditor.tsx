@@ -36,6 +36,7 @@ import {
   SummarizationMode,
 } from '@/types/transcription';
 import { formatTime } from '@/lib/audioToneGenerator';
+import { formatReadableDuration } from './AudioUploader';
 import {
   exportTranscript,
   exportSummary,
@@ -306,7 +307,7 @@ export const TranscriptEditor: React.FC<TranscriptEditorProps> = ({
             </span>
           </div>
           <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 mt-1 font-medium">
-            <span>Duration: {Math.round(data.metadata.duration)}s</span>
+            <span>Duration: {formatReadableDuration(data.metadata.duration)}</span>
             <span>•</span>
             <span>Words: {data.metadata.wordCount}</span>
             <span>•</span>

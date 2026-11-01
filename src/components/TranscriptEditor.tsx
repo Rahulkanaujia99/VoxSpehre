@@ -1016,6 +1016,19 @@ export const TranscriptEditor: React.FC<TranscriptEditorProps> = ({
                   } rounded-lg p-1.5 leading-relaxed`}
                   title={isViewingOriginal ? 'Locked in original verbatim view' : 'Click to edit transcript text'}
                 />
+
+                {/* Click to play from here (Reference Image 1) */}
+                <div className="pt-1.5 flex items-center">
+                  <button
+                    type="button"
+                    onClick={() => onSeekAudio(seg.startTime)}
+                    className="inline-flex items-center gap-1.5 text-xs text-blue-600 hover:text-blue-700 font-normal transition-colors cursor-pointer group select-none"
+                    title={`Play audio starting at ${formatTime(seg.startTime)}`}
+                  >
+                    <span className="text-[10px] leading-none text-blue-600 group-hover:scale-110 transition-transform">▷</span>
+                    <span>Click to play from here</span>
+                  </button>
+                </div>
               </div>
             );
           })}

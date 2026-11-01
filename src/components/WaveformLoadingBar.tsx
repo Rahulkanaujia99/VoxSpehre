@@ -41,7 +41,7 @@ export const WaveformLoadingBar: React.FC<WaveformLoadingBarProps> = ({
 
       ctx.clearRect(0, 0, width, height);
 
-      // Increment phase for smooth fluid undulating motion
+      // Increment phase for smooth undulating motion
       phaseRef.current += 0.045;
       const phase = phaseRef.current;
 
@@ -49,134 +49,222 @@ export const WaveformLoadingBar: React.FC<WaveformLoadingBarProps> = ({
       const targetProgress = Math.max(8, Math.min(100, progress));
       if (currentProgressRef.current < targetProgress) {
         currentProgressRef.current += (targetProgress - currentProgressRef.current) * 0.08;
-      } else if (currentProgressRef.current < 94) {
-        // Subtle forward trickle so loading bar stays alive
-        currentProgressRef.current += 0.02;
+      } else if (currentProgressRef.current < 95) {
+        // Subtle forward trickle so loading bar stays alive during network processing
+        currentProgressRef.current += 0.025;
       }
 
       const activeProgressRatio = Math.max(0.08, Math.min(1, currentProgressRef.current / 100));
       const splitX = activeProgressRatio * width;
+      const splitNormX = splitX / width;
+      const splitEnv = Math.pow(Math.sin(splitNormX * Math.PI), 1.5);
 
-      // Calculate acoustic wave geometry for each x
-      const topPoints: { x: number; y: number }[] = [];
-      const bottomPoints: { x: number; y: number }[] = [];
+      // Multi-ribbon wave layers configuration strictly matching Reference Image 3
+      const waveLayers = [
+        {
+          // Layer 1: Hot Pink / Magenta Wave
+          freq1: 15,
+          freq2: 26,
+          amp1: 13,
+          amp2: 6.5,
+          phaseOffset: 0,
+          stroke: '#f43f5e',
+          glow: 'rgba(244, 63, 94, 0.9)',
+          lineWidth: 2.2,
+          fillColor: 'rgba(236, 72, 153, 0.3)',
+        },
+        {
+          // Layer 2: Electric Purple / Violet Wave
+          freq1: 12,
+          freq2: 22,
+          amp1: 11,
+          amp2: 5.5,
+          phaseOffset: 1.3,
+          stroke: '#c084fc',
+          glow: 'rgba(192, 132, 252, 0.9)',
+          lineWidth: 2.0,
+          fillColor: 'rgba(168, 85, 247, 0.25)',
+        },
+        {
+          // Layer 3: Electric Blue / Cyan Wave
+          freq1: 18,
+          freq2: 30,
+          amp1: 9,
+          amp2: 4.5,
+          phaseOffset: 2.7,
+          stroke: '#38bdf8',
+          glow: 'rgba(56, 189, 248, 0.85)',
+          lineWidth: 1.8,
+          fillColor: 'rgba(59, 130, 246, 0.2)',
+        },
+      ];
 
-      const step = 2;
-      for (let x = 0; x <= width; x += step) {
-        const normX = x / width;
-        // Bell-curve envelope: 0 at edges, smooth body
-        const env = Math.pow(Math.sin(normX * Math.PI), 1.15) * (1 - 0.12 * normX);
+      // =======================================================================
+      // 1. DRAW LUMINOUS HORIZONTAL CENTRAL BEAM (Exact match to Reference Image 3)
+      // =======================================================================
+      ctx.save();
+      const beamGrad = ctx.createLinearGradient(0, 0, width, 0);
+      beamGrad.addColorStop(0, 'rgba(244, 63, 94, 0)');
+      beamGrad.addColorStop(0.15, 'rgba(244, 63, 94, 0.35)');
+      beamGrad.addColorStop(0.35, 'rgba(236, 72, 153, 0.7)');
+      beamGrad.addColorStop(0.5, 'rgba(255, 255, 255, 0.95)');
+      beamGrad.addColorStop(0.65, 'rgba(168, 85, 247, 0.7)');
+      beamGrad.addColorStop(0.85, 'rgba(56, 189, 248, 0.35)');
+      beamGrad.addColorStop(1.0, 'rgba(56, 189, 248, 0)');
 
-        // Multi-frequency harmonic acoustic waveform
-        const w1 = Math.sin(normX * 20 + phase);
-        const w2 = Math.sin(normX * 11 - phase * 0.75 + 0.6);
-        const w3 = Math.cos(normX * 32 + phase * 1.1);
+      ctx.shadowBlur = 12;
+      ctx.shadowColor = '#ec4899';
+      ctx.fillStyle = beamGrad;
+      ctx.fillRect(width * 0.05, midY - 1.5, width * 0.9, 3);
+      ctx.restore();
 
-        const baseThickness = 2.5;
-        const amp = baseThickness + (w1 * 7.5 + w2 * 5.5 + w3 * 2.5 + 9.5) * env;
+      // =======================================================================
+      // 2. DRAW SYMMETRICAL FLUID WAVE RIBBONS WITH GLOWING EDGES
+      // =======================================================================
+      waveLayers.forEach((layer) => {
+        const topPts: { x: number; y: number }[] = [];
+        const botPts: { x: number; y: number }[] = [];
 
-        topPoints.push({ x, y: midY - amp });
-        bottomPoints.push({ x, y: midY + amp });
-      }
+        for (let x = 0; x <= width; x += 3) {
+          const normX = x / width;
+          // Smooth bell envelope tapering to 0 at both edges
+          const env = Math.pow(Math.sin(normX * Math.PI), 1.5);
 
-      // Find indices for split point
-      let splitIdx = 0;
-      for (let i = 0; i < topPoints.length; i++) {
-        if (topPoints[i].x >= splitX) {
-          splitIdx = i;
-          break;
+          const waveVal =
+            (Math.sin(normX * layer.freq1 + phase + layer.phaseOffset) * layer.amp1 +
+              Math.sin(normX * layer.freq2 - phase * 0.75 + layer.phaseOffset) * layer.amp2) *
+            env;
+
+          topPts.push({ x, y: midY - Math.abs(waveVal) });
+          botPts.push({ x, y: midY + Math.abs(waveVal) });
         }
-      }
-      if (splitIdx === 0) splitIdx = topPoints.length - 1;
 
-      // =======================================================================
-      // 1. DRAW COMPLETED PORTION (LEFT: Pink -> Fuchsia -> Purple -> Blue)
-      // =======================================================================
-      if (splitIdx > 0) {
+        // Draw Completed Portion (0 to splitX) with Full Vibrant Glow
         ctx.save();
-
-        // Path for completed wave
         ctx.beginPath();
-        ctx.moveTo(topPoints[0].x, topPoints[0].y);
-        for (let i = 1; i <= splitIdx; i++) {
-          ctx.lineTo(topPoints[i].x, topPoints[i].y);
+        ctx.moveTo(topPts[0].x, topPts[0].y);
+        for (let i = 1; i < topPts.length; i++) {
+          if (topPts[i].x <= splitX) {
+            ctx.lineTo(topPts[i].x, topPts[i].y);
+          }
         }
-        for (let i = splitIdx; i >= 0; i--) {
-          ctx.lineTo(bottomPoints[i].x, bottomPoints[i].y);
+        for (let i = botPts.length - 1; i >= 0; i--) {
+          if (botPts[i].x <= splitX) {
+            ctx.lineTo(botPts[i].x, botPts[i].y);
+          }
         }
         ctx.closePath();
 
-        // Multi-stop horizontal gradient matching Reference Image 1
-        const leftGrad = ctx.createLinearGradient(0, 0, splitX, 0);
-        leftGrad.addColorStop(0, '#f43f5e'); // Vibrant Rose/Pink
-        leftGrad.addColorStop(0.28, '#d946ef'); // Fuchsia
-        leftGrad.addColorStop(0.62, '#8b5cf6'); // Royal Purple
-        leftGrad.addColorStop(1.0, '#3b82f6'); // Electric Blue
-
-        // Ambient glow around the completed wave
-        ctx.shadowBlur = 12;
-        ctx.shadowColor = 'rgba(217, 70, 239, 0.45)';
-        ctx.fillStyle = leftGrad;
+        // Fill fluid translucent body
+        ctx.fillStyle = layer.fillColor;
         ctx.fill();
 
-        ctx.restore();
-      }
+        // Stroke glowing edge for upper and lower crests
+        ctx.shadowBlur = 14;
+        ctx.shadowColor = layer.glow;
+        ctx.lineWidth = layer.lineWidth;
+        ctx.strokeStyle = layer.stroke;
 
-      // =======================================================================
-      // 2. DRAW UNCOMPLETED / PENDING PORTION (RIGHT: Soft Pale Lavender)
-      // =======================================================================
-      if (splitIdx < topPoints.length - 1) {
-        ctx.save();
-
+        // Top edge stroke
         ctx.beginPath();
-        ctx.moveTo(topPoints[splitIdx].x, topPoints[splitIdx].y);
-        for (let i = splitIdx + 1; i < topPoints.length; i++) {
-          ctx.lineTo(topPoints[i].x, topPoints[i].y);
+        ctx.moveTo(topPts[0].x, topPts[0].y);
+        for (let i = 1; i < topPts.length && topPts[i].x <= splitX; i++) {
+          ctx.lineTo(topPts[i].x, topPts[i].y);
         }
-        for (let i = bottomPoints.length - 1; i >= splitIdx; i--) {
-          ctx.lineTo(bottomPoints[i].x, bottomPoints[i].y);
-        }
-        ctx.closePath();
+        ctx.stroke();
 
-        const rightGrad = ctx.createLinearGradient(splitX, 0, width, 0);
-        rightGrad.addColorStop(0, 'rgba(192, 132, 252, 0.45)');
-        rightGrad.addColorStop(0.45, 'rgba(216, 180, 254, 0.22)');
-        rightGrad.addColorStop(1.0, 'rgba(238, 242, 255, 0.04)');
-
-        ctx.fillStyle = rightGrad;
-        ctx.shadowBlur = 0;
-        ctx.fill();
-
-        ctx.restore();
-      }
-
-      // =======================================================================
-      // 3. DRAW GLOWING CYAN VERTICAL NEEDLE (Progress separator line)
-      // =======================================================================
-      if (splitIdx < topPoints.length) {
-        const topY = topPoints[splitIdx].y;
-        const bottomY = bottomPoints[splitIdx].y;
-
-        ctx.save();
+        // Bottom edge stroke
         ctx.beginPath();
-        ctx.moveTo(splitX, topY - 1);
-        ctx.lineTo(splitX, bottomY + 1);
+        ctx.moveTo(botPts[0].x, botPts[0].y);
+        for (let i = 1; i < botPts.length && botPts[i].x <= splitX; i++) {
+          ctx.lineTo(botPts[i].x, botPts[i].y);
+        }
+        ctx.stroke();
+        ctx.restore();
+
+        // Draw Pending / Remaining Portion (splitX to width) with Soft Dimmed Violet
+        if (splitX < width) {
+          ctx.save();
+          ctx.beginPath();
+          let started = false;
+          for (let i = 0; i < topPts.length; i++) {
+            if (topPts[i].x >= splitX) {
+              if (!started) {
+                ctx.moveTo(topPts[i].x, topPts[i].y);
+                started = true;
+              } else {
+                ctx.lineTo(topPts[i].x, topPts[i].y);
+              }
+            }
+          }
+          for (let i = botPts.length - 1; i >= 0; i--) {
+            if (botPts[i].x >= splitX) {
+              ctx.lineTo(botPts[i].x, botPts[i].y);
+            }
+          }
+          ctx.closePath();
+          ctx.fillStyle = 'rgba(192, 132, 252, 0.08)';
+          ctx.fill();
+
+          ctx.shadowBlur = 4;
+          ctx.shadowColor = 'rgba(192, 132, 252, 0.3)';
+          ctx.lineWidth = 1.2;
+          ctx.strokeStyle = 'rgba(192, 132, 252, 0.25)';
+
+          ctx.beginPath();
+          started = false;
+          for (let i = 0; i < topPts.length; i++) {
+            if (topPts[i].x >= splitX) {
+              if (!started) {
+                ctx.moveTo(topPts[i].x, topPts[i].y);
+                started = true;
+              } else {
+                ctx.lineTo(topPts[i].x, topPts[i].y);
+              }
+            }
+          }
+          ctx.stroke();
+
+          ctx.beginPath();
+          started = false;
+          for (let i = 0; i < botPts.length; i++) {
+            if (botPts[i].x >= splitX) {
+              if (!started) {
+                ctx.moveTo(botPts[i].x, botPts[i].y);
+                started = true;
+              } else {
+                ctx.lineTo(botPts[i].x, botPts[i].y);
+              }
+            }
+          }
+          ctx.stroke();
+          ctx.restore();
+        }
+      });
+
+      // =======================================================================
+      // 3. GLOWING PROGRESS NEEDLE AT SPLIT POINT
+      // =======================================================================
+      if (splitX < width) {
+        ctx.save();
+        const needleHeight = Math.max(14, 24 * splitEnv);
+        ctx.beginPath();
+        ctx.moveTo(splitX, midY - needleHeight);
+        ctx.lineTo(splitX, midY + needleHeight);
         ctx.lineWidth = 2.5;
         ctx.strokeStyle = '#38bdf8';
-        ctx.shadowBlur = 10;
+        ctx.shadowBlur = 12;
         ctx.shadowColor = '#06b6d4';
         ctx.stroke();
 
-        // Extra subtle core white glint
         ctx.beginPath();
-        ctx.moveTo(splitX, topY + 2);
-        ctx.lineTo(splitX, bottomY - 2);
-        ctx.lineWidth = 1;
+        ctx.moveTo(splitX, midY - needleHeight * 0.6);
+        ctx.lineTo(splitX, midY + needleHeight * 0.6);
+        ctx.lineWidth = 1.2;
         ctx.strokeStyle = '#ffffff';
-        ctx.shadowBlur = 4;
+        ctx.shadowBlur = 6;
         ctx.shadowColor = '#ffffff';
         ctx.stroke();
-
         ctx.restore();
       }
 
@@ -195,36 +283,39 @@ export const WaveformLoadingBar: React.FC<WaveformLoadingBarProps> = ({
 
   return (
     <div
-      className={`relative w-full rounded-2xl sm:rounded-3xl p-5 sm:p-6 bg-gradient-to-r from-purple-50/80 via-indigo-50/60 to-blue-50/40 border border-purple-100/90 shadow-sm backdrop-blur-sm space-y-4 animate-in fade-in duration-300 ${className}`}
+      className={`relative w-full rounded-2xl sm:rounded-3xl p-5 sm:p-6 bg-[#120f2d]/95 backdrop-blur-2xl border border-purple-500/25 shadow-[0_12px_45px_rgba(15,10,40,0.75)] space-y-4 animate-in fade-in duration-300 text-white ${className}`}
     >
+      {/* Subtle Ambient Radial Glow */}
+      <div className="pointer-events-none absolute -top-16 -left-16 w-56 h-56 bg-purple-600/18 rounded-full blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-16 -right-16 w-56 h-56 bg-pink-600/15 rounded-full blur-3xl" />
+
       {/* Top Status Row: Circular Spinner Ring + Status Text */}
-      <div className="flex items-center gap-3">
-        {/* Glowing Purple/Indigo Spinner Ring matching Image 1 */}
+      <div className="relative z-10 flex items-center gap-3">
+        {/* Glowing Purple/Indigo Spinner Ring */}
         <div className="relative w-5 h-5 shrink-0">
-          <div className="w-5 h-5 rounded-full border-2 border-indigo-600 border-t-transparent animate-spin" />
+          <div className="w-5 h-5 rounded-full border-2 border-purple-400 border-t-transparent animate-spin" />
         </div>
 
         {/* Status Text (e.g. Transcribing audio with OpenAI speech recognition...) */}
-        <p className="text-xs sm:text-sm font-semibold text-[#1e1b4b] tracking-tight truncate flex-1" title={stageText}>
+        <p className="text-xs sm:text-sm font-semibold text-purple-100 tracking-tight truncate flex-1" title={stageText}>
           {stageText}
         </p>
 
         {/* Percentage badge */}
-        <span className="text-[11px] font-mono font-bold text-indigo-700 bg-indigo-100/70 px-2 py-0.5 rounded-full shrink-0">
+        <span className="text-[11px] font-mono font-bold text-purple-300 bg-purple-500/20 border border-purple-500/30 px-2.5 py-0.5 rounded-full shrink-0">
           {Math.round(progress)}%
         </span>
       </div>
 
-      {/* Synchronized Animated Waveform Loading Bar Canvas */}
-      <div className="w-full flex items-center justify-center pt-1">
+      {/* Synchronized Animated Fluid Waveform Canvas matching Reference Image 3 */}
+      <div className="relative z-10 w-full flex items-center justify-center pt-1">
         <canvas
           ref={canvasRef}
           width={880}
-          height={48}
-          className="w-full h-10 sm:h-12 select-none"
+          height={52}
+          className="w-full h-11 sm:h-12 select-none"
         />
       </div>
     </div>
   );
 };
-

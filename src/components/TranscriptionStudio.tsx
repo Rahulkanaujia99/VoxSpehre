@@ -33,6 +33,14 @@ import {
   CheckCircle,
   Play,
   Mic,
+  SlidersHorizontal,
+  ChevronDown,
+  ChevronLeft,
+  Calendar,
+  Globe,
+  MoreHorizontal,
+  Copy,
+  ArrowUpToLine,
 } from 'lucide-react';
 import {
   TranscriptionResult,
@@ -40,8 +48,8 @@ import {
   HistoryItem,
   TranscriptionStyle,
 } from '@/types/transcription';
-import { exportToDOCX, exportToPDF, exportToTXT, exportCombined } from '@/lib/exportUtils';
-import { formatDuration, createSyntheticAudioBlob } from '@/lib/audioToneGenerator';
+import { exportToDOCX, exportToPDF, exportToTXT, exportToSRT, exportCombined } from '@/lib/exportUtils';
+import { formatDuration, formatTime, createSyntheticAudioBlob } from '@/lib/audioToneGenerator';
 import { useAuth } from '@/context/AuthContext';
 import { usePlayerSettings, PlayerDesign } from '@/context/PlayerSettingsContext';
 import {
@@ -59,13 +67,26 @@ import { AuthModal } from './AuthModal';
 interface TranscriptionStudioProps {
   initialSampleId?: string;
   onBackToHome?: () => void;
+  activeTab?: SidebarTab;
+  onTabChange?: (tab: SidebarTab) => void;
 }
 
 export const TranscriptionStudio: React.FC<TranscriptionStudioProps> = ({
   onBackToHome,
+  activeTab: controlledTab,
+  onTabChange: onControlledTabChange,
 }) => {
   // Navigation & Layout
-  const [sidebarTab, setSidebarTab] = useState<SidebarTab>('dashboard');
+  const [internalSidebarTab, setInternalSidebarTab] = useState<SidebarTab>('dashboard');
+  const sidebarTab = controlledTab || internalSidebarTab;
+
+  const setSidebarTab = (tab: SidebarTab) => {
+    setInternalSidebarTab(tab);
+    if (onControlledTabChange) {
+      onControlledTabChange(tab);
+    }
+  };
+
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   // Active Transcription Result (Starts strictly as NULL for clean initial upload dashboard)
@@ -88,6 +109,17 @@ export const TranscriptionStudio: React.FC<TranscriptionStudioProps> = ({
   const [isSyncingCloud, setIsSyncingCloud] = useState<boolean>(false);
   const [showStudioAuthModal, setShowStudioAuthModal] = useState<boolean>(false);
   const { user, profile, signOut, isConfigured } = useAuth();
+
+  // Recordings Page State (Filtering, Sorting, Selection, Pagination)
+  const [recordingsStatusFilter, setRecordingsStatusFilter] = useState<'all' | 'processing' | 'transcribed' | 'failed'>('all');
+  const [recordingsSort, setRecordingsSort] = useState<'newest' | 'oldest' | 'duration_desc' | 'duration_asc' | 'alphabetical'>('newest');
+  const [showSortDropdown, setShowSortDropdown] = useState(false);
+  const [showFilterDropdown, setShowFilterDropdown] = useState(false);
+  const [selectedRecordingIds, setSelectedRecordingIds] = useState<Set<string>>(new Set());
+  const [activeExportDropdownId, setActiveExportDropdownId] = useState<string | null>(null);
+  const [activeMoreMenuId, setActiveMoreMenuId] = useState<string | null>(null);
+  const [rowsPerPage, setRowsPerPage] = useState<number>(20);
+  const [currentPage, setCurrentPage] = useState<number>(1);
 
   // Audio Player Theme Settings & Interactive Live Preview State
   const { playerDesign, setPlayerDesign } = usePlayerSettings();
@@ -301,16 +333,108 @@ export const TranscriptionStudio: React.FC<TranscriptionStudioProps> = ({
     setSidebarTab('dashboard');
   };
 
-  // Filtered recordings for the Recordings tab
-  const filteredRecordings = useMemo(() => {
-    if (!searchRecordingsQuery.trim()) return history;
-    const q = searchRecordingsQuery.toLowerCase();
-    return history.filter(
-      (item) =>
-        item.fileName.toLowerCase().includes(q) ||
-        item.result.summary.toLowerCase().includes(q)
-    );
-  }, [history, searchRecordingsQuery]);
+  // Filtered and sorted recordings for the Recordings tab
+  const filteredAndSortedRecordings = useMemo(() => {
+    let result = [...history];
+
+    // 1. Text Search: matches fileName, summary, speaker, or segment content
+    if (searchRecordingsQuery.trim()) {
+      const q = searchRecordingsQuery.toLowerCase();
+      result = result.filter(
+        (item) =>
+          item.fileName.toLowerCase().includes(q) ||
+          item.result.summary.toLowerCase().includes(q) ||
+          item.result.segments.some(
+            (s) => s.text.toLowerCase().includes(q) || s.speaker.toLowerCase().includes(q)
+          )
+      );
+    }
+
+    // 2. Status Filter
+    if (recordingsStatusFilter !== 'all') {
+      if (recordingsStatusFilter === 'transcribed') {
+        // All completed recordings in history are transcribed
+      } else {
+        result = []; // none processing or failed in completed history
+      }
+    }
+
+    // 3. Sorting
+    result.sort((a, b) => {
+      if (recordingsSort === 'newest') {
+        return new Date(b.date).getTime() - new Date(a.date).getTime();
+      } else if (recordingsSort === 'oldest') {
+        return new Date(a.date).getTime() - new Date(b.date).getTime();
+      } else if (recordingsSort === 'duration_desc') {
+        return b.duration - a.duration;
+      } else if (recordingsSort === 'duration_asc') {
+        return a.duration - b.duration;
+      } else if (recordingsSort === 'alphabetical') {
+        return a.fileName.localeCompare(b.fileName);
+      }
+      return 0;
+    });
+
+    return result;
+  }, [history, searchRecordingsQuery, recordingsStatusFilter, recordingsSort]);
+
+  // Paginated recordings
+  const totalRecordings = filteredAndSortedRecordings.length;
+  const totalPages = Math.max(1, Math.ceil(totalRecordings / rowsPerPage));
+  const paginatedRecordings = useMemo(() => {
+    const start = (currentPage - 1) * rowsPerPage;
+    return filteredAndSortedRecordings.slice(start, start + rowsPerPage);
+  }, [filteredAndSortedRecordings, currentPage, rowsPerPage]);
+
+  const startIndex = totalRecordings === 0 ? 0 : (currentPage - 1) * rowsPerPage + 1;
+  const endIndex = Math.min(currentPage * rowsPerPage, totalRecordings);
+
+  // Formatter for recording timestamp matching reference image
+  const formatRecordingDate = (dateStr: string) => {
+    try {
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return dateStr;
+      const now = new Date();
+      const isToday = d.toDateString() === now.toDateString();
+      const yesterday = new Date();
+      yesterday.setDate(now.getDate() - 1);
+      const isYesterday = d.toDateString() === yesterday.toDateString();
+      const hours = d.getHours().toString().padStart(2, '0');
+      const mins = d.getMinutes().toString().padStart(2, '0');
+      if (isToday) return `Today, ${hours}:${mins}`;
+      if (isYesterday) return `Yesterday, ${hours}:${mins}`;
+      const day = d.getDate();
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      return `${day} ${months[d.getMonth()]}, ${hours}:${mins}`;
+    } catch {
+      return dateStr;
+    }
+  };
+
+  const handleToggleSelectAll = () => {
+    if (selectedRecordingIds.size === paginatedRecordings.length && paginatedRecordings.length > 0) {
+      setSelectedRecordingIds(new Set());
+    } else {
+      setSelectedRecordingIds(new Set(paginatedRecordings.map((r) => r.id)));
+    }
+  };
+
+  const handleToggleSelectRecording = (id: string) => {
+    const next = new Set(selectedRecordingIds);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    setSelectedRecordingIds(next);
+  };
+
+  const handleDeleteSelected = async () => {
+    if (selectedRecordingIds.size === 0) return;
+    if (confirm(`Delete ${selectedRecordingIds.size} selected recording(s)?`)) {
+      for (const id of Array.from(selectedRecordingIds)) {
+        await handleDeleteHistoryItem(id);
+      }
+      setSelectedRecordingIds(new Set());
+    }
+  };
 
   const userDisplayName =
     profile?.full_name ||
@@ -514,56 +638,199 @@ export const TranscriptionStudio: React.FC<TranscriptionStudioProps> = ({
 
           {/* ======================================================== */}
           {/* TAB 2: RECORDINGS (RECORDING HISTORY & EXPORTS)           */}
+          {/* (Exact match to Reference Screenshot media_1793561467272) */}
           {/* ======================================================== */}
           {sidebarTab === 'recordings' && (
-            <div className="space-y-6 animate-fade-in">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200">
+            <div className="space-y-4 animate-fade-in pb-12">
+              {/* 1. Page Header */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <div>
-                  <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
-                    Transcribed Recordings
+                  <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
+                    Recordings
                   </h2>
-                  <p className="text-xs sm:text-sm text-slate-500 mt-1">
-                    Manage, search, export and review all audio transcripts and strategic summaries.
+                  <p className="text-xs text-slate-500 font-medium mt-0.5">
+                    {totalRecordings} {totalRecordings === 1 ? 'recording' : 'recordings'}
                   </p>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  {user && (
-                    <button
-                      onClick={refreshHistory}
-                      disabled={isSyncingCloud}
-                      className="p-2 rounded-xl bg-white border border-slate-200 text-slate-600 hover:text-indigo-600 hover:bg-slate-50 transition-colors cursor-pointer"
-                      title="Sync with Supabase"
-                    >
-                      <RefreshCw className={`w-4 h-4 ${isSyncingCloud ? 'animate-spin text-indigo-600' : ''}`} />
-                    </button>
-                  )}
+                {selectedRecordingIds.size > 0 && (
                   <button
-                    onClick={handleNewTranscription}
-                    className="flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-xs transition-all cursor-pointer"
+                    onClick={handleDeleteSelected}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 hover:bg-rose-100 text-xs font-bold transition-all cursor-pointer self-start sm:self-auto"
                   >
-                    <Plus className="w-3.5 h-3.5" />
-                    <span>New Transcription</span>
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>Delete selected ({selectedRecordingIds.size})</span>
                   </button>
+                )}
+              </div>
+
+              {/* 2. Search & Filters Bar matching screenshot */}
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 pt-1">
+                {/* Search transcripts, titles, speakers input */}
+                <div className="relative flex-1 max-w-xl">
+                  <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    placeholder="Search transcripts, titles, speakers"
+                    value={searchRecordingsQuery}
+                    onChange={(e) => {
+                      setSearchRecordingsQuery(e.target.value);
+                      setCurrentPage(1);
+                    }}
+                    className="w-full pl-9 pr-14 py-2 text-xs sm:text-sm bg-white border border-slate-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-indigo-500 shadow-2xs"
+                  />
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-mono text-slate-400 border border-slate-200 bg-slate-50 px-1.5 py-0.5 rounded">
+                    Ctrl K
+                  </span>
+                </div>
+
+                {/* Status Filter Pills + Filter Button + Sort Dropdown */}
+                <div className="flex flex-wrap items-center gap-2 self-start lg:self-auto">
+                  {/* Status Pills Group */}
+                  <div className="inline-flex items-center bg-slate-100/80 p-0.5 rounded-xl border border-slate-200/60 text-xs font-semibold">
+                    {(['all', 'processing', 'transcribed', 'failed'] as const).map((status) => {
+                      const isActive = recordingsStatusFilter === status;
+                      const label =
+                        status === 'all'
+                          ? 'All'
+                          : status === 'processing'
+                          ? 'Processing'
+                          : status === 'transcribed'
+                          ? 'Transcribed'
+                          : 'Failed';
+                      return (
+                        <button
+                          key={status}
+                          type="button"
+                          onClick={() => {
+                            setRecordingsStatusFilter(status);
+                            setCurrentPage(1);
+                          }}
+                          className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer capitalize ${
+                            isActive
+                              ? 'bg-[#0f172a] text-white shadow-xs font-bold'
+                              : 'text-slate-600 hover:text-slate-900'
+                          }`}
+                        >
+                          {label}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Filter Button */}
+                  <button
+                    type="button"
+                    onClick={() => setShowFilterDropdown(!showFilterDropdown)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-xs font-semibold text-slate-700 shadow-2xs cursor-pointer transition-colors"
+                  >
+                    <SlidersHorizontal className="w-3.5 h-3.5 text-slate-500" />
+                    <span>Filter</span>
+                  </button>
+
+                  {/* Sort Dropdown */}
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() => setShowSortDropdown(!showSortDropdown)}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-xs font-semibold text-slate-700 shadow-2xs cursor-pointer transition-colors"
+                    >
+                      <span>
+                        {recordingsSort === 'newest'
+                          ? 'Newest first'
+                          : recordingsSort === 'oldest'
+                          ? 'Oldest first'
+                          : recordingsSort === 'duration_desc'
+                          ? 'Longest first'
+                          : recordingsSort === 'duration_asc'
+                          ? 'Shortest first'
+                          : 'Alphabetical'}
+                      </span>
+                      <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+                    </button>
+
+                    {showSortDropdown && (
+                      <div className="absolute right-0 top-full mt-1.5 w-44 bg-white rounded-xl shadow-xl border border-slate-200 p-1.5 z-30 text-xs font-medium space-y-0.5 animate-in fade-in zoom-in-95">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setRecordingsSort('newest');
+                            setShowSortDropdown(false);
+                          }}
+                          className={`w-full text-left px-2.5 py-1.5 rounded-lg cursor-pointer ${
+                            recordingsSort === 'newest'
+                              ? 'bg-indigo-50 text-indigo-700 font-bold'
+                              : 'hover:bg-slate-50 text-slate-700'
+                          }`}
+                        >
+                          Newest first
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setRecordingsSort('oldest');
+                            setShowSortDropdown(false);
+                          }}
+                          className={`w-full text-left px-2.5 py-1.5 rounded-lg cursor-pointer ${
+                            recordingsSort === 'oldest'
+                              ? 'bg-indigo-50 text-indigo-700 font-bold'
+                              : 'hover:bg-slate-50 text-slate-700'
+                          }`}
+                        >
+                          Oldest first
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setRecordingsSort('duration_desc');
+                            setShowSortDropdown(false);
+                          }}
+                          className={`w-full text-left px-2.5 py-1.5 rounded-lg cursor-pointer ${
+                            recordingsSort === 'duration_desc'
+                              ? 'bg-indigo-50 text-indigo-700 font-bold'
+                              : 'hover:bg-slate-50 text-slate-700'
+                          }`}
+                        >
+                          Duration (Longest)
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setRecordingsSort('duration_asc');
+                            setShowSortDropdown(false);
+                          }}
+                          className={`w-full text-left px-2.5 py-1.5 rounded-lg cursor-pointer ${
+                            recordingsSort === 'duration_asc'
+                              ? 'bg-indigo-50 text-indigo-700 font-bold'
+                              : 'hover:bg-slate-50 text-slate-700'
+                          }`}
+                        >
+                          Duration (Shortest)
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setRecordingsSort('alphabetical');
+                            setShowSortDropdown(false);
+                          }}
+                          className={`w-full text-left px-2.5 py-1.5 rounded-lg cursor-pointer ${
+                            recordingsSort === 'alphabetical'
+                              ? 'bg-indigo-50 text-indigo-700 font-bold'
+                              : 'hover:bg-slate-50 text-slate-700'
+                          }`}
+                        >
+                          Alphabetical (A-Z)
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 
-              {/* Search Bar */}
-              <div className="relative">
-                <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                <input
-                  type="text"
-                  placeholder="Search recordings by file name or key summary points..."
-                  value={searchRecordingsQuery}
-                  onChange={(e) => setSearchRecordingsQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 text-xs sm:text-sm bg-white border border-slate-200 rounded-2xl focus:outline-hidden focus:ring-2 focus:ring-indigo-500 shadow-2xs"
-                />
-              </div>
-
-              {/* Recordings List */}
-              <div className="space-y-3">
-                {filteredRecordings.length === 0 ? (
-                  <div className="bg-white rounded-3xl border border-slate-200 p-12 text-center space-y-3">
+              {/* 3. Recording Cards List */}
+              <div className="space-y-3 pt-1">
+                {paginatedRecordings.length === 0 ? (
+                  <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center space-y-3 shadow-2xs">
                     <FileAudio className="w-12 h-12 text-slate-300 mx-auto" />
                     <h3 className="text-base font-bold text-slate-800">No recordings found</h3>
                     <p className="text-xs text-slate-500 max-w-sm mx-auto">
@@ -580,70 +847,294 @@ export const TranscriptionStudio: React.FC<TranscriptionStudioProps> = ({
                     </button>
                   </div>
                 ) : (
-                  filteredRecordings.map((doc) => (
-                    <div
-                      key={doc.id}
-                      className="p-5 bg-white hover:bg-indigo-50/30 rounded-2xl border border-slate-200 hover:border-indigo-300 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-2xs group"
-                    >
-                      <div className="space-y-1.5 min-w-0">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span className="text-sm font-bold text-slate-900 group-hover:text-indigo-900 font-mono">
-                            {doc.fileName}
-                          </span>
-                          <span className="text-[10px] text-slate-400">({doc.date})</span>
-                          {!doc.id.startsWith('doc-') && (
-                            <span className="text-[9px] font-bold text-teal-700 bg-teal-50 px-2 py-0.5 rounded-full border border-teal-200">
-                              CLOUD
-                            </span>
-                          )}
+                  paginatedRecordings.map((doc) => {
+                    const isSelected = selectedRecordingIds.has(doc.id);
+                    const previewText =
+                      doc.result.segments?.map((s) => s.text).join(' ') ||
+                      doc.result.summary ||
+                      'No transcript text preview available.';
+
+                    return (
+                      <div
+                        key={doc.id}
+                        className={`bg-white rounded-2xl border transition-all p-5 shadow-2xs space-y-3 ${
+                          isSelected ? 'border-indigo-400 ring-1 ring-indigo-400' : 'border-slate-200/90 hover:border-slate-300'
+                        }`}
+                      >
+                        {/* Top Row: Details (Left) & Action Buttons (Right) */}
+                        <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
+                          {/* Left: Checkbox + Filename + Metadata Badges */}
+                          <div className="flex items-start gap-3 min-w-0 flex-1">
+                            {/* Checkbox */}
+                            <input
+                              type="checkbox"
+                              checked={isSelected}
+                              onChange={() => handleToggleSelectRecording(doc.id)}
+                              className="w-4 h-4 mt-0.5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer shrink-0"
+                            />
+
+                            <div className="min-w-0 space-y-1.5 flex-1">
+                              {/* Filename */}
+                              <h4
+                                onClick={() => {
+                                  setTranscriptionData(doc.result);
+                                  setAudioDuration(doc.result.metadata.duration);
+                                  setCurrentTime(0);
+                                  setIsPlaying(false);
+                                  setSidebarTab('dashboard');
+                                }}
+                                className="text-sm font-bold text-slate-900 hover:text-indigo-600 cursor-pointer truncate tracking-tight transition-colors"
+                                title={doc.fileName}
+                              >
+                                {doc.fileName.replace(/\.[^/.]+$/, '')}
+                              </h4>
+
+                              {/* Badges Row matching screenshot */}
+                              <div className="flex flex-wrap items-center gap-2 text-[11px] font-medium text-slate-500">
+                                {/* • Transcribed status badge */}
+                                <span className="inline-flex items-center gap-1.5 text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full px-2.5 py-0.5 font-semibold">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                                  <span>Transcribed</span>
+                                </span>
+
+                                {/* ↑ File upload source badge */}
+                                <span className="inline-flex items-center gap-1 text-slate-600 bg-slate-50 border border-slate-200 rounded-full px-2.5 py-0.5">
+                                  <ArrowUpToLine className="w-3 h-3 text-slate-500" />
+                                  <span>File upload</span>
+                                </span>
+
+                                {/* 📅 Date & Time */}
+                                <span className="inline-flex items-center gap-1 text-slate-500">
+                                  <Calendar className="w-3 h-3 text-slate-400" />
+                                  <span>{formatRecordingDate(doc.date)}</span>
+                                </span>
+
+                                {/* ⏱ Duration */}
+                                <span className="inline-flex items-center gap-1 text-slate-500 font-mono">
+                                  <Clock className="w-3 h-3 text-slate-400" />
+                                  <span>{formatTime(doc.duration)}</span>
+                                </span>
+
+                                {/* 🌐 Language */}
+                                <span className="inline-flex items-center gap-1 text-slate-500">
+                                  <Globe className="w-3 h-3 text-slate-400" />
+                                  <span>{doc.result.metadata?.language || 'Auto'}</span>
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Right: Action Buttons Group matching screenshot */}
+                          <div className="flex items-center gap-1.5 self-end md:self-center shrink-0">
+                            {/* [ Open transcript ] Button */}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setTranscriptionData(doc.result);
+                                setAudioDuration(doc.result.metadata.duration);
+                                setCurrentTime(0);
+                                setIsPlaying(false);
+                                setSidebarTab('dashboard');
+                              }}
+                              className="px-3.5 py-1.5 rounded-xl text-xs font-bold text-white bg-[#4f46e5] hover:bg-[#4338ca] shadow-xs transition-all cursor-pointer"
+                            >
+                              Open transcript
+                            </button>
+
+                            {/* [ Export ∨ ] Dropdown Button */}
+                            <div className="relative">
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setActiveExportDropdownId(
+                                    activeExportDropdownId === doc.id ? null : doc.id
+                                  )
+                                }
+                                className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700 transition-colors cursor-pointer"
+                              >
+                                <span>Export</span>
+                                <ChevronDown className="w-3 h-3 text-slate-400" />
+                              </button>
+
+                              {activeExportDropdownId === doc.id && (
+                                <div className="absolute right-0 top-full mt-1.5 w-36 bg-white rounded-xl shadow-xl border border-slate-200 p-1 z-30 text-xs font-medium space-y-0.5 animate-in fade-in zoom-in-95">
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      exportCombined(doc.result, 'docx');
+                                      setActiveExportDropdownId(null);
+                                    }}
+                                    className="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-slate-50 text-slate-700 flex items-center gap-1.5 cursor-pointer"
+                                  >
+                                    <FileText className="w-3.5 h-3.5 text-blue-600" />
+                                    <span>Word (DOCX)</span>
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      exportToPDF(doc.result);
+                                      setActiveExportDropdownId(null);
+                                    }}
+                                    className="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-slate-50 text-slate-700 flex items-center gap-1.5 cursor-pointer"
+                                  >
+                                    <FileText className="w-3.5 h-3.5 text-rose-600" />
+                                    <span>PDF Document</span>
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      exportToTXT(doc.result);
+                                      setActiveExportDropdownId(null);
+                                    }}
+                                    className="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-slate-50 text-slate-700 flex items-center gap-1.5 cursor-pointer"
+                                  >
+                                    <FileText className="w-3.5 h-3.5 text-slate-500" />
+                                    <span>Plain Text (TXT)</span>
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      exportToSRT(doc.result);
+                                      setActiveExportDropdownId(null);
+                                    }}
+                                    className="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-slate-50 text-slate-700 flex items-center gap-1.5 cursor-pointer"
+                                  >
+                                    <FileText className="w-3.5 h-3.5 text-purple-600" />
+                                    <span>Subtitles (SRT)</span>
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Play Audio Button (▷) */}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setTranscriptionData(doc.result);
+                                setAudioDuration(doc.result.metadata.duration);
+                                setCurrentTime(0);
+                                setIsPlaying(true);
+                                setSidebarTab('dashboard');
+                              }}
+                              className="w-8 h-8 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 flex items-center justify-center cursor-pointer transition-colors"
+                              title="Play Audio"
+                            >
+                              <Play className="w-3.5 h-3.5 fill-current ml-0.5 text-slate-600" />
+                            </button>
+
+                            {/* Delete Button (🗑) */}
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteHistoryItem(doc.id)}
+                              className="w-8 h-8 rounded-xl border border-slate-200 bg-white hover:bg-rose-50 text-rose-500 hover:text-rose-600 flex items-center justify-center cursor-pointer transition-colors"
+                              title="Delete Recording"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+
+                            {/* Three-dot More Actions Menu (•••) */}
+                            <div className="relative">
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setActiveMoreMenuId(activeMoreMenuId === doc.id ? null : doc.id)
+                                }
+                                className="w-8 h-8 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-500 flex items-center justify-center cursor-pointer transition-colors"
+                                title="More actions"
+                              >
+                                <MoreHorizontal className="w-4 h-4" />
+                              </button>
+
+                              {activeMoreMenuId === doc.id && (
+                                <div className="absolute right-0 top-full mt-1.5 w-40 bg-white rounded-xl shadow-xl border border-slate-200 p-1 z-30 text-xs font-medium space-y-0.5 animate-in fade-in zoom-in-95">
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      navigator.clipboard.writeText(previewText);
+                                      setActiveMoreMenuId(null);
+                                    }}
+                                    className="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-slate-50 text-slate-700 flex items-center gap-1.5 cursor-pointer"
+                                  >
+                                    <Copy className="w-3.5 h-3.5 text-slate-500" />
+                                    <span>Copy Transcript</span>
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setTranscriptionData(doc.result);
+                                      setSidebarTab('dashboard');
+                                      setActiveMoreMenuId(null);
+                                    }}
+                                    className="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-slate-50 text-slate-700 flex items-center gap-1.5 cursor-pointer"
+                                  >
+                                    <FileText className="w-3.5 h-3.5 text-indigo-600" />
+                                    <span>Open in Studio</span>
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          </div>
                         </div>
 
-                        <div className="flex items-center gap-2.5 text-xs text-slate-500 font-medium">
-                          <span>Duration: {formatReadableDuration(doc.duration)}</span>
-                          <span>•</span>
-                          <span>{doc.wordCount} words</span>
-                          <span>•</span>
-                          <span>{doc.speakersCount} speakers</span>
-                        </div>
-
-                        <p className="text-xs text-slate-600 line-clamp-1 italic max-w-2xl">
-                          &ldquo;{doc.result.summary}&rdquo;
+                        {/* Bottom: Transcript Preview Paragraph */}
+                        <p className="text-xs sm:text-sm text-slate-600 leading-relaxed font-normal pt-1 line-clamp-2">
+                          {previewText}
                         </p>
                       </div>
-
-                      <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
-                        <button
-                          onClick={() => {
-                            setTranscriptionData(doc.result);
-                            setAudioDuration(doc.result.metadata.duration);
-                            setCurrentTime(0);
-                            setSidebarTab('dashboard');
-                          }}
-                          className="px-3.5 py-2 rounded-xl text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 shadow-2xs transition-all cursor-pointer"
-                        >
-                          Open in Studio →
-                        </button>
-
-                        <button
-                          onClick={() => exportCombined(doc.result, 'docx')}
-                          className="p-2 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 transition-colors cursor-pointer"
-                          title="Download DOCX"
-                        >
-                          <Download className="w-3.5 h-3.5" />
-                        </button>
-
-                        <button
-                          onClick={() => handleDeleteHistoryItem(doc.id)}
-                          className="p-2 rounded-xl bg-slate-50 hover:bg-rose-50 border border-slate-200 text-slate-400 hover:text-rose-600 transition-colors cursor-pointer"
-                          title="Delete Recording"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </div>
-                  ))
+                    );
+                  })
                 )}
               </div>
+
+              {/* 4. Pagination Bottom Bar matching screenshot */}
+              {totalRecordings > 0 && (
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 bg-white rounded-2xl border border-slate-200/80 shadow-2xs text-xs text-slate-600 mt-2">
+                  <div className="font-medium text-slate-500">
+                    Showing {startIndex}–{endIndex} of {totalRecordings}
+                  </div>
+
+                  <div className="flex items-center gap-4">
+                    {/* Rows per page selector */}
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-slate-500">Rows per page</span>
+                      <select
+                        value={rowsPerPage}
+                        onChange={(e) => {
+                          setRowsPerPage(Number(e.target.value));
+                          setCurrentPage(1);
+                        }}
+                        className="border border-slate-200 bg-white rounded-lg px-2 py-1 text-xs font-bold text-slate-700 focus:outline-indigo-500 cursor-pointer"
+                      >
+                        <option value={10}>10</option>
+                        <option value={20}>20</option>
+                        <option value={50}>50</option>
+                        <option value={100}>100</option>
+                      </select>
+                    </div>
+
+                    {/* Previous and Next Navigation */}
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                        disabled={currentPage <= 1}
+                        className="w-7 h-7 rounded-lg border border-slate-200 flex items-center justify-center hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed text-slate-600 transition-colors cursor-pointer"
+                        title="Previous page"
+                      >
+                        <ChevronLeft className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                        disabled={currentPage >= totalPages}
+                        className="w-7 h-7 rounded-lg border border-slate-200 flex items-center justify-center hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed text-slate-600 transition-colors cursor-pointer"
+                      >
+                        <ChevronRight className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

@@ -54,9 +54,9 @@ export const WaveformLoadingBar: React.FC<WaveformLoadingBarProps> = ({
         currentProgressRef.current += 0.025;
       }
 
-      // Active wave bounds (centered, leaving space at ends so it blurs to 0 without hitting canvas edges)
-      const xMin = width * 0.08;
-      const xMax = width * 0.92;
+      // Active wave bounds - extended wide across canvas for long flowing animation
+      const xMin = width * 0.02;
+      const xMax = width * 0.98;
       const waveW = xMax - xMin;
 
       const activeProgressRatio = Math.max(0.08, Math.min(1, currentProgressRef.current / 100));
@@ -68,8 +68,8 @@ export const WaveformLoadingBar: React.FC<WaveformLoadingBarProps> = ({
       const waveLayers = [
         {
           // Layer 1: Hot Pink / Magenta Wave
-          f1: 3.8,
-          f2: 7.2,
+          f1: 4.8,
+          f2: 9.2,
           ampTop: 15,
           ampBot: 12,
           phaseOffset: 0,
@@ -80,8 +80,8 @@ export const WaveformLoadingBar: React.FC<WaveformLoadingBarProps> = ({
         },
         {
           // Layer 2: Electric Purple / Violet Wave
-          f1: 3.2,
-          f2: 6.0,
+          f1: 4.2,
+          f2: 8.0,
           ampTop: 13.5,
           ampBot: 11,
           phaseOffset: 1.6,
@@ -92,8 +92,8 @@ export const WaveformLoadingBar: React.FC<WaveformLoadingBarProps> = ({
         },
         {
           // Layer 3: Electric Blue / Cyan Wave
-          f1: 4.4,
-          f2: 8.5,
+          f1: 5.4,
+          f2: 10.5,
           ampTop: 11,
           ampBot: 9.5,
           phaseOffset: 3.2,
@@ -106,10 +106,10 @@ export const WaveformLoadingBar: React.FC<WaveformLoadingBarProps> = ({
 
       // =======================================================================
       // 1. DRAW LUMINOUS HORIZONTAL CENTRAL BEAM (Exact match to Reference Image 2 & 3)
-      // Strictly spans between xMin + waveW * 0.08 and xMax - waveW * 0.08, fading softly to 0 at both ends
+      // Extended wide across canvas, fading softly to 0 at both ends
       // =======================================================================
-      const beamStart = xMin + waveW * 0.08;
-      const beamEnd = xMax - waveW * 0.08;
+      const beamStart = xMin + waveW * 0.02;
+      const beamEnd = xMax - waveW * 0.02;
 
       ctx.save();
       const beamGrad = ctx.createLinearGradient(beamStart, 0, beamEnd, 0);
@@ -368,7 +368,7 @@ export const WaveformLoadingBar: React.FC<WaveformLoadingBarProps> = ({
       <div className="relative z-10 w-full flex items-center justify-center pt-1">
         <canvas
           ref={canvasRef}
-          width={880}
+          width={1000}
           height={52}
           className="w-full h-11 sm:h-12 select-none"
         />

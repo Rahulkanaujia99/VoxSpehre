@@ -32,6 +32,10 @@ export type TranscriptionStyle =
   | 'bilingual';
 
 export interface ComprehensiveSummaries {
+  summary?: string;
+  paragraph?: string;
+  aiSummary?: string;
+  translatedText?: string;
   executive?: string;
   detailed?: string;
   minutes?: string;
@@ -42,6 +46,11 @@ export interface ComprehensiveSummaries {
 }
 
 export type SummarizationMode =
+  | 'summary'
+  | 'paragraph'
+  | 'ai_summary'
+  | 'translate'
+  | 'edit'
   | 'executive'
   | 'detailed'
   | 'minutes'

@@ -193,9 +193,9 @@ export const AudioWaveformPlayer: React.FC<AudioWaveformPlayerProps> = ({
 
       const isPurple = activeDesign === 'purple-glass';
 
-      // Wave active bounds (centered, leaving space at ends so it blurs to 0 without hitting canvas edges)
-      const xMin = width * 0.10;
-      const xMax = width * 0.90;
+      // Wave active bounds (extended wide across canvas for long flowing animation)
+      const xMin = width * 0.02;
+      const xMax = width * 0.98;
       const waveW = xMax - xMin;
 
       // Color layers strictly matching Reference Image 1 & 2
@@ -203,8 +203,8 @@ export const AudioWaveformPlayer: React.FC<AudioWaveformPlayerProps> = ({
         ? [
             {
               // Hot pink / magenta rounded mound layer
-              f1: 3.8,
-              f2: 7.2,
+              f1: 4.8,
+              f2: 9.2,
               ampTop: isPlaying ? 13 : 8.5,
               ampBot: isPlaying ? 10 : 6.5,
               phaseOffset: 0,
@@ -215,8 +215,8 @@ export const AudioWaveformPlayer: React.FC<AudioWaveformPlayerProps> = ({
             },
             {
               // Electric violet / purple rounded mound layer
-              f1: 3.2,
-              f2: 6.0,
+              f1: 4.2,
+              f2: 8.0,
               ampTop: isPlaying ? 12 : 7.5,
               ampBot: isPlaying ? 11 : 7.0,
               phaseOffset: 1.7,
@@ -227,8 +227,8 @@ export const AudioWaveformPlayer: React.FC<AudioWaveformPlayerProps> = ({
             },
             {
               // Electric blue / sky cyan rounded mound layer
-              f1: 4.4,
-              f2: 8.5,
+              f1: 5.4,
+              f2: 10.5,
               ampTop: isPlaying ? 10 : 6.0,
               ampBot: isPlaying ? 9 : 5.5,
               phaseOffset: 3.3,
@@ -241,8 +241,8 @@ export const AudioWaveformPlayer: React.FC<AudioWaveformPlayerProps> = ({
         : [
             {
               // Cyan layer
-              f1: 3.6,
-              f2: 6.8,
+              f1: 4.6,
+              f2: 8.8,
               ampTop: isPlaying ? 13 : 8.5,
               ampBot: isPlaying ? 10 : 6.5,
               phaseOffset: 0,
@@ -253,8 +253,8 @@ export const AudioWaveformPlayer: React.FC<AudioWaveformPlayerProps> = ({
             },
             {
               // Emerald layer
-              f1: 3.0,
-              f2: 5.8,
+              f1: 4.0,
+              f2: 7.8,
               ampTop: isPlaying ? 12 : 7.5,
               ampBot: isPlaying ? 11 : 7.0,
               phaseOffset: 1.6,
@@ -265,8 +265,8 @@ export const AudioWaveformPlayer: React.FC<AudioWaveformPlayerProps> = ({
             },
             {
               // Teal layer
-              f1: 4.2,
-              f2: 8.0,
+              f1: 5.2,
+              f2: 10.0,
               ampTop: isPlaying ? 10 : 6.0,
               ampBot: isPlaying ? 9 : 5.5,
               phaseOffset: 3.1,
@@ -375,9 +375,9 @@ export const AudioWaveformPlayer: React.FC<AudioWaveformPlayerProps> = ({
       });
 
       // 4. Central Horizontal Specular Neon Beam (Image 2 exact match)
-      // Strictly spans between xMin + waveW * 0.08 and xMax - waveW * 0.08, fading softly to 0 at both ends
-      const beamStart = xMin + waveW * 0.08;
-      const beamEnd = xMax - waveW * 0.08;
+      // Extended wide across canvas, fading softly to 0 at both ends
+      const beamStart = xMin + waveW * 0.02;
+      const beamEnd = xMax - waveW * 0.02;
 
       ctx.save();
       const beamGrad = ctx.createLinearGradient(beamStart, 0, beamEnd, 0);
@@ -591,13 +591,13 @@ export const AudioWaveformPlayer: React.FC<AudioWaveformPlayerProps> = ({
           </div>
 
           {/* Row 2: Centered Animated Glowing Waveform Canvas */}
-          <div className="relative w-full h-7 flex items-center justify-center -my-0.5 z-0">
+          <div className="relative w-full h-8 flex items-center justify-center -my-0.5 z-0">
             <canvas
               ref={canvasRef}
-              width={720}
-              height={32}
+              width={1000}
+              height={36}
               onClick={handleCanvasClick}
-              className="w-full max-w-xl h-7 cursor-pointer select-none"
+              className="w-full max-w-4xl h-8 cursor-pointer select-none"
               title="Click anywhere on waveform to seek"
             />
           </div>
@@ -770,13 +770,13 @@ export const AudioWaveformPlayer: React.FC<AudioWaveformPlayerProps> = ({
           </div>
 
           {/* Row 2: Centered Animated Waveform Canvas (Cyan / Emerald Acoustic Waves) */}
-          <div className="relative w-full h-7 flex items-center justify-center -my-0.5 z-0">
+          <div className="relative w-full h-8 flex items-center justify-center -my-0.5 z-0">
             <canvas
               ref={canvasRef}
-              width={720}
-              height={32}
+              width={1000}
+              height={36}
               onClick={handleCanvasClick}
-              className="w-full max-w-xl h-7 cursor-pointer select-none"
+              className="w-full max-w-4xl h-8 cursor-pointer select-none"
               title="Click anywhere on acoustic wave to seek"
             />
           </div>

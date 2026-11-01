@@ -12,6 +12,7 @@ import { useAuth } from '@/context/AuthContext';
 
 export default function Home() {
   const [currentView, setCurrentView] = useState<'home' | 'app' | 'auth'>('home');
+  const [dashboardTab, setDashboardTab] = useState<'dashboard' | 'recordings' | 'profile' | 'settings'>('dashboard');
   const [isPenguinInfoOpen, setIsPenguinInfoOpen] = useState(false);
   const [penguinSection, setPenguinSection] = useState('about');
   const { user } = useAuth();
@@ -87,6 +88,11 @@ export default function Home() {
         onBackToHome={handleBackToHome}
         onOpenStudio={handleStartTranscribing}
         onOpenPenguinInfo={handleOpenPenguinInfo}
+        activeTab={dashboardTab}
+        onNavigate={(tab) => {
+          setDashboardTab(tab);
+          if (currentView !== 'app') setCurrentView('app');
+        }}
       />
 
       {currentView === 'home' && (
@@ -137,6 +143,8 @@ export default function Home() {
         <div className="flex-1 flex flex-col animate-fadeIn">
           <TranscriptionStudio
             onBackToHome={handleBackToHome}
+            activeTab={dashboardTab}
+            onTabChange={setDashboardTab}
           />
         </div>
       )}

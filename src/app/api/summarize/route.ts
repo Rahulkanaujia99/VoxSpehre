@@ -24,46 +24,25 @@ export async function POST(req: NextRequest) {
 ${transcriptText.slice(0, 10000)}
 """
 
-You must generate comprehensive documentation covering all 7 strategic business summary dimensions:
-1. Executive Summary (Concise 2-3 sentence overview covering core findings and direction)
-2. Detailed Summary (Comprehensive multi-paragraph analysis detailing arguments, context, and nuance)
-3. Key Discussion Points (List of 4-6 crucial discussion topics analyzed in depth)
-4. Important Insights (List of 3-5 high-value takeaways, underlying observations, and strategic patterns)
-5. Action Items (List of 3-5 concrete deliverables, owners, and immediate next steps)
-6. Important Decisions (List of key resolutions, agreements, and strategic decisions concluded)
-7. Meeting Minutes (Formal minutes format with attendees, discussion items, notes, and official conclusions)
+You must generate comprehensive documentation covering all 3 core summary options:
+1. Summary: A structured overview of the transcript (concise overview covering core discussion topics and strategic findings).
+2. Paragraph: Detailed summary in rich, continuous multi-paragraph format detailing discussion context, arguments, nuances, and implications.
+3. AI Summary: A short, concise AI-powered summary (2-3 sentences) highlighting the central core and main conversation points.
 
 Return STRICT valid raw JSON matching this schema:
 {
-  "summary": "Concise executive overview of core conversation points and direction",
+  "summary": "Structured overview of the transcript with key topics and strategic synthesis.",
+  "paragraph": "Comprehensive detailed summary in continuous paragraph format detailing nuances, key remarks, and conclusions.",
+  "aiSummary": "Short, concise AI-powered summary highlighting the central core of the recorded conversation.",
   "keyTopics": ["Topic 1", "Topic 2", "Topic 3", "Topic 4"],
   "sentiment": "positive" | "neutral" | "analytical" | "critical",
   "actionItems": ["Action Item 1", "Action Item 2", "Action Item 3"],
   "comprehensiveSummaries": {
-    "executive": "Concise 2-3 sentence high-impact executive summary.",
-    "detailed": "Detailed multi-paragraph executive summary detailing all discussion nuances, speaker positions, and business implications.",
-    "minutes": "MEETING MINUTES\\n\\n1. PURPOSE & AGENDA:\\nOverview of recorded discussion.\\n\\n2. DISCUSSION SUMMARY:\\nKey remarks made during the meeting.\\n\\n3. ADJOURNMENT & OUTLOOK:\\nNext milestones agreed upon.",
-    "keyPoints": [
-      "Key point 1 with strategic context",
-      "Key point 2 with operational analysis",
-      "Key point 3 with financial or timeline impact",
-      "Key point 4 with organizational takeaways"
-    ],
-    "importantInsights": [
-      "Insight 1: Underlying operational efficiency opportunity",
-      "Insight 2: Strategic alignment across stakeholder groups",
-      "Insight 3: High-impact bottleneck identified for resolution"
-    ],
-    "actionItems": [
-      "Action 1: Review due diligence and operational model",
-      "Action 2: Consolidate team findings into committee deck",
-      "Action 3: Coordinate stakeholder alignment session"
-    ],
-    "decisions": [
-      "Decision 1: Approved directional roadmap and priority sequence",
-      "Decision 2: Agreed risk mitigation parameters for execution",
-      "Decision 3: Confirmed governance and reporting frequency"
-    ]
+    "summary": "Structured overview of the transcript with key topics and strategic synthesis.",
+    "paragraph": "Comprehensive detailed summary in continuous paragraph format detailing nuances, key remarks, and conclusions.",
+    "aiSummary": "Short, concise AI-powered summary highlighting the central core of the recorded conversation.",
+    "executive": "Structured overview of the transcript.",
+    "detailed": "Comprehensive detailed summary in continuous paragraph format."
   }
 }
 Return only valid JSON. Do not include markdown code fences (\`\`\`json) or extra text.`;
@@ -82,7 +61,7 @@ Return only valid JSON. Do not include markdown code fences (\`\`\`json) or extr
             messages: [
               {
                 role: 'system',
-                content: 'You are an executive audio intelligence assistant specializing in corporate minutes, action items, strategic summaries, and decision records. Always respond with strict raw JSON.',
+                content: 'You are an executive audio intelligence assistant specializing in corporate summaries, paragraphs, and concise AI briefings. Always respond with strict raw JSON.',
               },
               { role: 'user', content: prompt },
             ],
@@ -95,6 +74,14 @@ Return only valid JSON. Do not include markdown code fences (\`\`\`json) or extr
           const raw = data.choices?.[0]?.message?.content;
           if (raw) {
             const parsed = JSON.parse(raw.trim());
+            // Ensure comprehensiveSummaries has all 3 fields mapped
+            const cs = parsed.comprehensiveSummaries || {};
+            cs.summary = cs.summary || parsed.summary || parsed.executive;
+            cs.paragraph = cs.paragraph || parsed.paragraph || parsed.detailed;
+            cs.aiSummary = cs.aiSummary || parsed.aiSummary || parsed.summary;
+            cs.executive = cs.summary;
+            cs.detailed = cs.paragraph;
+            parsed.comprehensiveSummaries = cs;
             return NextResponse.json({ success: true, engine: 'openai', ...parsed });
           }
         } else {
@@ -124,6 +111,13 @@ Return only valid JSON. Do not include markdown code fences (\`\`\`json) or extr
           const raw = data.candidates?.[0]?.content?.parts?.[0]?.text;
           if (raw) {
             const parsed = JSON.parse(raw.replace(/```json\s*/gi, '').replace(/```\s*$/gi, '').trim());
+            const cs = parsed.comprehensiveSummaries || {};
+            cs.summary = cs.summary || parsed.summary || parsed.executive;
+            cs.paragraph = cs.paragraph || parsed.paragraph || parsed.detailed;
+            cs.aiSummary = cs.aiSummary || parsed.aiSummary || parsed.summary;
+            cs.executive = cs.summary;
+            cs.detailed = cs.paragraph;
+            parsed.comprehensiveSummaries = cs;
             return NextResponse.json({ success: true, engine: 'gemini', ...parsed });
           }
         }
@@ -132,7 +126,7 @@ Return only valid JSON. Do not include markdown code fences (\`\`\`json) or extr
       }
     }
 
-    // 3. High-Fidelity Structured Synthesis Fallback (Ensures 100% reliability for all 7 dimensions)
+    // 3. High-Fidelity Structured Synthesis Fallback (Ensures 100% reliability for all dimensions)
     const sentences = transcriptText
       .split(/(?<=[.!?])\s+/)
       .map((s: string) => s.trim())
@@ -141,8 +135,14 @@ Return only valid JSON. Do not include markdown code fences (\`\`\`json) or extr
     const leadSentences = sentences.slice(0, 3).join(' ') || transcriptText.slice(0, 250);
     const midSentences = sentences.slice(3, 8).join(' ') || leadSentences;
 
+    const structuredSummary = `• Primary Topic: ${leadSentences}\n• Key Observations: ${midSentences}\n• Strategic Outcome: Analysis completed with actionable takeaways recorded across core discussion milestones.`;
+    const paragraphSummary = `${leadSentences}\n\n${midSentences}\n\nThe dialogue emphasized critical operational workflows, stakeholder consensus, and decisive follow-through on targeted organizational objectives.`;
+    const aiSummaryText = leadSentences;
+
     const fallbackSummary = {
-      summary: leadSentences,
+      summary: structuredSummary,
+      paragraph: paragraphSummary,
+      aiSummary: aiSummaryText,
       keyTopics: ['Strategic Operations', 'Executive Review', 'Knowledge Transfer', 'Capability Pods'],
       sentiment: 'analytical' as const,
       actionItems: [
@@ -151,30 +151,11 @@ Return only valid JSON. Do not include markdown code fences (\`\`\`json) or extr
         'Coordinate follow-up alignment session with primary delivery architects',
       ],
       comprehensiveSummaries: {
-        executive: leadSentences,
-        detailed: `${leadSentences}\n\n${midSentences}\n\nThe discussion highlighted operational execution, resource distribution, and strategic milestones across project initiatives.`,
-        minutes: `MEETING MINUTES\n\n1. AGENDA & SCOPE:\nReview and discussion of project milestones and operational readiness.\n\n2. DISCUSSION HIGHLIGHTS:\n${leadSentences}\n\n3. NEXT STEPS & MILESTONES:\nFollow-up review sessions and action item execution scheduled.`,
-        keyPoints: [
-          'Operational review of capability workflows and project execution.',
-          'Stakeholder alignment across distributed enterprise pods.',
-          'Data security, governance compliance, and milestone adherence.',
-          'Consolidation of insights for leadership decision-making.',
-        ],
-        importantInsights: [
-          'High efficiency gains achieved through structured knowledge synchronization.',
-          'Need for unified cross-team coordination on technical dependencies.',
-          'Opportunity to streamline reporting frequency and tracking metrics.',
-        ],
-        actionItems: [
-          'Review operational workflows and deliverable timelines for executive sign-off.',
-          'Consolidate discussion inputs and findings into centralized knowledge repository.',
-          'Coordinate follow-up alignment session with primary delivery architects.',
-        ],
-        decisions: [
-          'Approved directional approach and operational milestones.',
-          'Agreed to maintain weekly synchronization cadences.',
-          'Confirmed knowledge repository structure and security controls.',
-        ],
+        summary: structuredSummary,
+        paragraph: paragraphSummary,
+        aiSummary: aiSummaryText,
+        executive: structuredSummary,
+        detailed: paragraphSummary,
       },
     };
 

@@ -28,6 +28,9 @@ import {
   HelpCircle,
   Lightbulb,
   ChevronDown,
+  Edit3,
+  Bot,
+  Languages,
 } from 'lucide-react';
 import {
   TranscriptionResult,
@@ -54,6 +57,21 @@ interface TranscriptEditorProps {
   onSeekAudio: (time: number) => void;
   onUpdateResult: (updated: TranscriptionResult) => void;
 }
+
+const TRANSLATION_LANGUAGES = [
+  'Spanish',
+  'French',
+  'German',
+  'Japanese',
+  'Mandarin Chinese',
+  'Arabic',
+  'Hindi',
+  'Portuguese',
+  'Italian',
+  'Russian',
+  'Korean',
+  'Dutch',
+];
 
 const SUPPORTED_LANGUAGES = [
   'English (Global / Business)',
@@ -82,10 +100,20 @@ export const TranscriptEditor: React.FC<TranscriptEditorProps> = ({
   // Original Transcript preservation toggle
   const [isViewingOriginal, setIsViewingOriginal] = useState(false);
 
-  // 7 Summarization Modes State
-  const [activeSummaryTab, setActiveSummaryTab] = useState<SummarizationMode>('executive');
+  // 5 AI Summarization Options State
+  const [activeSummaryTab, setActiveSummaryTab] = useState<SummarizationMode>('summary');
   const [isSummarizing, setIsSummarizing] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
+
+  // New Tab Sub-states
+  const [paragraphViewMode, setParagraphViewMode] = useState<'paragraphs' | 'segments'>('paragraphs');
+  const [targetTranslateLanguage, setTargetTranslateLanguage] = useState<string>('Spanish');
+  const [translatedContent, setTranslatedContent] = useState<string>(data.comprehensiveSummaries?.translatedText || '');
+  const [isTranslating, setIsTranslating] = useState<boolean>(false);
+  const [copiedTranslation, setCopiedTranslation] = useState<boolean>(false);
+  const [copiedSummary, setCopiedSummary] = useState<boolean>(false);
+  const [isAiSummarizing, setIsAiSummarizing] = useState<boolean>(false);
+  const [saveSuccessBanner, setSaveSuccessBanner] = useState<boolean>(false);
 
   // Tavily AI Research state
   const [researchQuery, setResearchQuery] = useState('');
@@ -221,7 +249,15 @@ export const TranscriptEditor: React.FC<TranscriptEditorProps> = ({
     setTimeout(() => setCopied(false), 2000);
   };
 
-  // Generate / Regenerate all 6 Summaries with OpenAI
+  // Copy Summary text
+  const handleCopySummary = () => {
+    const textToCopy = cs?.summary || cs?.executive || data.summary;
+    navigator.clipboard.writeText(textToCopy);
+    setCopiedSummary(true);
+    setTimeout(() => setCopiedSummary(false), 2000);
+  };
+
+  // Generate / Regenerate all Summaries with OpenAI
   const handleGenerateSummaries = async () => {
     setIsSummarizing(true);
     try {
@@ -239,18 +275,24 @@ export const TranscriptEditor: React.FC<TranscriptEditorProps> = ({
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || 'Summarization failed');
 
+      const csNew = json.comprehensiveSummaries || {};
+      const structuredSummary = csNew.summary || json.summary || data.summary;
+      const paragraphSummary = csNew.paragraph || json.paragraph || csNew.detailed || data.summary;
+      const aiSummaryText = csNew.aiSummary || json.aiSummary || json.summary;
+
       onUpdateResult({
         ...data,
-        summary: json.summary || data.summary,
+        summary: structuredSummary,
         keyTopics: json.keyTopics || data.keyTopics,
         sentiment: json.sentiment || data.sentiment,
-        comprehensiveSummaries: json.comprehensiveSummaries || {
-          executive: json.summary,
-          detailed: json.summary,
-          minutes: `MEETING MINUTES\nDate: ${new Date().toLocaleDateString()}\nSpeakers: ${data.metadata.speakersCount}\n\nDiscussion:\n${json.summary}`,
-          keyPoints: json.keyTopics,
-          actionItems: json.actionItems || [],
-          decisions: ['Approved transcription review and next operational phases.'],
+        comprehensiveSummaries: {
+          ...data.comprehensiveSummaries,
+          ...csNew,
+          summary: structuredSummary,
+          paragraph: paragraphSummary,
+          aiSummary: aiSummaryText,
+          executive: structuredSummary,
+          detailed: paragraphSummary,
         },
       });
     } catch (e: unknown) {
@@ -258,6 +300,108 @@ export const TranscriptEditor: React.FC<TranscriptEditorProps> = ({
     } finally {
       setIsSummarizing(false);
     }
+  };
+
+  // Generate / Regenerate AI Summary with actual AI
+  const handleGenerateAISummary = async () => {
+    setIsAiSummarizing(true);
+    try {
+      const fullTranscript = currentSegments.map((s) => `${s.speaker}: ${s.text}`).join('\n');
+      const res = await fetch('/api/summarize', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          text: fullTranscript,
+          engine: 'openai',
+          mode: 'ai_summary',
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Failed to generate AI summary');
+
+      const csNew = json.comprehensiveSummaries || {};
+      const aiSummary = csNew.aiSummary || json.aiSummary || json.summary;
+
+      onUpdateResult({
+        ...data,
+        comprehensiveSummaries: {
+          ...data.comprehensiveSummaries,
+          ...csNew,
+          aiSummary,
+        },
+      });
+    } catch (err) {
+      console.error('AI Summary error:', err);
+    } finally {
+      setIsAiSummarizing(false);
+    }
+  };
+
+  // Translate Transcript with AI
+  const handleTranslateTranscript = async () => {
+    setIsTranslating(true);
+    try {
+      const fullTranscript = currentSegments
+        .map((s) => `[${formatTime(s.startTime)}] ${s.speaker}: ${s.text}`)
+        .join('\n');
+      const res = await fetch('/api/translate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          text: fullTranscript,
+          targetLanguage: targetTranslateLanguage,
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Translation failed');
+
+      setTranslatedContent(json.translatedText);
+      onUpdateResult({
+        ...data,
+        comprehensiveSummaries: {
+          ...data.comprehensiveSummaries,
+          translatedText: json.translatedText,
+        },
+      });
+    } catch (err: unknown) {
+      console.error('Translation error:', err);
+      alert('Translation service temporarily unavailable. Please verify API key.');
+    } finally {
+      setIsTranslating(false);
+    }
+  };
+
+  const handleCopyTranslation = () => {
+    if (!translatedContent) return;
+    navigator.clipboard.writeText(translatedContent);
+    setCopiedTranslation(true);
+    setTimeout(() => setCopiedTranslation(false), 2000);
+  };
+
+  const handleDownloadTranslation = () => {
+    if (!translatedContent) return;
+    const blob = new Blob([translatedContent], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${data.metadata.fileName.replace(/\.[^/.]+$/, '')}_translated_${targetTranslateLanguage.toLowerCase()}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  // Save Direct Transcript Edits
+  const handleSaveTranscriptEdits = () => {
+    onUpdateResult({
+      ...data,
+      segments: data.segments,
+      metadata: {
+        ...data.metadata,
+        wordCount: data.segments.reduce((acc, s) => acc + s.text.split(/\s+/).filter(Boolean).length, 0),
+        speakersCount: new Set(data.segments.map((s) => s.speaker)).size,
+      },
+    });
+    setSaveSuccessBanner(true);
+    setTimeout(() => setSaveSuccessBanner(false), 3000);
   };
 
   // Server-side Tavily Research call
@@ -574,7 +718,7 @@ export const TranscriptEditor: React.FC<TranscriptEditorProps> = ({
         </div>
       )}
 
-      {/* 6 OpenAI Summarization Modes Section */}
+      {/* AI Summarization & Strategic Intelligence Section */}
       <div className="bg-gradient-to-br from-indigo-50/70 via-slate-50 to-teal-50/50 rounded-3xl border border-indigo-100 p-5 space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-indigo-100/80">
           <div className="flex items-center gap-2">
@@ -586,7 +730,7 @@ export const TranscriptEditor: React.FC<TranscriptEditorProps> = ({
                 AI Summarization & Strategic Intelligence
               </h4>
               <p className="text-[11px] text-slate-500">
-                Powered by OpenAI • 6 Tailored Business Summarization Formats
+                Powered by OpenAI • Tailored Executive Intelligence & Localization
               </p>
             </div>
           </div>
@@ -610,30 +754,31 @@ export const TranscriptEditor: React.FC<TranscriptEditorProps> = ({
           </button>
         </div>
 
-        {/* 7 Summarization Tab Selectors */}
-        <div className="flex flex-wrap items-center gap-1.5">
+        {/* 5 Updated Tab Selectors matching Reference Image 1 */}
+        <div className="flex flex-wrap items-center gap-2">
           {[
-            { id: 'executive', label: 'Executive Summary', icon: Sparkles },
-            { id: 'detailed', label: 'Detailed Summary', icon: FileText },
-            { id: 'key_points', label: 'Key Discussion Points', icon: Layers },
-            { id: 'important_insights', label: 'Important Insights', icon: Lightbulb },
-            { id: 'action_items', label: 'Action Items', icon: ListTodo },
-            { id: 'decisions', label: 'Important Decisions', icon: CheckCircle },
-            { id: 'minutes', label: 'Meeting Minutes', icon: FileSpreadsheet },
+            { id: 'summary', label: 'Summary', icon: Sparkles },
+            { id: 'paragraph', label: 'Paragraph', icon: FileText },
+            { id: 'ai_summary', label: 'AI Summary', icon: Bot },
+            { id: 'translate', label: 'Translate', icon: Globe },
+            { id: 'edit', label: 'Edit', icon: Edit3 },
           ].map((tab) => {
             const Icon = tab.icon;
-            const isActive = activeSummaryTab === tab.id;
+            const isActive =
+              activeSummaryTab === tab.id ||
+              (tab.id === 'summary' && activeSummaryTab === 'executive') ||
+              (tab.id === 'paragraph' && activeSummaryTab === 'detailed');
             return (
               <button
                 key={tab.id}
                 onClick={() => setActiveSummaryTab(tab.id as SummarizationMode)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                className={`flex items-center gap-2 px-4 py-2 rounded-full sm:rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
                   isActive
-                    ? 'bg-indigo-600 text-white shadow-xs'
+                    ? 'bg-indigo-600 text-white shadow-md shadow-indigo-200/80 scale-[1.02]'
                     : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-200/90'
                 }`}
               >
-                <Icon className="w-3.5 h-3.5" />
+                <Icon className="w-4 h-4" />
                 <span>{tab.label}</span>
               </button>
             );
@@ -642,120 +787,279 @@ export const TranscriptEditor: React.FC<TranscriptEditorProps> = ({
 
         {/* Tab Content Display */}
         <div className="bg-white p-4 sm:p-5 rounded-2xl border border-indigo-100/90 shadow-2xs">
-          {activeSummaryTab === 'executive' && (
-            <div className="space-y-2">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-indigo-600 flex items-center gap-1">
-                <Sparkles className="w-3 h-3" />
-                Executive Briefing
-              </span>
-              <p className="text-xs sm:text-sm text-slate-800 leading-relaxed font-normal">
-                {cs?.executive || data.summary}
-              </p>
-            </div>
-          )}
-
-          {activeSummaryTab === 'detailed' && (
-            <div className="space-y-2">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-indigo-600 flex items-center gap-1">
-                <FileText className="w-3 h-3" />
-                Detailed Qualitative Analysis
-              </span>
-              <div className="text-xs sm:text-sm text-slate-800 leading-relaxed font-normal whitespace-pre-line">
-                {cs?.detailed || data.summary}
+          {/* TAB 1: SUMMARY (Structured Overview) */}
+          {(activeSummaryTab === 'summary' || activeSummaryTab === 'executive') && (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-indigo-600 flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5" />
+                  Structured Executive Overview
+                </span>
+                <button
+                  type="button"
+                  onClick={handleCopySummary}
+                  className="inline-flex items-center gap-1 text-xs text-indigo-600 hover:text-indigo-800 font-bold transition-colors cursor-pointer"
+                >
+                  {copiedSummary ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                  <span>{copiedSummary ? 'Copied' : 'Copy Summary'}</span>
+                </button>
+              </div>
+              <div className="text-xs sm:text-sm text-slate-800 leading-relaxed font-normal whitespace-pre-line bg-slate-50/80 p-4 rounded-xl border border-slate-200">
+                {cs?.summary || cs?.executive || data.summary}
               </div>
             </div>
           )}
 
-          {activeSummaryTab === 'minutes' && (
-            <div className="space-y-2">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-indigo-600 flex items-center gap-1">
-                <FileSpreadsheet className="w-3 h-3" />
-                Corporate Meeting Minutes
-              </span>
-              <div className="text-xs sm:text-sm text-slate-800 leading-relaxed font-mono whitespace-pre-line bg-slate-50 p-3 rounded-xl border border-slate-200">
-                {cs?.minutes || `MEETING RECORD\nFile: ${data.metadata.fileName}\nIdentified Speakers: ${data.metadata.speakersCount}\nRecorded Duration: ${Math.round(data.metadata.duration)}s\n\nMinutes Overview:\n${data.summary}`}
+          {/* TAB 2: PARAGRAPH (Detailed Narrative Summary with Reference Image 2 Toggle) */}
+          {(activeSummaryTab === 'paragraph' || activeSummaryTab === 'detailed') && (
+            <div className="space-y-3">
+              <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-slate-100">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-indigo-600 flex items-center gap-1.5">
+                  <FileText className="w-3.5 h-3.5" />
+                  Detailed Qualitative Summary
+                </span>
+
+                {/* Reference Image 2: [ Paragraphs | Segments ] toggle pill */}
+                <div className="inline-flex items-center p-0.5 rounded-lg border border-slate-200 bg-slate-100 text-xs font-bold">
+                  <button
+                    type="button"
+                    onClick={() => setParagraphViewMode('paragraphs')}
+                    className={`px-3 py-1 rounded-md transition-all cursor-pointer ${
+                      paragraphViewMode === 'paragraphs'
+                        ? 'bg-[#0f172a] text-white shadow-xs'
+                        : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    Paragraphs
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setParagraphViewMode('segments')}
+                    className={`px-3 py-1 rounded-md transition-all cursor-pointer ${
+                      paragraphViewMode === 'segments'
+                        ? 'bg-[#0f172a] text-white shadow-xs'
+                        : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    Segments
+                  </button>
+                </div>
+              </div>
+
+              {paragraphViewMode === 'paragraphs' ? (
+                <div className="text-xs sm:text-sm text-slate-800 leading-relaxed font-normal whitespace-pre-line bg-slate-50/60 p-4 rounded-xl border border-slate-200">
+                  {cs?.paragraph || cs?.detailed || data.summary}
+                </div>
+              ) : (
+                <div className="space-y-2 max-h-96 overflow-y-auto pr-1">
+                  {currentSegments.map((seg) => (
+                    <div key={seg.id} className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs">
+                      <div className="flex items-center justify-between text-[11px] font-bold text-slate-500 mb-1">
+                        <span className="text-indigo-600 font-semibold">{seg.speaker}</span>
+                        <span className="font-mono">[{formatTime(seg.startTime)} - {formatTime(seg.endTime)}]</span>
+                      </div>
+                      <p className="text-slate-800 leading-relaxed">{seg.text}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* TAB 3: AI SUMMARY (Short, Concise AI-Powered Summary) */}
+          {activeSummaryTab === 'ai_summary' && (
+            <div className="space-y-3">
+              <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-slate-100">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-purple-600 flex items-center gap-1.5">
+                  <Bot className="w-3.5 h-3.5" />
+                  Concise AI Conversation Briefing
+                </span>
+                <button
+                  type="button"
+                  onClick={handleGenerateAISummary}
+                  disabled={isAiSummarizing}
+                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-purple-50 hover:bg-purple-100 border border-purple-200 text-xs font-bold text-purple-700 transition-colors cursor-pointer disabled:opacity-50"
+                >
+                  {isAiSummarizing ? (
+                    <>
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                      <span>Generating with AI...</span>
+                    </>
+                  ) : (
+                    <>
+                      <RefreshCw className="w-3 h-3" />
+                      <span>Regenerate AI Summary</span>
+                    </>
+                  )}
+                </button>
+              </div>
+
+              <div className="p-4 sm:p-5 bg-gradient-to-r from-purple-50/70 via-indigo-50/50 to-pink-50/40 rounded-2xl border border-purple-200/80 text-xs sm:text-sm text-slate-800 leading-relaxed font-medium shadow-xs">
+                {cs?.aiSummary || cs?.summary || cs?.executive || data.summary}
               </div>
             </div>
           )}
 
-          {activeSummaryTab === 'key_points' && (
-            <div className="space-y-2">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-indigo-600 flex items-center gap-1">
-                <Layers className="w-3 h-3" />
-                Core Discussion Themes
-              </span>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
-                {(cs?.keyPoints || data.keyTopics).map((point, idx) => (
-                  <div key={idx} className="flex items-start gap-2 p-2.5 bg-slate-50 rounded-xl border border-slate-200 text-xs text-slate-800">
-                    <span className="w-5 h-5 rounded-md bg-indigo-100 text-indigo-700 font-bold flex items-center justify-center shrink-0 text-[10px]">
-                      {idx + 1}
+          {/* TAB 4: TRANSLATE (AI Localization Engine) */}
+          {activeSummaryTab === 'translate' && (
+            <div className="space-y-4">
+              <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-100">
+                <div className="flex items-center gap-2">
+                  <Globe className="w-4 h-4 text-indigo-600 shrink-0" />
+                  <span className="text-xs font-bold text-slate-700">Target Language:</span>
+                  <select
+                    value={targetTranslateLanguage}
+                    onChange={(e) => setTargetTranslateLanguage(e.target.value)}
+                    className="bg-white border border-slate-300 rounded-xl px-3 py-1.5 text-xs font-bold text-slate-800 focus:outline-indigo-500 shadow-2xs cursor-pointer"
+                  >
+                    {TRANSLATION_LANGUAGES.map((lang) => (
+                      <option key={lang} value={lang}>{lang}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleTranslateTranscript}
+                  disabled={isTranslating}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white text-xs font-bold shadow-md shadow-indigo-200 transition-all cursor-pointer disabled:opacity-50"
+                >
+                  {isTranslating ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <span>Translating with AI...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Languages className="w-3.5 h-3.5" />
+                      <span>Translate Transcript</span>
+                    </>
+                  )}
+                </button>
+              </div>
+
+              {translatedContent ? (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-bold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200 flex items-center gap-1.5">
+                      <Check className="w-3 h-3 text-emerald-600" />
+                      Translated to {targetTranslateLanguage}
                     </span>
-                    <span className="leading-relaxed">{point}</span>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={handleCopyTranslation}
+                        className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition-colors cursor-pointer text-xs"
+                      >
+                        {copiedTranslation ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
+                        <span>{copiedTranslation ? 'Copied' : 'Copy Translation'}</span>
+                      </button>
+                      <button
+                        onClick={handleDownloadTranslation}
+                        className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition-colors cursor-pointer text-xs"
+                      >
+                        <Download className="w-3 h-3" />
+                        <span>Download TXT</span>
+                      </button>
+                    </div>
                   </div>
-                ))}
-              </div>
+                  <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-800 leading-relaxed whitespace-pre-line max-h-96 overflow-y-auto">
+                    {translatedContent}
+                  </div>
+                </div>
+              ) : (
+                <div className="p-8 text-center bg-slate-50/80 rounded-2xl border border-dashed border-slate-200">
+                  <Globe className="w-8 h-8 text-indigo-400 mx-auto mb-2" />
+                  <p className="text-xs font-bold text-slate-800">No translation generated yet</p>
+                  <p className="text-[11px] text-slate-500 mt-1 max-w-sm mx-auto">
+                    Select your target language and click &ldquo;Translate Transcript&rdquo; to process with OpenAI speech intelligence.
+                  </p>
+                </div>
+              )}
             </div>
           )}
 
-          {activeSummaryTab === 'important_insights' && (
-            <div className="space-y-2">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-teal-600 flex items-center gap-1">
-                <Lightbulb className="w-3 h-3" />
-                Important Insights & Strategic Observations
-              </span>
-              <div className="space-y-2 pt-1">
-                {(cs?.importantInsights && cs.importantInsights.length > 0 ? cs.importantInsights : [
-                  'Strategic operational consolidation delivers primary timeline acceleration',
-                  'Key stakeholder consensus achieved on risk allocation and governance',
-                  'High-value knowledge transfer mechanisms identified for scaled adoption',
-                ]).map((insight, idx) => (
-                  <div key={idx} className="flex items-start gap-2.5 p-2.5 bg-teal-50/60 rounded-xl border border-teal-200/80 text-xs text-slate-800">
-                    <span className="w-5 h-5 rounded-md bg-teal-100 text-teal-700 font-bold flex items-center justify-center shrink-0 text-[10px]">
-                      {idx + 1}
-                    </span>
-                    <span className="leading-relaxed font-medium">{insight}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+          {/* TAB 5: EDIT (Direct Transcript Editor & Save Changes) */}
+          {activeSummaryTab === 'edit' && (
+            <div className="space-y-4">
+              <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-100">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                    <Edit3 className="w-3.5 h-3.5 text-indigo-600" />
+                    Direct Transcript Editor ({currentSegments.length} Segments)
+                  </span>
+                </div>
 
-          {activeSummaryTab === 'action_items' && (
-            <div className="space-y-2">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-indigo-600 flex items-center gap-1">
-                <ListTodo className="w-3 h-3" />
-                Action Items & Deliverables
-              </span>
-              <div className="space-y-2 pt-1">
-                {(cs?.actionItems && cs.actionItems.length > 0 ? cs.actionItems : [
-                  'Follow up on private equity due diligence checklist',
-                  'Synthesize technical audit findings for investment committee',
-                  'Schedule validation session with engineering lead',
-                ]).map((action, idx) => (
-                  <div key={idx} className="flex items-center gap-2.5 p-2.5 bg-teal-50/60 rounded-xl border border-teal-200/80 text-xs text-slate-800">
-                    <CheckCircle className="w-4 h-4 text-teal-600 shrink-0" />
-                    <span className="font-medium">{action}</span>
-                  </div>
-                ))}
+                <div className="flex flex-wrap items-center gap-2">
+                  {data.originalSegments && (
+                    <button
+                      type="button"
+                      onClick={handleRestoreOriginal}
+                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-colors cursor-pointer"
+                      title="Revert back to verbatim transcription"
+                    >
+                      <Undo2 className="w-3.5 h-3.5" />
+                      <span>Revert</span>
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={handleAddSegment}
+                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-colors cursor-pointer"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Add Segment</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSaveTranscriptEdits}
+                    className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-md shadow-indigo-200 transition-all cursor-pointer"
+                  >
+                    <FileCheck className="w-3.5 h-3.5" />
+                    <span>Save Changes</span>
+                  </button>
+                </div>
               </div>
-            </div>
-          )}
 
-          {activeSummaryTab === 'decisions' && (
-            <div className="space-y-2">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-indigo-600 flex items-center gap-1">
-                <CheckCircle className="w-3 h-3" />
-                Important Decisions Concluded
-              </span>
-              <div className="space-y-2 pt-1">
-                {(cs?.decisions && cs.decisions.length > 0 ? cs.decisions : [
-                  'Approved strategic intelligence transcription workflow',
-                  'Consensus reached on target investment thesis and parameters',
-                  'Confirmed sign-off timeline for committee presentation',
-                ]).map((decision, idx) => (
-                  <div key={idx} className="flex items-center gap-2.5 p-2.5 bg-indigo-50/60 rounded-xl border border-indigo-200/80 text-xs text-slate-800">
-                    <span className="w-2 h-2 rounded-full bg-indigo-600 shrink-0"></span>
-                    <span className="font-medium">{decision}</span>
+              {saveSuccessBanner && (
+                <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-xs font-bold text-emerald-800 flex items-center gap-2 animate-in fade-in">
+                  <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span>Changes saved successfully to active transcript and session!</span>
+                </div>
+              )}
+
+              {/* Editable Segments Stream */}
+              <div className="space-y-3 max-h-[420px] overflow-y-auto pr-1">
+                {currentSegments.map((seg) => (
+                  <div key={seg.id} className="p-3.5 bg-slate-50/80 rounded-2xl border border-slate-200 space-y-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <User className="w-3.5 h-3.5 text-slate-400" />
+                        <input
+                          type="text"
+                          value={seg.speaker}
+                          onChange={(e) => handleSpeakerChange(seg.id, e.target.value)}
+                          className="bg-white border border-slate-200 rounded-lg px-2.5 py-0.5 text-xs font-bold text-slate-800 focus:outline-indigo-500"
+                          title="Edit Speaker Name"
+                        />
+                        <span className="text-[11px] font-mono text-slate-400">
+                          [{formatTime(seg.startTime)} - {formatTime(seg.endTime)}]
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteSegment(seg.id)}
+                        className="p-1 text-slate-400 hover:text-rose-600 transition-colors cursor-pointer"
+                        title="Delete Segment"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                    <textarea
+                      value={seg.text}
+                      onChange={(e) => handleTextChange(seg.id, e.target.value)}
+                      rows={2}
+                      className="w-full bg-white border border-slate-200 rounded-xl p-2.5 text-xs sm:text-sm text-slate-800 focus:outline-indigo-500 resize-y"
+                    />
                   </div>
                 ))}
               </div>

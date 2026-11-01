@@ -27,6 +27,12 @@ import {
   X,
   FileText,
   Volume2,
+  Settings,
+  Palette,
+  Check,
+  CheckCircle,
+  Play,
+  Mic,
 } from 'lucide-react';
 import {
   TranscriptionResult,
@@ -35,8 +41,9 @@ import {
   TranscriptionStyle,
 } from '@/types/transcription';
 import { exportToDOCX, exportToPDF, exportToTXT, exportCombined } from '@/lib/exportUtils';
-import { formatDuration } from '@/lib/audioToneGenerator';
+import { formatDuration, createSyntheticAudioBlob } from '@/lib/audioToneGenerator';
 import { useAuth } from '@/context/AuthContext';
+import { usePlayerSettings, PlayerDesign } from '@/context/PlayerSettingsContext';
 import {
   fetchCloudTranscriptions,
   saveCloudTranscription,
@@ -81,6 +88,30 @@ export const TranscriptionStudio: React.FC<TranscriptionStudioProps> = ({
   const [isSyncingCloud, setIsSyncingCloud] = useState<boolean>(false);
   const [showStudioAuthModal, setShowStudioAuthModal] = useState<boolean>(false);
   const { user, profile, signOut, isConfigured } = useAuth();
+
+  // Audio Player Theme Settings & Interactive Live Preview State
+  const { playerDesign, setPlayerDesign } = usePlayerSettings();
+  const [settingsAudioUrl, setSettingsAudioUrl] = useState<string | null>(null);
+  const [settingsAudioDuration, setSettingsAudioDuration] = useState<number>(57);
+  const [settingsCurrentTime, setSettingsCurrentTime] = useState<number>(23);
+  const [settingsIsPlaying, setSettingsIsPlaying] = useState<boolean>(false);
+  const [saveToast, setSaveToast] = useState<string | null>(null);
+
+  // Initialize synthetic audio tone for live preview
+  useEffect(() => {
+    if (typeof window !== 'undefined' && !settingsAudioUrl) {
+      const synthetic = createSyntheticAudioBlob(57);
+      setSettingsAudioUrl(synthetic);
+    }
+  }, [settingsAudioUrl]);
+
+  const handleSelectPlayerDesign = async (design: PlayerDesign) => {
+    await setPlayerDesign(design);
+    setSaveToast(`Player Design "${design === 'purple-glass' ? 'Purple Glass' : 'Teal Glass'}" applied & saved!`);
+    setTimeout(() => {
+      setSaveToast(null);
+    }, 3500);
+  };
 
   // Load History from Supabase (or localStorage fallback when not logged in)
   const refreshHistory = useCallback(async () => {
@@ -444,6 +475,7 @@ export const TranscriptionStudio: React.FC<TranscriptionStudioProps> = ({
                       duration={audioDuration}
                       currentTime={currentTime}
                       isPlaying={isPlaying}
+                      title={transcriptionData.metadata.fileName}
                       onTimeUpdate={(t) => setCurrentTime(t)}
                       onPlayPause={(p) => setIsPlaying(p)}
                       onSeek={(t) => setCurrentTime(t)}
@@ -676,6 +708,27 @@ export const TranscriptionStudio: React.FC<TranscriptionStudioProps> = ({
                   </div>
                 </div>
 
+                {/* Audio Player Preferences Quick Link */}
+                <div className="p-4 rounded-2xl bg-indigo-50/60 border border-indigo-100 flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center shrink-0">
+                      <Palette className="w-4.5 h-4.5" />
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-bold text-indigo-950">Audio Player Preference</h4>
+                      <p className="text-[11px] text-indigo-700/80">
+                        Current theme: <span className="font-bold">{playerDesign === 'purple-glass' ? 'Player Design 1 (Purple Glass)' : 'Player Design 2 (Teal Glass)'}</span>
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setSidebarTab('settings')}
+                    className="px-3 py-1.5 rounded-xl bg-white text-indigo-700 hover:bg-indigo-50 border border-indigo-200 text-xs font-bold transition-all shadow-2xs cursor-pointer shrink-0"
+                  >
+                    Change Theme →
+                  </button>
+                </div>
+
                 {/* Action Buttons */}
                 <div className="pt-2 flex items-center justify-between">
                   {user ? (
@@ -694,6 +747,317 @@ export const TranscriptionStudio: React.FC<TranscriptionStudioProps> = ({
                       <User className="w-3.5 h-3.5" />
                       <span>Sign In with Supabase</span>
                     </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ======================================================== */}
+          {/* TAB 4: MY SETTINGS (AUDIO PLAYER PREFERENCES)            */}
+          {/* ======================================================== */}
+          {sidebarTab === 'settings' && (
+            <div className="space-y-8 max-w-5xl animate-fade-in">
+              {/* Header */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+                      My Settings
+                    </h2>
+                    <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200">
+                      Preferences
+                    </span>
+                  </div>
+                  <p className="text-xs sm:text-sm text-slate-500 mt-1">
+                    Manage your application preferences, audio player interface, and studio settings.
+                  </p>
+                </div>
+
+                {/* Sub-nav quick link to My Profile */}
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setSidebarTab('profile')}
+                    className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-600 bg-white hover:bg-slate-50 border border-slate-200 transition-colors shadow-2xs cursor-pointer"
+                  >
+                    <User className="w-3.5 h-3.5 text-slate-400" />
+                    <span>View My Profile</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Toast / Notification when preference is updated */}
+              {saveToast && (
+                <div className="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-xs font-bold text-emerald-800 flex items-center gap-2.5 shadow-xs animate-in fade-in duration-200">
+                  <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span>{saveToast}</span>
+                </div>
+              )}
+
+              {/* SECTION: AUDIO PLAYER PREFERENCES */}
+              <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/90 shadow-sm space-y-6">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                      <Palette className="w-4 h-4" />
+                    </div>
+                    <h3 className="text-lg font-bold text-slate-900">
+                      Audio Player Preferences
+                    </h3>
+                  </div>
+                  <p className="text-xs text-slate-500 mt-1.5 max-w-2xl leading-relaxed">
+                    Select your preferred audio player design. Your selection applies automatically across all uploaded recordings, studio transcriptions, and persists across reloads and logins.
+                  </p>
+                </div>
+
+                {/* TWO SELECTABLE CARDS */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* CARD 1: Player Design 1 – Purple Glass */}
+                  <div
+                    onClick={() => handleSelectPlayerDesign('purple-glass')}
+                    className={`relative rounded-3xl p-5 border-2 transition-all cursor-pointer flex flex-col justify-between group ${
+                      playerDesign === 'purple-glass'
+                        ? 'border-purple-600 bg-purple-50/20 shadow-md shadow-purple-500/10 ring-2 ring-purple-500/20'
+                        : 'border-slate-200 hover:border-purple-300 bg-white hover:shadow-sm'
+                    }`}
+                  >
+                    <div className="space-y-4">
+                      {/* Card Header & Radio */}
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-purple-100 text-purple-800 tracking-wide uppercase">
+                              Default • Ref Image 2
+                            </span>
+                            {playerDesign === 'purple-glass' && (
+                              <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 flex items-center gap-1">
+                                <Check className="w-3 h-3 text-emerald-600" /> Active Theme
+                              </span>
+                            )}
+                          </div>
+                          <h4 className="text-base font-bold text-slate-900 mt-1.5 group-hover:text-purple-900 transition-colors">
+                            Player Design 1 – Purple Glass
+                          </h4>
+                          <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">
+                            Premium purple/blue glassmorphism player with glowing fluid waveform, rounded corners, and vibrant gradients.
+                          </p>
+                        </div>
+
+                        {/* Radio circle */}
+                        <div
+                          className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 mt-1 transition-all ${
+                            playerDesign === 'purple-glass'
+                              ? 'border-purple-600 bg-purple-600'
+                              : 'border-slate-300 group-hover:border-purple-400'
+                          }`}
+                        >
+                          {playerDesign === 'purple-glass' && (
+                            <div className="w-2 h-2 rounded-full bg-white" />
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Visual Thumbnail / Preview of Purple Glass */}
+                      <div className="relative rounded-2xl overflow-hidden border border-purple-500/30 bg-[#120f2d] p-4 text-white shadow-inner">
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-500 via-indigo-600 to-purple-600 flex items-center justify-center shadow-xs shrink-0">
+                              <div className="flex items-center gap-0.5 h-4">
+                                <div className="w-0.5 h-2 bg-white rounded-full" />
+                                <div className="w-0.5 h-3.5 bg-white rounded-full" />
+                                <div className="w-0.5 h-4 bg-white rounded-full" />
+                                <div className="w-0.5 h-2.5 bg-white rounded-full" />
+                              </div>
+                            </div>
+                            <div className="min-w-0">
+                              <div className="text-xs font-bold text-white truncate">Meeting_Recording.mp3</div>
+                              <div className="text-[10px] text-purple-300/70">Total duration: 0:57</div>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <div className="w-7 h-7 rounded-full bg-gradient-to-b from-[#9055ff] to-[#6725ea] flex items-center justify-center shadow-[0_0_12px_rgba(144,85,255,0.7)] text-white">
+                              <Play className="w-3.5 h-3.5 fill-white ml-0.5" />
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Fluid Wave Thumbnail Mock */}
+                        <div className="my-2.5 h-7 relative flex items-center justify-center overflow-hidden">
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <div className="w-full h-3 bg-gradient-to-r from-pink-500/40 via-purple-400/80 to-blue-400/40 rounded-full blur-[2px]" />
+                          </div>
+                          <div className="w-full h-0.5 bg-gradient-to-r from-pink-500 via-purple-300 to-blue-400 relative z-10" />
+                        </div>
+
+                        {/* Scrubber Mock */}
+                        <div className="flex items-center gap-2 text-[9px] font-mono text-purple-200/70">
+                          <span>0:23</span>
+                          <div className="flex-1 h-1 bg-purple-950 rounded-full overflow-hidden">
+                            <div className="w-[40%] h-full bg-gradient-to-r from-purple-500 to-pink-500 rounded-full" />
+                          </div>
+                          <span>0:57</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Action Button */}
+                    <div className="mt-5 pt-3 border-t border-slate-100 flex items-center justify-between">
+                      <span className="text-[11px] text-slate-400">
+                        {playerDesign === 'purple-glass' ? 'Active application theme' : 'Click to select theme'}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleSelectPlayerDesign('purple-glass');
+                        }}
+                        className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                          playerDesign === 'purple-glass'
+                            ? 'bg-purple-600 text-white shadow-xs'
+                            : 'bg-slate-100 text-slate-700 hover:bg-purple-50 hover:text-purple-700'
+                        }`}
+                      >
+                        {playerDesign === 'purple-glass' ? 'Selected' : 'Use Purple Glass'}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* CARD 2: Player Design 2 – Teal Glass */}
+                  <div
+                    onClick={() => handleSelectPlayerDesign('teal-glass')}
+                    className={`relative rounded-3xl p-5 border-2 transition-all cursor-pointer flex flex-col justify-between group ${
+                      playerDesign === 'teal-glass'
+                        ? 'border-teal-600 bg-teal-50/20 shadow-md shadow-teal-500/10 ring-2 ring-teal-500/20'
+                        : 'border-slate-200 hover:border-teal-300 bg-white hover:shadow-sm'
+                    }`}
+                  >
+                    <div className="space-y-4">
+                      {/* Card Header & Radio */}
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-teal-100 text-teal-800 tracking-wide uppercase">
+                              Acoustic • Ref Image 3
+                            </span>
+                            {playerDesign === 'teal-glass' && (
+                              <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 flex items-center gap-1">
+                                <Check className="w-3 h-3 text-emerald-600" /> Active Theme
+                              </span>
+                            )}
+                          </div>
+                          <h4 className="text-base font-bold text-slate-900 mt-1.5 group-hover:text-teal-900 transition-colors">
+                            Player Design 2 – Teal Glass
+                          </h4>
+                          <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">
+                            Dark teal/green glassmorphism player with glowing animated acoustic waveform, mic emblem, and emerald ring controls.
+                          </p>
+                        </div>
+
+                        {/* Radio circle */}
+                        <div
+                          className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 mt-1 transition-all ${
+                            playerDesign === 'teal-glass'
+                              ? 'border-teal-600 bg-teal-600'
+                              : 'border-slate-300 group-hover:border-teal-400'
+                          }`}
+                        >
+                          {playerDesign === 'teal-glass' && (
+                            <div className="w-2 h-2 rounded-full bg-white" />
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Visual Thumbnail / Preview of Teal Glass */}
+                      <div className="relative rounded-2xl overflow-hidden border border-teal-500/30 bg-[#061e1b] p-4 text-white shadow-inner">
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-800 flex items-center justify-center shadow-xs shrink-0">
+                              <Mic className="w-4.5 h-4.5 text-white" />
+                            </div>
+                            <div className="min-w-0">
+                              <div className="text-xs font-bold text-white truncate">Demo.mp3</div>
+                              <div className="text-[10px] text-teal-300/70">Total duration: 0:57</div>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <div className="w-7 h-7 rounded-full border border-emerald-400 bg-emerald-950/40 flex items-center justify-center shadow-[0_0_12px_rgba(52,211,153,0.6)] text-emerald-300">
+                              <Play className="w-3.5 h-3.5 fill-current ml-0.5" />
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Fluid Wave Thumbnail Mock */}
+                        <div className="my-2.5 h-7 relative flex items-center justify-center overflow-hidden">
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <div className="w-full h-3 bg-gradient-to-r from-teal-500/40 via-emerald-400/80 to-cyan-400/40 rounded-full blur-[2px]" />
+                          </div>
+                          <div className="w-full h-0.5 bg-gradient-to-r from-teal-400 via-emerald-300 to-cyan-300 relative z-10" />
+                        </div>
+
+                        {/* Scrubber Mock */}
+                        <div className="flex items-center gap-2 text-[9px] font-mono text-teal-200/70">
+                          <span>0:00</span>
+                          <div className="flex-1 h-1 bg-teal-950 rounded-full overflow-hidden">
+                            <div className="w-[30%] h-full bg-gradient-to-r from-teal-400 to-cyan-300 rounded-full" />
+                          </div>
+                          <span>0:57</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Action Button */}
+                    <div className="mt-5 pt-3 border-t border-slate-100 flex items-center justify-between">
+                      <span className="text-[11px] text-slate-400">
+                        {playerDesign === 'teal-glass' ? 'Active application theme' : 'Click to select theme'}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleSelectPlayerDesign('teal-glass');
+                        }}
+                        className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                          playerDesign === 'teal-glass'
+                            ? 'bg-teal-600 text-white shadow-xs'
+                            : 'bg-slate-100 text-slate-700 hover:bg-teal-50 hover:text-teal-700'
+                        }`}
+                      >
+                        {playerDesign === 'teal-glass' ? 'Selected' : 'Use Teal Glass'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* LIVE INTERACTIVE PLAYER PREVIEW */}
+                <div className="pt-6 border-t border-slate-100 space-y-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div>
+                      <h4 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                        <span>Live Interactive Player Preview</span>
+                        <span className="text-[10px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded-full">
+                          REAL-TIME AUDIO & WAVEFORM
+                        </span>
+                      </h4>
+                      <p className="text-xs text-slate-500 mt-0.5">
+                        Test the live player with audio playback, synchronized undulating waveform animations, and seekbar controls. Switching themes while playing continues seamlessly without audio pause.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Render Live AudioWaveformPlayer with the currently active playerDesign */}
+                  {settingsAudioUrl && (
+                    <AudioWaveformPlayer
+                      audioUrl={settingsAudioUrl}
+                      duration={settingsAudioDuration}
+                      currentTime={settingsCurrentTime}
+                      isPlaying={settingsIsPlaying}
+                      title={playerDesign === 'purple-glass' ? 'Meeting_Recording.mp3' : 'Demo.mp3'}
+                      onTimeUpdate={(t) => setSettingsCurrentTime(t)}
+                      onPlayPause={(p) => setSettingsIsPlaying(p)}
+                      onSeek={(t) => setSettingsCurrentTime(t)}
+                    />
                   )}
                 </div>
               </div>

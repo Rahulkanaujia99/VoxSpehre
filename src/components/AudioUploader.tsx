@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { TranscriptionStyle } from '@/types/transcription';
 import { formatDuration } from '@/lib/audioToneGenerator';
+import { AudioWaveformPlayer } from './AudioWaveformPlayer';
 
 export interface StyleOption {
   id: TranscriptionStyle;
@@ -82,7 +83,6 @@ export const AudioUploader: React.FC<AudioUploaderProps> = ({
   transcriptionStage = '',
 }) => {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [customFileName, setCustomFileName] = useState<string>('');
@@ -93,8 +93,6 @@ export const AudioUploader: React.FC<AudioUploaderProps> = ({
   const [audioDuration, setAudioDuration] = useState<number>(0);
   const [currentTime, setCurrentTime] = useState<number>(0);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
-  const [volume, setVolume] = useState<number>(0.9);
-  const [isMuted, setIsMuted] = useState<boolean>(false);
 
   const [selectedStyle, setSelectedStyle] = useState<TranscriptionStyle>('standard');
   const [isStyleDropdownOpen, setIsStyleDropdownOpen] = useState<boolean>(false);
@@ -183,9 +181,6 @@ export const AudioUploader: React.FC<AudioUploaderProps> = ({
   };
 
   const handleClearAll = () => {
-    if (audioRef.current) {
-      audioRef.current.pause();
-    }
     if (audioUrl) {
       URL.revokeObjectURL(audioUrl);
     }
@@ -214,51 +209,6 @@ export const AudioUploader: React.FC<AudioUploaderProps> = ({
   const handleCancelEdit = () => {
     setEditedNameInput(customFileName || selectedFile?.name || '');
     setIsEditingName(false);
-  };
-
-  // Audio Playback Controls
-  const togglePlayPause = () => {
-    if (!audioRef.current) return;
-    if (isPlaying) {
-      audioRef.current.pause();
-      setIsPlaying(false);
-    } else {
-      audioRef.current.play().then(() => setIsPlaying(true)).catch((e) => console.warn(e));
-    }
-  };
-
-  const handleTimeUpdate = () => {
-    if (audioRef.current) {
-      setCurrentTime(audioRef.current.currentTime);
-    }
-  };
-
-  const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newTime = parseFloat(e.target.value);
-    setCurrentTime(newTime);
-    if (audioRef.current) {
-      audioRef.current.currentTime = newTime;
-    }
-  };
-
-  const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = parseFloat(e.target.value);
-    setVolume(val);
-    setIsMuted(val === 0);
-    if (audioRef.current) {
-      audioRef.current.volume = val;
-    }
-  };
-
-  const toggleMute = () => {
-    if (!audioRef.current) return;
-    if (isMuted) {
-      audioRef.current.volume = volume || 0.9;
-      setIsMuted(false);
-    } else {
-      audioRef.current.volume = 0;
-      setIsMuted(true);
-    }
   };
 
   const handleStart = () => {
@@ -432,105 +382,18 @@ export const AudioUploader: React.FC<AudioUploaderProps> = ({
             </div>
           </div>
 
-          {/* Embedded Audio Player */}
+          {/* Selectable Glassmorphism Audio Waveform Player */}
           {audioUrl && (
-            <div className="bg-slate-900 text-white rounded-2xl p-5 shadow-inner space-y-4">
-              <audio
-                ref={audioRef}
-                src={audioUrl}
-                onTimeUpdate={handleTimeUpdate}
-                onEnded={() => {
-                  setIsPlaying(false);
-                  setCurrentTime(0);
-                }}
-              />
-
-              {/* Pseudo Waveform Scrubber Bars */}
-              <div className="relative flex items-center justify-between gap-1 h-12 px-2 py-1 bg-slate-950/60 rounded-xl border border-slate-800">
-                {Array.from({ length: 48 }).map((_, idx) => {
-                  const progress = audioDuration > 0 ? currentTime / audioDuration : 0;
-                  const barProgress = idx / 48;
-                  const isPassed = barProgress <= progress;
-                  const height = 20 + 70 * Math.abs(Math.sin((idx / 6) + (idx % 3) * 0.5));
-
-                  return (
-                    <div
-                      key={idx}
-                      style={{ height: `${height}%` }}
-                      className={`w-1 rounded-full transition-colors ${
-                        isPassed ? 'bg-teal-400' : 'bg-slate-700'
-                      }`}
-                    />
-                  );
-                })}
-              </div>
-
-              {/* Audio Controls Bar */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  {/* Play / Pause Button */}
-                  <button
-                    onClick={togglePlayPause}
-                    className="w-10 h-10 rounded-xl bg-teal-500 hover:bg-teal-400 text-slate-950 flex items-center justify-center transition-all shadow-md shadow-teal-500/20 active:scale-95 cursor-pointer"
-                  >
-                    {isPlaying ? <Pause className="w-5 h-5 fill-current" /> : <Play className="w-5 h-5 fill-current ml-0.5" />}
-                  </button>
-
-                  {/* Rewind to Start */}
-                  <button
-                    onClick={() => {
-                      if (audioRef.current) {
-                        audioRef.current.currentTime = 0;
-                        setCurrentTime(0);
-                      }
-                    }}
-                    className="p-2 text-slate-400 hover:text-white transition-colors cursor-pointer"
-                    title="Restart Audio"
-                  >
-                    <RotateCcw className="w-4 h-4" />
-                  </button>
-
-                  {/* Current / Duration Time */}
-                  <div className="font-mono text-xs text-teal-300 tracking-wider">
-                    {formatDuration(currentTime)} / {formatDuration(audioDuration)}
-                  </div>
-                </div>
-
-                {/* Seek Bar Slider */}
-                <input
-                  type="range"
-                  min="0"
-                  max={audioDuration || 1}
-                  step="0.1"
-                  value={currentTime}
-                  onChange={handleSeek}
-                  className="flex-1 max-w-xs accent-teal-400 h-1.5 bg-slate-800 rounded-lg cursor-pointer"
-                />
-
-                {/* Volume Control */}
-                <div className="flex items-center gap-2 self-end sm:self-auto">
-                  <button
-                    onClick={toggleMute}
-                    className="text-slate-400 hover:text-white p-1 transition-colors"
-                  >
-                    {isMuted || volume === 0 ? (
-                      <VolumeX className="w-4 h-4 text-rose-400" />
-                    ) : (
-                      <Volume2 className="w-4 h-4" />
-                    )}
-                  </button>
-                  <input
-                    type="range"
-                    min="0"
-                    max="1"
-                    step="0.05"
-                    value={isMuted ? 0 : volume}
-                    onChange={handleVolumeChange}
-                    className="w-20 accent-teal-400 h-1.5 bg-slate-800 rounded-lg cursor-pointer"
-                  />
-                </div>
-              </div>
-            </div>
+            <AudioWaveformPlayer
+              audioUrl={audioUrl}
+              duration={audioDuration}
+              currentTime={currentTime}
+              isPlaying={isPlaying}
+              title={displayFileName}
+              onTimeUpdate={(t) => setCurrentTime(t)}
+              onPlayPause={(p) => setIsPlaying(p)}
+              onSeek={(t) => setCurrentTime(t)}
+            />
           )}
 
           {/* Transcription Style Dropdown & Start Transcription Action Bar */}

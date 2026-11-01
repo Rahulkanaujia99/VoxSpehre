@@ -187,78 +187,98 @@ export const AudioWaveformPlayer: React.FC<AudioWaveformPlayerProps> = ({
       if (isPlaying) {
         phaseRef.current += 0.05 * playbackRate;
       } else {
-        phaseRef.current += 0.005;
+        phaseRef.current += 0.006;
       }
       const phase = phaseRef.current;
 
       const isPurple = activeDesign === 'purple-glass';
 
-      // Ribbons Configuration
+      // Waveform configurations matching the exact screenshots
       const ribbons = isPurple
         ? [
             {
-              freq1: 0.022,
-              freq2: 0.038,
-              amp: isPlaying ? 16 : 8,
+              freq1: 0.024,
+              freq2: 0.042,
+              amp: isPlaying ? 10 : 5.5,
               phaseOffset: 0,
               stroke: '#f43f5e',
-              glow: 'rgba(244, 63, 94, 0.75)',
-              lineWidth: 2.5,
-              fillGradient: ['rgba(236, 72, 153, 0.25)', 'rgba(168, 85, 247, 0.02)'],
+              glow: 'rgba(244, 63, 94, 0.85)',
+              lineWidth: 2.2,
+              fillGradient: ['rgba(236, 72, 153, 0.28)', 'rgba(168, 85, 247, 0.02)'],
             },
             {
-              freq1: 0.016,
-              freq2: 0.028,
-              amp: isPlaying ? 14 : 7,
+              freq1: 0.018,
+              freq2: 0.032,
+              amp: isPlaying ? 9 : 4.5,
               phaseOffset: 1.4,
               stroke: '#c084fc',
-              glow: 'rgba(192, 132, 252, 0.8)',
-              lineWidth: 2.2,
-              fillGradient: ['rgba(168, 85, 247, 0.2)', 'rgba(99, 102, 241, 0.02)'],
+              glow: 'rgba(192, 132, 252, 0.85)',
+              lineWidth: 2.0,
+              fillGradient: ['rgba(168, 85, 247, 0.22)', 'rgba(99, 102, 241, 0.02)'],
             },
             {
               freq1: 0.028,
-              freq2: 0.045,
-              amp: isPlaying ? 12 : 6,
+              freq2: 0.05,
+              amp: isPlaying ? 7.5 : 3.5,
               phaseOffset: 2.8,
               stroke: '#60a5fa',
-              glow: 'rgba(96, 165, 250, 0.7)',
-              lineWidth: 1.8,
-              fillGradient: ['rgba(96, 165, 250, 0.15)', 'rgba(59, 130, 246, 0.01)'],
+              glow: 'rgba(96, 165, 250, 0.75)',
+              lineWidth: 1.6,
+              fillGradient: ['rgba(96, 165, 250, 0.16)', 'rgba(59, 130, 246, 0.01)'],
             },
           ]
         : [
             {
-              freq1: 0.02,
-              freq2: 0.035,
-              amp: isPlaying ? 16 : 8,
+              freq1: 0.022,
+              freq2: 0.038,
+              amp: isPlaying ? 10 : 5.5,
               phaseOffset: 0,
               stroke: '#22d3ee',
-              glow: 'rgba(34, 211, 238, 0.8)',
-              lineWidth: 2.5,
-              fillGradient: ['rgba(34, 211, 238, 0.25)', 'rgba(20, 184, 166, 0.02)'],
+              glow: 'rgba(34, 211, 238, 0.85)',
+              lineWidth: 2.2,
+              fillGradient: ['rgba(34, 211, 238, 0.28)', 'rgba(20, 184, 166, 0.02)'],
             },
             {
-              freq1: 0.015,
-              freq2: 0.026,
-              amp: isPlaying ? 14 : 7,
+              freq1: 0.016,
+              freq2: 0.03,
+              amp: isPlaying ? 9 : 4.5,
               phaseOffset: 1.5,
               stroke: '#34d399',
-              glow: 'rgba(52, 211, 153, 0.8)',
-              lineWidth: 2.2,
-              fillGradient: ['rgba(52, 211, 153, 0.22)', 'rgba(16, 185, 129, 0.02)'],
+              glow: 'rgba(52, 211, 153, 0.85)',
+              lineWidth: 2.0,
+              fillGradient: ['rgba(52, 211, 153, 0.24)', 'rgba(16, 185, 129, 0.02)'],
             },
             {
-              freq1: 0.025,
-              freq2: 0.042,
-              amp: isPlaying ? 11 : 5.5,
+              freq1: 0.026,
+              freq2: 0.046,
+              amp: isPlaying ? 7.5 : 3.5,
               phaseOffset: 3.1,
               stroke: '#06b6d4',
-              glow: 'rgba(6, 182, 212, 0.65)',
-              lineWidth: 1.8,
+              glow: 'rgba(6, 182, 212, 0.7)',
+              lineWidth: 1.6,
               fillGradient: ['rgba(13, 148, 136, 0.18)', 'rgba(15, 118, 110, 0.01)'],
             },
           ];
+
+      // Draw horizontal core ambient light streak (visible in center of wave in screenshot)
+      ctx.save();
+      const coreGrad = ctx.createLinearGradient(0, 0, width, 0);
+      if (isPurple) {
+        coreGrad.addColorStop(0, 'rgba(236, 72, 153, 0)');
+        coreGrad.addColorStop(0.35, 'rgba(236, 72, 153, 0.25)');
+        coreGrad.addColorStop(0.5, 'rgba(244, 63, 94, 0.45)');
+        coreGrad.addColorStop(0.65, 'rgba(168, 85, 247, 0.25)');
+        coreGrad.addColorStop(1, 'rgba(168, 85, 247, 0)');
+      } else {
+        coreGrad.addColorStop(0, 'rgba(34, 211, 238, 0)');
+        coreGrad.addColorStop(0.35, 'rgba(34, 211, 238, 0.25)');
+        coreGrad.addColorStop(0.5, 'rgba(52, 211, 153, 0.45)');
+        coreGrad.addColorStop(0.65, 'rgba(6, 182, 212, 0.25)');
+        coreGrad.addColorStop(1, 'rgba(6, 182, 212, 0)');
+      }
+      ctx.fillStyle = coreGrad;
+      ctx.fillRect(0, midY - 2.5, width, 5);
+      ctx.restore();
 
       // Draw Each Harmonic Ribbon
       ribbons.forEach((ribbon) => {
@@ -266,15 +286,15 @@ export const AudioWaveformPlayer: React.FC<AudioWaveformPlayerProps> = ({
         ctx.beginPath();
         ctx.lineWidth = ribbon.lineWidth;
         ctx.strokeStyle = ribbon.stroke;
-        ctx.shadowBlur = isPlaying ? 14 : 8;
+        ctx.shadowBlur = isPlaying ? 10 : 6;
         ctx.shadowColor = ribbon.glow;
 
         const points: { x: number; y: number }[] = [];
 
         for (let x = 0; x <= width; x += 3) {
           const normX = x / width;
-          // Smooth bell envelope: 0 at edges, peaks in center
-          const envelope = Math.pow(Math.sin(normX * Math.PI), 1.35);
+          // Smooth bell envelope: 0 at edges, peaks gracefully in center
+          const envelope = Math.pow(Math.sin(normX * Math.PI), 1.6);
 
           const y =
             midY +
@@ -313,19 +333,6 @@ export const AudioWaveformPlayer: React.FC<AudioWaveformPlayerProps> = ({
 
         ctx.restore();
       });
-
-      // Synchronized Playhead Marker along the wave
-      const progress = duration > 0 ? Math.max(0, Math.min(1, currentTime / duration)) : 0;
-      const playheadX = progress * width;
-
-      ctx.save();
-      ctx.beginPath();
-      ctx.arc(playheadX, midY, isPlaying ? 4.5 : 3.5, 0, Math.PI * 2);
-      ctx.fillStyle = '#ffffff';
-      ctx.shadowBlur = 10;
-      ctx.shadowColor = isPurple ? '#f43f5e' : '#22d3ee';
-      ctx.fill();
-      ctx.restore();
 
       animationFrameRef.current = requestAnimationFrame(renderWaveform);
     };
@@ -384,56 +391,56 @@ export const AudioWaveformPlayer: React.FC<AudioWaveformPlayerProps> = ({
 
       {/* ==================================================================== */}
       {/* PLAYER DESIGN 1: PREMIUM PURPLE GLASSMORPHISM                        */}
-      {/* (Reference Image 2: Purple/blue glass, glowing waveform, rounded 28px) */}
+      {/* (Target height ~120-130px on desktop, matching Reference Image 2)    */}
       {/* ==================================================================== */}
       {activeDesign === 'purple-glass' && (
         <div
-          className={`relative overflow-hidden rounded-[28px] border border-purple-500/25 bg-[#120f2d]/95 backdrop-blur-2xl shadow-[0_16px_50px_rgba(15,10,40,0.85)] p-5 sm:p-6 text-white transition-all duration-300 ${
+          className={`relative overflow-hidden rounded-[28px] border border-purple-500/20 bg-gradient-to-r from-[#110e28]/95 via-[#141130]/90 to-[#0e0c24]/95 backdrop-blur-2xl shadow-[0_12px_45px_rgba(20,15,45,0.7)] px-6 sm:px-7 py-3 sm:py-3.5 h-[124px] sm:h-[128px] flex flex-col justify-between text-white transition-all duration-300 select-none ${
             isCompactPreview ? 'scale-95' : ''
           }`}
         >
           {/* Subtle Ambient Radial Glow */}
-          <div className="pointer-events-none absolute -top-24 -left-20 w-80 h-80 bg-purple-600/15 rounded-full blur-3xl" />
-          <div className="pointer-events-none absolute -bottom-24 -right-20 w-80 h-80 bg-pink-600/15 rounded-full blur-3xl" />
+          <div className="pointer-events-none absolute -top-16 -left-16 w-60 h-60 bg-purple-600/18 rounded-full blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-16 -right-16 w-60 h-60 bg-pink-600/15 rounded-full blur-3xl" />
 
-          {/* Top Control Bar: [Square Icon Box] [Title & Subtitle] [Controls: Shuffle, SkipBack, Play, SkipForward, Repeat] */}
-          <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          {/* Row 1: Left Info & Centered Audio Controls */}
+          <div className="relative z-10 flex items-center justify-between w-full h-11">
             {/* Left: Waveform Icon Squircle + File Info */}
-            <div className="flex items-center gap-3.5 min-w-0">
-              <div className="w-13 h-13 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-br from-blue-500 via-indigo-600 to-purple-600 flex items-center justify-center shadow-lg shadow-purple-500/35 shrink-0">
+            <div className="flex items-center gap-3 min-w-0 z-10">
+              <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-[#4f46e5] via-[#7c3aed] to-[#d946ef] flex items-center justify-center shadow-md shadow-purple-500/30 shrink-0">
                 {/* Stylized soundwave vertical bars */}
-                <div className="flex items-center gap-1 h-6">
-                  <div className="w-1 h-3.5 bg-white rounded-full animate-pulse" />
+                <div className="flex items-center gap-0.5 h-5">
+                  <div className="w-1 h-2.5 bg-white rounded-full animate-pulse" />
+                  <div className="w-1 h-4.5 bg-white rounded-full" />
                   <div className="w-1 h-5 bg-white rounded-full" />
-                  <div className="w-1 h-6 bg-white rounded-full" />
-                  <div className="w-1 h-4 bg-white rounded-full animate-pulse" />
-                  <div className="w-1 h-2.5 bg-white rounded-full" />
+                  <div className="w-1 h-3.5 bg-white rounded-full animate-pulse" />
+                  <div className="w-1 h-2 bg-white rounded-full" />
                 </div>
               </div>
 
               <div className="min-w-0">
                 <h4
-                  className="text-sm sm:text-base font-bold text-white tracking-wide truncate max-w-[200px] sm:max-w-xs md:max-w-md"
+                  className="text-sm font-bold text-white tracking-wide truncate max-w-[130px] sm:max-w-xs md:max-w-sm"
                   title={title}
                 >
                   {title}
                 </h4>
-                <p className="text-xs text-purple-300/70 font-medium mt-0.5">
+                <p className="text-[11px] text-purple-300/70 font-medium leading-tight mt-0.5">
                   Total duration: {formatDuration(duration)}
                 </p>
               </div>
             </div>
 
-            {/* Center / Right: Audio Control Buttons */}
-            <div className="flex items-center gap-2 sm:gap-3 self-center sm:self-auto">
+            {/* Center Controls: Horizontally centered in player */}
+            <div className="flex md:absolute md:left-1/2 md:-translate-x-1/2 items-center gap-2 sm:gap-3 z-10 shrink-0">
               {/* Shuffle Button */}
               <button
                 type="button"
                 onClick={() => setIsShuffle(!isShuffle)}
-                className={`p-2 rounded-xl transition-all cursor-pointer ${
+                className={`p-1.5 rounded-lg transition-all cursor-pointer ${
                   isShuffle
                     ? 'text-pink-400 bg-purple-500/20'
-                    : 'text-purple-300/70 hover:text-white hover:bg-white/5'
+                    : 'text-slate-400 hover:text-white hover:bg-white/5'
                 }`}
                 title="Shuffle"
               >
@@ -444,7 +451,7 @@ export const AudioWaveformPlayer: React.FC<AudioWaveformPlayerProps> = ({
               <button
                 type="button"
                 onClick={() => handleSkip(-5)}
-                className="p-2 text-purple-200/80 hover:text-white hover:bg-white/10 rounded-xl transition-all cursor-pointer active:scale-95"
+                className="p-1.5 text-slate-300 hover:text-white hover:bg-white/10 rounded-lg transition-all cursor-pointer active:scale-95"
                 title="Skip back 5 seconds"
               >
                 <SkipBack className="w-4.5 h-4.5 fill-current" />
@@ -454,7 +461,7 @@ export const AudioWaveformPlayer: React.FC<AudioWaveformPlayerProps> = ({
               <button
                 type="button"
                 onClick={() => onPlayPause(!isPlaying)}
-                className="w-12 h-12 rounded-full bg-gradient-to-b from-[#9055ff] to-[#6725ea] text-white flex items-center justify-center shadow-[0_0_24px_rgba(144,85,255,0.7)] hover:shadow-[0_0_30px_rgba(144,85,255,0.9)] hover:scale-105 active:scale-95 transition-all cursor-pointer mx-1 shrink-0"
+                className="w-11 h-11 rounded-full bg-gradient-to-b from-[#8B5CF6] to-[#6D28D9] text-white flex items-center justify-center shadow-[0_0_20px_rgba(139,92,246,0.65)] hover:shadow-[0_0_26px_rgba(139,92,246,0.85)] hover:scale-105 active:scale-95 transition-all cursor-pointer mx-1 shrink-0"
                 title={isPlaying ? 'Pause' : 'Play'}
               >
                 {isPlaying ? (
@@ -468,7 +475,7 @@ export const AudioWaveformPlayer: React.FC<AudioWaveformPlayerProps> = ({
               <button
                 type="button"
                 onClick={() => handleSkip(5)}
-                className="p-2 text-purple-200/80 hover:text-white hover:bg-white/10 rounded-xl transition-all cursor-pointer active:scale-95"
+                className="p-1.5 text-slate-300 hover:text-white hover:bg-white/10 rounded-lg transition-all cursor-pointer active:scale-95"
                 title="Skip forward 5 seconds"
               >
                 <SkipForward className="w-4.5 h-4.5 fill-current" />
@@ -478,41 +485,44 @@ export const AudioWaveformPlayer: React.FC<AudioWaveformPlayerProps> = ({
               <button
                 type="button"
                 onClick={() => setIsRepeat(!isRepeat)}
-                className={`p-2 rounded-xl transition-all cursor-pointer ${
+                className={`p-1.5 rounded-lg transition-all cursor-pointer ${
                   isRepeat
                     ? 'text-pink-400 bg-purple-500/20'
-                    : 'text-purple-300/70 hover:text-white hover:bg-white/5'
+                    : 'text-slate-400 hover:text-white hover:bg-white/5'
                 }`}
                 title={isRepeat ? 'Repeat active' : 'Enable repeat'}
               >
                 <Repeat className="w-4 h-4" />
               </button>
             </div>
+
+            {/* Right Spacer for balanced flex on desktop */}
+            <div className="w-12 sm:w-20 hidden md:block" />
           </div>
 
-          {/* Synchronized Animated Glowing Waveform Canvas */}
-          <div className="relative z-10 my-3 sm:my-4">
+          {/* Row 2: Centered Animated Glowing Waveform Canvas */}
+          <div className="relative w-full h-7 flex items-center justify-center -my-0.5 z-0">
             <canvas
               ref={canvasRef}
-              width={800}
-              height={56}
+              width={720}
+              height={32}
               onClick={handleCanvasClick}
-              className="w-full h-12 sm:h-14 cursor-pointer select-none rounded-xl"
+              className="w-full max-w-xl h-7 cursor-pointer select-none"
               title="Click anywhere on waveform to seek"
             />
           </div>
 
-          {/* Bottom Scrubber & Volume Row */}
-          <div className="relative z-10 flex items-center gap-3 sm:gap-4 text-xs font-mono">
+          {/* Row 3: Bottom Scrubber & Volume Row */}
+          <div className="relative z-10 flex items-center gap-3 sm:gap-4 text-xs font-mono h-5">
             {/* Current Timestamp */}
-            <span className="text-purple-200/80 font-medium shrink-0 min-w-[36px]">
+            <span className="text-slate-400 font-medium shrink-0 min-w-[32px] text-[11px]">
               {formatDuration(currentTime)}
             </span>
 
             {/* Glowing Interactive Seekbar Track */}
             <div
               onClick={handleScrubberClick}
-              className="group relative flex-1 h-2 bg-purple-950/70 hover:bg-purple-950 rounded-full cursor-pointer flex items-center"
+              className="group relative flex-1 h-1.5 bg-purple-950/60 hover:bg-purple-950/80 rounded-full cursor-pointer flex items-center"
             >
               {/* Filled Track Gradient */}
               <div
@@ -520,12 +530,12 @@ export const AudioWaveformPlayer: React.FC<AudioWaveformPlayerProps> = ({
                 style={{ width: `${progressPercent}%` }}
               >
                 {/* Circular White Glow Thumb */}
-                <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 w-3.5 h-3.5 bg-white rounded-full shadow-[0_0_10px_rgba(255,255,255,0.9)] group-hover:scale-125 transition-transform" />
+                <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 w-3 h-3 bg-white rounded-full shadow-[0_0_8px_rgba(255,255,255,0.9)] group-hover:scale-125 transition-transform" />
               </div>
             </div>
 
             {/* Total Duration */}
-            <span className="text-purple-300/60 font-medium shrink-0 min-w-[36px] text-right">
+            <span className="text-slate-400 font-medium shrink-0 min-w-[32px] text-right text-[11px]">
               {formatDuration(duration)}
             </span>
 
@@ -534,7 +544,7 @@ export const AudioWaveformPlayer: React.FC<AudioWaveformPlayerProps> = ({
               <button
                 type="button"
                 onClick={toggleMute}
-                className="p-1 text-purple-300/70 hover:text-white transition-colors cursor-pointer"
+                className="p-1 text-slate-400 hover:text-white transition-colors cursor-pointer"
                 title={isMuted ? 'Unmute' : 'Mute'}
               >
                 {isMuted || volume === 0 ? (
@@ -550,7 +560,7 @@ export const AudioWaveformPlayer: React.FC<AudioWaveformPlayerProps> = ({
                 step="0.05"
                 value={isMuted ? 0 : volume}
                 onChange={(e) => handleVolumeChange(parseFloat(e.target.value))}
-                className="w-14 sm:w-18 h-1 accent-purple-400 cursor-pointer bg-purple-900/60 rounded-lg appearance-none"
+                className="w-14 sm:w-16 h-1 accent-purple-400 cursor-pointer bg-purple-950/70 rounded-lg appearance-none"
                 title={`Volume: ${Math.round((isMuted ? 0 : volume) * 100)}%`}
               />
             </div>
@@ -560,7 +570,7 @@ export const AudioWaveformPlayer: React.FC<AudioWaveformPlayerProps> = ({
               <button
                 type="button"
                 onClick={() => setShowSpeedMenu(!showSpeedMenu)}
-                className="p-1.5 text-purple-300/70 hover:text-white hover:bg-white/10 rounded-lg transition-colors cursor-pointer"
+                className="p-1 text-slate-400 hover:text-white hover:bg-white/10 rounded-md transition-colors cursor-pointer"
                 title="Playback Speed"
               >
                 <MoreVertical className="w-4 h-4" />
@@ -595,46 +605,46 @@ export const AudioWaveformPlayer: React.FC<AudioWaveformPlayerProps> = ({
 
       {/* ==================================================================== */}
       {/* PLAYER DESIGN 2: DARK TEAL / EMERALD GLASSMORPHISM                  */}
-      {/* (Reference Image 3: Dark teal glass, mic emblem, ring play button)   */}
+      {/* (Target height ~120-130px on desktop, matching Reference Image 1)    */}
       {/* ==================================================================== */}
       {activeDesign === 'teal-glass' && (
         <div
-          className={`relative overflow-hidden rounded-[28px] border border-teal-500/25 bg-[#061e1b]/95 backdrop-blur-2xl shadow-[0_16px_50px_rgba(2,25,22,0.85)] p-5 sm:p-6 text-white transition-all duration-300 ${
+          className={`relative overflow-hidden rounded-[28px] border border-teal-500/20 bg-gradient-to-r from-[#072421]/95 via-[#092c28]/90 to-[#061d19]/95 backdrop-blur-2xl shadow-[0_12px_45px_rgba(10,45,40,0.7)] px-6 sm:px-7 py-3 sm:py-3.5 h-[124px] sm:h-[128px] flex flex-col justify-between text-white transition-all duration-300 select-none ${
             isCompactPreview ? 'scale-95' : ''
           }`}
         >
           {/* Subtle Ambient Radial Glow */}
-          <div className="pointer-events-none absolute -top-24 -left-20 w-80 h-80 bg-teal-600/15 rounded-full blur-3xl" />
-          <div className="pointer-events-none absolute -bottom-24 -right-20 w-80 h-80 bg-emerald-600/15 rounded-full blur-3xl" />
+          <div className="pointer-events-none absolute -top-16 -left-16 w-60 h-60 bg-teal-600/18 rounded-full blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-16 -right-16 w-60 h-60 bg-emerald-600/15 rounded-full blur-3xl" />
 
-          {/* Top Control Bar: [Square Mic Icon] [Title & Subtitle] [Controls: SkipBack, Emerald Ring Play, SkipForward] */}
-          <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          {/* Row 1: Left Info & Centered Audio Controls */}
+          <div className="relative z-10 flex items-center justify-between w-full h-11">
             {/* Left: Microphone Squircle + File Info */}
-            <div className="flex items-center gap-3.5 min-w-0">
-              <div className="w-13 h-13 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-br from-emerald-500 via-teal-600 to-teal-800 flex items-center justify-center shadow-lg shadow-teal-500/30 shrink-0">
-                <Mic className="w-6 h-6 text-white" />
+            <div className="flex items-center gap-3 min-w-0 z-10">
+              <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-[#10b981] via-[#0d9488] to-[#042f2e] flex items-center justify-center shadow-md shadow-teal-500/25 shrink-0">
+                <Mic className="w-5 h-5 text-white" />
               </div>
 
               <div className="min-w-0">
                 <h4
-                  className="text-sm sm:text-base font-bold text-white tracking-wide truncate max-w-[200px] sm:max-w-xs md:max-w-md"
+                  className="text-sm font-bold text-white tracking-wide truncate max-w-[130px] sm:max-w-xs md:max-w-sm"
                   title={title}
                 >
                   {title}
                 </h4>
-                <p className="text-xs text-teal-300/70 font-medium mt-0.5">
+                <p className="text-[11px] text-teal-300/70 font-medium leading-tight mt-0.5">
                   Total duration: {formatDuration(duration)}
                 </p>
               </div>
             </div>
 
-            {/* Center: Controls matching Reference Image 3 (SkipBack, Glowing Ring Play, SkipForward) */}
-            <div className="flex items-center gap-3 self-center sm:self-auto">
+            {/* Center Controls: Horizontally centered in player (SkipBack, Emerald Ring Play, SkipForward) */}
+            <div className="flex md:absolute md:left-1/2 md:-translate-x-1/2 items-center gap-2 sm:gap-3 z-10 shrink-0">
               {/* Skip Back 5s */}
               <button
                 type="button"
                 onClick={() => handleSkip(-5)}
-                className="p-2 text-teal-200/80 hover:text-white hover:bg-white/10 rounded-xl transition-all cursor-pointer active:scale-95"
+                className="p-1.5 text-slate-300 hover:text-white hover:bg-white/10 rounded-lg transition-all cursor-pointer active:scale-95"
                 title="Skip back 5 seconds"
               >
                 <SkipBack className="w-4.5 h-4.5 fill-current" />
@@ -644,7 +654,7 @@ export const AudioWaveformPlayer: React.FC<AudioWaveformPlayerProps> = ({
               <button
                 type="button"
                 onClick={() => onPlayPause(!isPlaying)}
-                className="w-12 h-12 rounded-full border-2 border-emerald-400 bg-emerald-950/40 text-emerald-300 hover:text-white hover:border-emerald-300 flex items-center justify-center shadow-[0_0_20px_rgba(52,211,153,0.55)] hover:shadow-[0_0_28px_rgba(52,211,153,0.8)] hover:scale-105 active:scale-95 transition-all cursor-pointer mx-1 shrink-0"
+                className="w-11 h-11 rounded-full border-2 border-[#10b981] bg-[#072421]/60 text-[#10b981] hover:text-white hover:border-emerald-300 flex items-center justify-center shadow-[0_0_18px_rgba(16,185,129,0.55)] hover:shadow-[0_0_24px_rgba(16,185,129,0.8)] hover:scale-105 active:scale-95 transition-all cursor-pointer mx-1 shrink-0"
                 title={isPlaying ? 'Pause' : 'Play'}
               >
                 {isPlaying ? (
@@ -658,50 +668,53 @@ export const AudioWaveformPlayer: React.FC<AudioWaveformPlayerProps> = ({
               <button
                 type="button"
                 onClick={() => handleSkip(5)}
-                className="p-2 text-teal-200/80 hover:text-white hover:bg-white/10 rounded-xl transition-all cursor-pointer active:scale-95"
+                className="p-1.5 text-slate-300 hover:text-white hover:bg-white/10 rounded-lg transition-all cursor-pointer active:scale-95"
                 title="Skip forward 5 seconds"
               >
                 <SkipForward className="w-4.5 h-4.5 fill-current" />
               </button>
             </div>
+
+            {/* Right Spacer for balanced flex on desktop */}
+            <div className="w-12 sm:w-20 hidden md:block" />
           </div>
 
-          {/* Synchronized Animated Waveform Canvas (Cyan / Emerald Fluid Acoustic Waves) */}
-          <div className="relative z-10 my-3 sm:my-4">
+          {/* Row 2: Centered Animated Waveform Canvas (Cyan / Emerald Acoustic Waves) */}
+          <div className="relative w-full h-7 flex items-center justify-center -my-0.5 z-0">
             <canvas
               ref={canvasRef}
-              width={800}
-              height={56}
+              width={720}
+              height={32}
               onClick={handleCanvasClick}
-              className="w-full h-12 sm:h-14 cursor-pointer select-none rounded-xl"
+              className="w-full max-w-xl h-7 cursor-pointer select-none"
               title="Click anywhere on acoustic wave to seek"
             />
           </div>
 
-          {/* Bottom Scrubber & Volume Row */}
-          <div className="relative z-10 flex items-center gap-3 sm:gap-4 text-xs font-mono">
+          {/* Row 3: Bottom Scrubber & Volume Row */}
+          <div className="relative z-10 flex items-center gap-3 sm:gap-4 text-xs font-mono h-5">
             {/* Current Timestamp */}
-            <span className="text-teal-200/80 font-medium shrink-0 min-w-[36px]">
+            <span className="text-slate-400 font-medium shrink-0 min-w-[32px] text-[11px]">
               {formatDuration(currentTime)}
             </span>
 
             {/* Glowing Interactive Seekbar Track */}
             <div
               onClick={handleScrubberClick}
-              className="group relative flex-1 h-2 bg-teal-950/70 hover:bg-teal-950 rounded-full cursor-pointer flex items-center"
+              className="group relative flex-1 h-1.5 bg-teal-950/60 hover:bg-teal-950/80 rounded-full cursor-pointer flex items-center"
             >
               {/* Filled Track Gradient */}
               <div
-                className="h-full rounded-full bg-gradient-to-r from-teal-400 via-emerald-400 to-cyan-300 transition-all duration-75 relative"
+                className="h-full rounded-full bg-gradient-to-r from-teal-400 to-cyan-300 transition-all duration-75 relative"
                 style={{ width: `${progressPercent}%` }}
               >
                 {/* Circular White Glow Thumb */}
-                <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 w-3.5 h-3.5 bg-white rounded-full shadow-[0_0_10px_rgba(255,255,255,0.9)] group-hover:scale-125 transition-transform" />
+                <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 w-3 h-3 bg-white rounded-full shadow-[0_0_8px_rgba(255,255,255,0.9)] group-hover:scale-125 transition-transform" />
               </div>
             </div>
 
             {/* Total Duration */}
-            <span className="text-teal-300/60 font-medium shrink-0 min-w-[36px] text-right">
+            <span className="text-slate-400 font-medium shrink-0 min-w-[32px] text-right text-[11px]">
               {formatDuration(duration)}
             </span>
 
@@ -710,7 +723,7 @@ export const AudioWaveformPlayer: React.FC<AudioWaveformPlayerProps> = ({
               <button
                 type="button"
                 onClick={toggleMute}
-                className="p-1 text-teal-300/70 hover:text-white transition-colors cursor-pointer"
+                className="p-1 text-slate-400 hover:text-white transition-colors cursor-pointer"
                 title={isMuted ? 'Unmute' : 'Mute'}
               >
                 {isMuted || volume === 0 ? (
@@ -726,16 +739,16 @@ export const AudioWaveformPlayer: React.FC<AudioWaveformPlayerProps> = ({
                 step="0.05"
                 value={isMuted ? 0 : volume}
                 onChange={(e) => handleVolumeChange(parseFloat(e.target.value))}
-                className="w-14 sm:w-18 h-1 accent-teal-400 cursor-pointer bg-teal-900/60 rounded-lg appearance-none"
+                className="w-14 sm:w-16 h-1 accent-teal-400 cursor-pointer bg-teal-950/70 rounded-lg appearance-none"
                 title={`Volume: ${Math.round((isMuted ? 0 : volume) * 100)}%`}
               />
             </div>
 
-            {/* Expand / Fullscreen icon (Reference Image 3: Maximize2 icon) */}
+            {/* Expand / Fullscreen icon (Reference Image: Maximize2 icon) */}
             <button
               type="button"
               onClick={toggleFullscreen}
-              className="p-1.5 text-teal-300/70 hover:text-white hover:bg-white/10 rounded-lg transition-colors cursor-pointer shrink-0"
+              className="p-1 text-slate-400 hover:text-white hover:bg-white/10 rounded-md transition-colors cursor-pointer shrink-0"
               title={isFullscreen ? 'Exit Fullscreen' : 'Expand Player'}
             >
               {isFullscreen ? (

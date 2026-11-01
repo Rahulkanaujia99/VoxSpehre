@@ -135,8 +135,8 @@ Return only valid JSON. Do not include markdown code fences (\`\`\`json) or extr
     // 3. High-Fidelity Structured Synthesis Fallback (Ensures 100% reliability for all 7 dimensions)
     const sentences = transcriptText
       .split(/(?<=[.!?])\s+/)
-      .map(s => s.trim())
-      .filter(s => s.length > 15);
+      .map((s: string) => s.trim())
+      .filter((s: string) => s.length > 15);
     
     const leadSentences = sentences.slice(0, 3).join(' ') || transcriptText.slice(0, 250);
     const midSentences = sentences.slice(3, 8).join(' ') || leadSentences;

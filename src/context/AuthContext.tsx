@@ -135,7 +135,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(demoUser);
     setProfile({
       id: 'demo-user-id',
+      email: email || 'rahul@voxsphere.ai',
       full_name: name || 'Rahul Kanaujia',
+      avatar_url: null,
       company: 'Penguin International',
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),

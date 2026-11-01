@@ -5,6 +5,7 @@ export interface Profile {
   email: string | null;
   full_name: string | null;
   avatar_url: string | null;
+  company?: string | null;
   created_at: string;
   updated_at: string;
 }

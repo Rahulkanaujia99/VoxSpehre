@@ -123,7 +123,6 @@ export const TranscriptEditor: React.FC<TranscriptEditorProps> = ({
   const [showExportMenu, setShowExportMenu] = useState(false);
 
   // New Tab Sub-states
-  const [summaryViewMode, setSummaryViewMode] = useState<'segments' | 'continuous'>('segments');
   const [paragraphViewMode, setParagraphViewMode] = useState<'paragraphs' | 'speaker_turns'>('paragraphs');
   const [targetTranslateLanguage, setTargetTranslateLanguage] = useState<string>('Spanish');
   const [translatedContent, setTranslatedContent] = useState<string>(data.comprehensiveSummaries?.translatedText || '');
@@ -267,19 +266,20 @@ export const TranscriptEditor: React.FC<TranscriptEditorProps> = ({
     setTimeout(() => setCopied(false), 2000);
   };
 
-  // Full transcript unified with timestamps for one-place viewing and copying
-  const fullTimestampedTranscriptText = React.useMemo(() => {
+  // Clean transcript paragraphs for Summary tab (no timestamps, no speaker names, no play option)
+  const cleanSummaryParagraphs = React.useMemo(() => {
     return currentSegments
-      .map(
-        (seg) =>
-          `[${formatTime(seg.startTime)} – ${formatTime(seg.endTime)}] ${seg.speaker}:\n${seg.text}`
-      )
-      .join('\n\n');
+      .map((seg) => seg.text.trim())
+      .filter(Boolean);
   }, [currentSegments]);
 
-  // Copy Summary text (Full transcript with timestamps)
+  const cleanSummaryText = React.useMemo(() => {
+    return cleanSummaryParagraphs.join('\n\n');
+  }, [cleanSummaryParagraphs]);
+
+  // Copy Summary text (Clean transcript without timestamps or speakers)
   const handleCopySummary = () => {
-    navigator.clipboard.writeText(fullTimestampedTranscriptText);
+    navigator.clipboard.writeText(cleanSummaryText);
     setCopiedSummary(true);
     setTimeout(() => setCopiedSummary(false), 2000);
   };
@@ -955,178 +955,58 @@ export const TranscriptEditor: React.FC<TranscriptEditorProps> = ({
 
         {/* Tab Content Display */}
         <div className="bg-white p-4 sm:p-5 rounded-2xl border border-indigo-100/90 shadow-2xs">
-          {/* TAB 1: SUMMARY (Transcript at One Place with Timestamps) */}
+          {/* TAB 1: SUMMARY (Clean Transcript Text - No Timestamps, No Speaker Names, No Play Button) */}
           {(activeSummaryTab === 'summary' || activeSummaryTab === 'executive') && (
             <div className="space-y-4">
               <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-100">
                 <div>
                   <span className="text-[11px] font-bold uppercase tracking-wider text-indigo-600 flex items-center gap-1.5">
-                    <Clock className="w-3.5 h-3.5" />
-                    Transcript with Timestamps
+                    <Sparkles className="w-3.5 h-3.5" />
+                    Summary
                   </span>
                   <p className="text-xs text-slate-500 mt-0.5">
-                    Complete transcript unified at one place with clickable timestamps and audio playback
+                    Complete transcript text displayed cleanly at one place
                   </p>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-2">
-                  {/* View Mode Toggle: Interactive Segments vs Unified Text */}
-                  <div className="inline-flex items-center p-0.5 rounded-xl border border-slate-200 bg-slate-100 text-xs font-bold">
-                    <button
-                      type="button"
-                      onClick={() => setSummaryViewMode('segments')}
-                      className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
-                        summaryViewMode === 'segments'
-                          ? 'bg-[#0f172a] text-white shadow-xs'
-                          : 'text-slate-600 hover:text-slate-900'
-                      }`}
-                    >
-                      Segments
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setSummaryViewMode('continuous')}
-                      className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
-                        summaryViewMode === 'continuous'
-                          ? 'bg-[#0f172a] text-white shadow-xs'
-                          : 'text-slate-600 hover:text-slate-900'
-                      }`}
-                    >
-                      Unified Text
-                    </button>
-                  </div>
-
-                  {/* Copy Button */}
-                  <button
-                    type="button"
-                    onClick={handleCopySummary}
-                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-colors cursor-pointer"
-                    title="Copy full transcript with timestamps"
-                  >
-                    {copiedSummary ? (
-                      <>
-                        <Check className="w-3.5 h-3.5 text-emerald-600" />
-                        <span className="text-emerald-700">Copied!</span>
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="w-3.5 h-3.5" />
-                        <span>Copy with Timestamps</span>
-                      </>
-                    )}
-                  </button>
-                </div>
+                {/* Copy Button */}
+                <button
+                  type="button"
+                  onClick={handleCopySummary}
+                  className="inline-flex items-center gap-1 px-3.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-colors cursor-pointer"
+                  title="Copy transcript text"
+                >
+                  {copiedSummary ? (
+                    <>
+                      <Check className="w-3.5 h-3.5 text-emerald-600" />
+                      <span className="text-emerald-700">Copied!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-3.5 h-3.5" />
+                      <span>Copy Summary</span>
+                    </>
+                  )}
+                </button>
               </div>
 
               {/* Stats Bar */}
               <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 font-medium px-1">
-                <span className="font-semibold text-slate-700">{currentSegments.length} Segments</span>
+                <span className="font-semibold text-slate-700">{data.metadata.wordCount} words</span>
                 <span>•</span>
-                <span>{data.metadata.wordCount} words</span>
+                <span>{currentSegments.length} paragraphs</span>
                 <span>•</span>
-                <span>Duration: {formatTime(data.metadata.duration || currentSegments[currentSegments.length - 1]?.endTime || 0)}</span>
+                <span>~{Math.max(1, Math.round(data.metadata.wordCount / 140))} min read</span>
               </div>
 
-              {/* Content Display */}
-              {summaryViewMode === 'segments' ? (
-                /* 1. Interactive Segments Stream at One Place */
-                <div className="space-y-3 max-h-[500px] overflow-y-auto pr-1">
-                  {currentSegments.map((seg) => {
-                    const isPlayingThisExactSegment = activePlayingSegmentId === seg.id;
-                    const isCurrentlyPlaying =
-                      isPlayingThisExactSegment || (currentTime >= seg.startTime && currentTime <= seg.endTime);
-
-                    return (
-                      <div
-                        key={seg.id}
-                        className={`p-3.5 rounded-2xl border transition-all duration-200 ${
-                          isPlayingThisExactSegment
-                            ? 'bg-indigo-50/60 border-indigo-400 ring-2 ring-indigo-200 shadow-sm'
-                            : isCurrentlyPlaying
-                            ? 'bg-teal-50/50 border-teal-300 ring-2 ring-teal-100 shadow-sm'
-                            : 'bg-slate-50/70 border-slate-200/80 hover:border-slate-300'
-                        }`}
-                      >
-                        <div className="flex items-center justify-between gap-2 pb-1.5 mb-1.5 border-b border-slate-200/60">
-                          <div className="flex items-center gap-2">
-                            {/* Clickable Monospace Timestamp Badge */}
-                            <button
-                              type="button"
-                              onClick={() => {
-                                if (onPlaySegment) {
-                                  onPlaySegment(seg.startTime, seg.endTime, seg.id);
-                                } else {
-                                  onSeekAudio(seg.startTime);
-                                }
-                              }}
-                              className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg font-mono text-xs font-bold transition-all cursor-pointer ${
-                                isPlayingThisExactSegment
-                                  ? 'bg-indigo-600 text-white shadow-xs'
-                                  : isCurrentlyPlaying
-                                  ? 'bg-teal-600 text-white shadow-xs'
-                                  : 'bg-white text-indigo-700 border border-indigo-200 hover:bg-indigo-600 hover:text-white'
-                              }`}
-                              title={`Play segment from ${formatTime(seg.startTime)} to ${formatTime(seg.endTime)}`}
-                            >
-                              <Clock className="w-3 h-3" />
-                              <span>
-                                {formatTime(seg.startTime)} – {formatTime(seg.endTime)}
-                              </span>
-                            </button>
-
-                            {/* Speaker Tag */}
-                            <span className="text-xs font-bold text-slate-700 flex items-center gap-1">
-                              <User className="w-3 h-3 text-slate-400" />
-                              {seg.speaker}
-                            </span>
-                          </div>
-
-                          {/* Quick Playing Status */}
-                          {isPlayingThisExactSegment && (
-                            <span className="text-[11px] font-bold text-indigo-700 bg-indigo-100 px-2 py-0.5 rounded-full flex items-center gap-1 animate-pulse">
-                              <span className="w-1.5 h-1.5 rounded-full bg-indigo-600"></span>
-                              Playing
-                            </span>
-                          )}
-                        </div>
-
-                        {/* Transcript Text */}
-                        <p className="text-xs sm:text-sm text-slate-800 leading-relaxed font-normal">
-                          {seg.text}
-                        </p>
-
-                        {/* Click to play from here */}
-                        <div className="pt-2 flex items-center">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              if (onPlaySegment) {
-                                onPlaySegment(seg.startTime, seg.endTime, seg.id);
-                              } else {
-                                onSeekAudio(seg.startTime);
-                              }
-                            }}
-                            className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 font-medium transition-colors cursor-pointer group select-none"
-                            title={`Play segment ${formatTime(seg.startTime)} – ${formatTime(seg.endTime)}`}
-                          >
-                            <span className="text-[10px] leading-none text-blue-600 group-hover:scale-110 transition-transform">
-                              {isPlayingThisExactSegment ? '⏹' : '▷'}
-                            </span>
-                            <span className={isPlayingThisExactSegment ? 'font-bold text-indigo-700 underline decoration-indigo-300' : ''}>
-                              {isPlayingThisExactSegment ? 'Playing this segment (Click to stop)' : 'Click to play from here'}
-                            </span>
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                /* 2. Unified Text View with Timestamps at One Place */
-                <div className="space-y-3 p-4 bg-slate-50/80 rounded-2xl border border-slate-200/90 text-xs sm:text-sm text-slate-800 leading-relaxed font-mono max-h-[500px] overflow-y-auto whitespace-pre-wrap select-text">
-                  {fullTimestampedTranscriptText}
-                </div>
-              )}
+              {/* Clean Readable Transcript Paragraphs (No Timestamps, No Speaker Names, No Play Option) */}
+              <div className="space-y-4 p-5 bg-slate-50/70 rounded-2xl border border-slate-200/90 text-xs sm:text-sm text-slate-800 leading-relaxed font-normal max-h-[520px] overflow-y-auto">
+                {cleanSummaryParagraphs.map((paragraph, idx) => (
+                  <p key={idx} className="leading-relaxed">
+                    {paragraph}
+                  </p>
+                ))}
+              </div>
             </div>
           )}
 

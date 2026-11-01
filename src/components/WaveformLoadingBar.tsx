@@ -54,96 +54,129 @@ export const WaveformLoadingBar: React.FC<WaveformLoadingBarProps> = ({
         currentProgressRef.current += 0.025;
       }
 
+      // Active wave bounds (centered, leaving space at ends so it blurs to 0 without hitting canvas edges)
+      const xMin = width * 0.08;
+      const xMax = width * 0.92;
+      const waveW = xMax - xMin;
+
       const activeProgressRatio = Math.max(0.08, Math.min(1, currentProgressRef.current / 100));
-      const splitX = activeProgressRatio * width;
-      const splitNormX = splitX / width;
+      const splitX = xMin + activeProgressRatio * waveW;
+      const splitNormX = (splitX - xMin) / waveW;
       const splitEnv = Math.pow(Math.sin(splitNormX * Math.PI), 1.5);
 
-      // Multi-ribbon wave layers configuration strictly matching Reference Image 3
+      // Multi-ribbon wave layers configuration strictly matching Reference Image 2 & 3
       const waveLayers = [
         {
           // Layer 1: Hot Pink / Magenta Wave
-          freq1: 15,
-          freq2: 26,
-          amp1: 13,
-          amp2: 6.5,
+          f1: 3.8,
+          f2: 7.2,
+          ampTop: 15,
+          ampBot: 12,
           phaseOffset: 0,
-          stroke: '#f43f5e',
-          glow: 'rgba(244, 63, 94, 0.9)',
+          stroke: '#ff2a8d',
+          glow: 'rgba(255, 42, 141, 0.9)',
           lineWidth: 2.2,
-          fillColor: 'rgba(236, 72, 153, 0.3)',
+          fillColor: 'rgba(255, 42, 141, 0.3)',
         },
         {
           // Layer 2: Electric Purple / Violet Wave
-          freq1: 12,
-          freq2: 22,
-          amp1: 11,
-          amp2: 5.5,
-          phaseOffset: 1.3,
-          stroke: '#c084fc',
-          glow: 'rgba(192, 132, 252, 0.9)',
+          f1: 3.2,
+          f2: 6.0,
+          ampTop: 13.5,
+          ampBot: 11,
+          phaseOffset: 1.6,
+          stroke: '#a855f7',
+          glow: 'rgba(168, 85, 247, 0.9)',
           lineWidth: 2.0,
           fillColor: 'rgba(168, 85, 247, 0.25)',
         },
         {
           // Layer 3: Electric Blue / Cyan Wave
-          freq1: 18,
-          freq2: 30,
-          amp1: 9,
-          amp2: 4.5,
-          phaseOffset: 2.7,
+          f1: 4.4,
+          f2: 8.5,
+          ampTop: 11,
+          ampBot: 9.5,
+          phaseOffset: 3.2,
           stroke: '#38bdf8',
           glow: 'rgba(56, 189, 248, 0.85)',
           lineWidth: 1.8,
-          fillColor: 'rgba(59, 130, 246, 0.2)',
+          fillColor: 'rgba(56, 189, 248, 0.2)',
         },
       ];
 
       // =======================================================================
-      // 1. DRAW LUMINOUS HORIZONTAL CENTRAL BEAM (Exact match to Reference Image 3)
+      // 1. DRAW LUMINOUS HORIZONTAL CENTRAL BEAM (Exact match to Reference Image 2 & 3)
+      // Strictly spans between xMin + waveW * 0.08 and xMax - waveW * 0.08, fading softly to 0 at both ends
       // =======================================================================
+      const beamStart = xMin + waveW * 0.08;
+      const beamEnd = xMax - waveW * 0.08;
+
       ctx.save();
-      const beamGrad = ctx.createLinearGradient(0, 0, width, 0);
-      beamGrad.addColorStop(0, 'rgba(244, 63, 94, 0)');
-      beamGrad.addColorStop(0.15, 'rgba(244, 63, 94, 0.35)');
-      beamGrad.addColorStop(0.35, 'rgba(236, 72, 153, 0.7)');
-      beamGrad.addColorStop(0.5, 'rgba(255, 255, 255, 0.95)');
-      beamGrad.addColorStop(0.65, 'rgba(168, 85, 247, 0.7)');
-      beamGrad.addColorStop(0.85, 'rgba(56, 189, 248, 0.35)');
+      const beamGrad = ctx.createLinearGradient(beamStart, 0, beamEnd, 0);
+      beamGrad.addColorStop(0, 'rgba(255, 42, 141, 0)');
+      beamGrad.addColorStop(0.15, 'rgba(255, 42, 141, 0.4)');
+      beamGrad.addColorStop(0.35, 'rgba(236, 72, 153, 0.85)');
+      beamGrad.addColorStop(0.48, 'rgba(255, 255, 255, 0.95)');
+      beamGrad.addColorStop(0.52, 'rgba(255, 255, 255, 1.0)');
+      beamGrad.addColorStop(0.65, 'rgba(168, 85, 247, 0.85)');
+      beamGrad.addColorStop(0.85, 'rgba(56, 189, 248, 0.4)');
       beamGrad.addColorStop(1.0, 'rgba(56, 189, 248, 0)');
 
+      ctx.beginPath();
+      ctx.moveTo(beamStart, midY);
+      ctx.lineTo(beamEnd, midY);
+      ctx.strokeStyle = beamGrad;
+      ctx.lineWidth = 2.0;
       ctx.shadowBlur = 12;
-      ctx.shadowColor = '#ec4899';
-      ctx.fillStyle = beamGrad;
-      ctx.fillRect(width * 0.05, midY - 1.5, width * 0.9, 3);
+      ctx.shadowColor = '#ff2a8d';
+      ctx.stroke();
+      ctx.restore();
+
+      // Specular hotspot lens flares in the center (visible in Reference Image 2 & 3)
+      const flareX1 = beamStart + (beamEnd - beamStart) * 0.49;
+      const flareX2 = beamStart + (beamEnd - beamStart) * 0.53;
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(flareX1, midY, 2.2, 0, Math.PI * 2);
+      ctx.arc(flareX2, midY, 1.8, 0, Math.PI * 2);
+      ctx.fillStyle = '#ffffff';
+      ctx.shadowBlur = 10;
+      ctx.shadowColor = '#ffffff';
+      ctx.fill();
       ctx.restore();
 
       // =======================================================================
-      // 2. DRAW SYMMETRICAL FLUID WAVE RIBBONS WITH GLOWING EDGES
+      // 2. DRAW SYMMETRICAL FLUID WAVE MOUNDS WITH BLURRY FADE-OUT ENDS
       // =======================================================================
       waveLayers.forEach((layer) => {
         const topPts: { x: number; y: number }[] = [];
         const botPts: { x: number; y: number }[] = [];
+        const step = 2.5;
 
-        for (let x = 0; x <= width; x += 3) {
-          const normX = x / width;
-          // Smooth bell envelope tapering to 0 at both edges
-          const env = Math.pow(Math.sin(normX * Math.PI), 1.5);
+        for (let x = xMin; x <= xMax; x += step) {
+          const u = (x - xMin) / waveW; // 0.0 to 1.0
+          // Smooth bell envelope strictly fading to 0 at ends
+          const env = Math.pow(Math.sin(u * Math.PI), 1.8);
 
-          const waveVal =
-            (Math.sin(normX * layer.freq1 + phase + layer.phaseOffset) * layer.amp1 +
-              Math.sin(normX * layer.freq2 - phase * 0.75 + layer.phaseOffset) * layer.amp2) *
-            env;
+          const s1 = Math.sin(u * layer.f1 * Math.PI * 2 + phase + layer.phaseOffset);
+          const s2 = Math.sin(u * layer.f2 * Math.PI * 2 - phase * 0.75 + layer.phaseOffset * 1.4);
+          const combo = s1 * 0.65 + s2 * 0.35;
 
-          topPts.push({ x, y: midY - Math.abs(waveVal) });
-          botPts.push({ x, y: midY + Math.abs(waveVal) });
+          // Organic rounded mounds above and below center line
+          const topH = (Math.pow(Math.max(0, combo), 1.25) * layer.ampTop + Math.abs(combo) * 0.15 * layer.ampTop) * env;
+          const botH = (Math.pow(Math.max(0, -combo), 1.25) * layer.ampBot + Math.abs(combo) * 0.15 * layer.ampBot) * env;
+
+          topPts.push({ x, y: midY - topH });
+          botPts.push({ x, y: midY + botH });
         }
 
-        // Draw Completed Portion (0 to splitX) with Full Vibrant Glow
+        if (topPts.length < 2) return;
+
+        // Draw Completed Active Portion (xMin to splitX) with Full Vibrant Glow
         ctx.save();
         ctx.beginPath();
-        ctx.moveTo(topPts[0].x, topPts[0].y);
-        for (let i = 1; i < topPts.length; i++) {
+        ctx.moveTo(xMin, midY);
+        for (let i = 0; i < topPts.length; i++) {
           if (topPts[i].x <= splitX) {
             ctx.lineTo(topPts[i].x, topPts[i].y);
           }
@@ -155,35 +188,46 @@ export const WaveformLoadingBar: React.FC<WaveformLoadingBarProps> = ({
         }
         ctx.closePath();
 
-        // Fill fluid translucent body
-        ctx.fillStyle = layer.fillColor;
+        const activeFillGrad = ctx.createLinearGradient(xMin, 0, xMax, 0);
+        activeFillGrad.addColorStop(0, 'rgba(0, 0, 0, 0)');
+        activeFillGrad.addColorStop(0.12, 'rgba(0, 0, 0, 0)');
+        activeFillGrad.addColorStop(0.25, layer.fillColor);
+        activeFillGrad.addColorStop(1.0, layer.fillColor);
+
+        ctx.fillStyle = activeFillGrad;
         ctx.fill();
 
         // Stroke glowing edge for upper and lower crests
+        const strokeGrad = ctx.createLinearGradient(xMin, 0, xMax, 0);
+        strokeGrad.addColorStop(0, 'rgba(0, 0, 0, 0)');
+        strokeGrad.addColorStop(0.12, 'rgba(0, 0, 0, 0)');
+        strokeGrad.addColorStop(0.25, layer.stroke);
+        strokeGrad.addColorStop(1.0, layer.stroke);
+
         ctx.shadowBlur = 14;
         ctx.shadowColor = layer.glow;
         ctx.lineWidth = layer.lineWidth;
-        ctx.strokeStyle = layer.stroke;
+        ctx.strokeStyle = strokeGrad;
 
         // Top edge stroke
         ctx.beginPath();
-        ctx.moveTo(topPts[0].x, topPts[0].y);
-        for (let i = 1; i < topPts.length && topPts[i].x <= splitX; i++) {
-          ctx.lineTo(topPts[i].x, topPts[i].y);
+        for (let i = 0; i < topPts.length && topPts[i].x <= splitX; i++) {
+          if (i === 0) ctx.moveTo(topPts[i].x, topPts[i].y);
+          else ctx.lineTo(topPts[i].x, topPts[i].y);
         }
         ctx.stroke();
 
         // Bottom edge stroke
         ctx.beginPath();
-        ctx.moveTo(botPts[0].x, botPts[0].y);
-        for (let i = 1; i < botPts.length && botPts[i].x <= splitX; i++) {
-          ctx.lineTo(botPts[i].x, botPts[i].y);
+        for (let i = 0; i < botPts.length && botPts[i].x <= splitX; i++) {
+          if (i === 0) ctx.moveTo(botPts[i].x, botPts[i].y);
+          else ctx.lineTo(botPts[i].x, botPts[i].y);
         }
         ctx.stroke();
         ctx.restore();
 
-        // Draw Pending / Remaining Portion (splitX to width) with Soft Dimmed Violet
-        if (splitX < width) {
+        // Draw Pending / Remaining Portion (splitX to xMax) with Soft Dimmed Violet
+        if (splitX < xMax) {
           ctx.save();
           ctx.beginPath();
           let started = false;
@@ -203,13 +247,26 @@ export const WaveformLoadingBar: React.FC<WaveformLoadingBarProps> = ({
             }
           }
           ctx.closePath();
-          ctx.fillStyle = 'rgba(192, 132, 252, 0.08)';
+
+          const pendingFillGrad = ctx.createLinearGradient(xMin, 0, xMax, 0);
+          pendingFillGrad.addColorStop(0, 'rgba(192, 132, 252, 0.12)');
+          pendingFillGrad.addColorStop(0.85, 'rgba(192, 132, 252, 0.08)');
+          pendingFillGrad.addColorStop(0.92, 'rgba(0, 0, 0, 0)');
+          pendingFillGrad.addColorStop(1.0, 'rgba(0, 0, 0, 0)');
+
+          ctx.fillStyle = pendingFillGrad;
           ctx.fill();
+
+          const pendingStrokeGrad = ctx.createLinearGradient(xMin, 0, xMax, 0);
+          pendingStrokeGrad.addColorStop(0, 'rgba(192, 132, 252, 0.35)');
+          pendingStrokeGrad.addColorStop(0.85, 'rgba(192, 132, 252, 0.25)');
+          pendingStrokeGrad.addColorStop(0.92, 'rgba(0, 0, 0, 0)');
+          pendingStrokeGrad.addColorStop(1.0, 'rgba(0, 0, 0, 0)');
 
           ctx.shadowBlur = 4;
           ctx.shadowColor = 'rgba(192, 132, 252, 0.3)';
           ctx.lineWidth = 1.2;
-          ctx.strokeStyle = 'rgba(192, 132, 252, 0.25)';
+          ctx.strokeStyle = pendingStrokeGrad;
 
           ctx.beginPath();
           started = false;

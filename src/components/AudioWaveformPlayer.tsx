@@ -185,154 +185,244 @@ export const AudioWaveformPlayer: React.FC<AudioWaveformPlayerProps> = ({
 
       // Increment phase when playing or slow idle breathe when paused
       if (isPlaying) {
-        phaseRef.current += 0.05 * playbackRate;
+        phaseRef.current += 0.045 * playbackRate;
       } else {
-        phaseRef.current += 0.006;
+        phaseRef.current += 0.008;
       }
       const phase = phaseRef.current;
 
       const isPurple = activeDesign === 'purple-glass';
 
-      // Waveform configurations matching the exact screenshots
-      const ribbons = isPurple
+      // Wave active bounds (centered, leaving space at ends so it blurs to 0 without hitting canvas edges)
+      const xMin = width * 0.10;
+      const xMax = width * 0.90;
+      const waveW = xMax - xMin;
+
+      // Color layers strictly matching Reference Image 1 & 2
+      const layers = isPurple
         ? [
             {
-              freq1: 0.024,
-              freq2: 0.042,
-              amp: isPlaying ? 10 : 5.5,
+              // Hot pink / magenta rounded mound layer
+              f1: 3.8,
+              f2: 7.2,
+              ampTop: isPlaying ? 13 : 8.5,
+              ampBot: isPlaying ? 10 : 6.5,
               phaseOffset: 0,
-              stroke: '#f43f5e',
-              glow: 'rgba(244, 63, 94, 0.85)',
+              strokeColor: '#ff2a8d',
+              glowColor: 'rgba(255, 42, 141, 0.9)',
               lineWidth: 2.2,
-              fillGradient: ['rgba(236, 72, 153, 0.28)', 'rgba(168, 85, 247, 0.02)'],
+              fillColor: 'rgba(255, 42, 141, 0.28)',
             },
             {
-              freq1: 0.018,
-              freq2: 0.032,
-              amp: isPlaying ? 9 : 4.5,
-              phaseOffset: 1.4,
-              stroke: '#c084fc',
-              glow: 'rgba(192, 132, 252, 0.85)',
+              // Electric violet / purple rounded mound layer
+              f1: 3.2,
+              f2: 6.0,
+              ampTop: isPlaying ? 12 : 7.5,
+              ampBot: isPlaying ? 11 : 7.0,
+              phaseOffset: 1.7,
+              strokeColor: '#a855f7',
+              glowColor: 'rgba(168, 85, 247, 0.9)',
               lineWidth: 2.0,
-              fillGradient: ['rgba(168, 85, 247, 0.22)', 'rgba(99, 102, 241, 0.02)'],
+              fillColor: 'rgba(168, 85, 247, 0.24)',
             },
             {
-              freq1: 0.028,
-              freq2: 0.05,
-              amp: isPlaying ? 7.5 : 3.5,
-              phaseOffset: 2.8,
-              stroke: '#60a5fa',
-              glow: 'rgba(96, 165, 250, 0.75)',
-              lineWidth: 1.6,
-              fillGradient: ['rgba(96, 165, 250, 0.16)', 'rgba(59, 130, 246, 0.01)'],
+              // Electric blue / sky cyan rounded mound layer
+              f1: 4.4,
+              f2: 8.5,
+              ampTop: isPlaying ? 10 : 6.0,
+              ampBot: isPlaying ? 9 : 5.5,
+              phaseOffset: 3.3,
+              strokeColor: '#38bdf8',
+              glowColor: 'rgba(56, 189, 248, 0.85)',
+              lineWidth: 1.8,
+              fillColor: 'rgba(56, 189, 248, 0.20)',
             },
           ]
         : [
             {
-              freq1: 0.022,
-              freq2: 0.038,
-              amp: isPlaying ? 10 : 5.5,
+              // Cyan layer
+              f1: 3.6,
+              f2: 6.8,
+              ampTop: isPlaying ? 13 : 8.5,
+              ampBot: isPlaying ? 10 : 6.5,
               phaseOffset: 0,
-              stroke: '#22d3ee',
-              glow: 'rgba(34, 211, 238, 0.85)',
+              strokeColor: '#22d3ee',
+              glowColor: 'rgba(34, 211, 238, 0.9)',
               lineWidth: 2.2,
-              fillGradient: ['rgba(34, 211, 238, 0.28)', 'rgba(20, 184, 166, 0.02)'],
+              fillColor: 'rgba(34, 211, 238, 0.28)',
             },
             {
-              freq1: 0.016,
-              freq2: 0.03,
-              amp: isPlaying ? 9 : 4.5,
-              phaseOffset: 1.5,
-              stroke: '#34d399',
-              glow: 'rgba(52, 211, 153, 0.85)',
+              // Emerald layer
+              f1: 3.0,
+              f2: 5.8,
+              ampTop: isPlaying ? 12 : 7.5,
+              ampBot: isPlaying ? 11 : 7.0,
+              phaseOffset: 1.6,
+              strokeColor: '#10b981',
+              glowColor: 'rgba(16, 185, 129, 0.9)',
               lineWidth: 2.0,
-              fillGradient: ['rgba(52, 211, 153, 0.24)', 'rgba(16, 185, 129, 0.02)'],
+              fillColor: 'rgba(16, 185, 129, 0.24)',
             },
             {
-              freq1: 0.026,
-              freq2: 0.046,
-              amp: isPlaying ? 7.5 : 3.5,
+              // Teal layer
+              f1: 4.2,
+              f2: 8.0,
+              ampTop: isPlaying ? 10 : 6.0,
+              ampBot: isPlaying ? 9 : 5.5,
               phaseOffset: 3.1,
-              stroke: '#06b6d4',
-              glow: 'rgba(6, 182, 212, 0.7)',
-              lineWidth: 1.6,
-              fillGradient: ['rgba(13, 148, 136, 0.18)', 'rgba(15, 118, 110, 0.01)'],
+              strokeColor: '#06b6d4',
+              glowColor: 'rgba(6, 182, 212, 0.85)',
+              lineWidth: 1.8,
+              fillColor: 'rgba(13, 148, 136, 0.20)',
             },
           ];
 
-      // Draw horizontal core ambient light streak (visible in center of wave in screenshot)
-      ctx.save();
-      const coreGrad = ctx.createLinearGradient(0, 0, width, 0);
-      if (isPurple) {
-        coreGrad.addColorStop(0, 'rgba(236, 72, 153, 0)');
-        coreGrad.addColorStop(0.35, 'rgba(236, 72, 153, 0.25)');
-        coreGrad.addColorStop(0.5, 'rgba(244, 63, 94, 0.45)');
-        coreGrad.addColorStop(0.65, 'rgba(168, 85, 247, 0.25)');
-        coreGrad.addColorStop(1, 'rgba(168, 85, 247, 0)');
-      } else {
-        coreGrad.addColorStop(0, 'rgba(34, 211, 238, 0)');
-        coreGrad.addColorStop(0.35, 'rgba(34, 211, 238, 0.25)');
-        coreGrad.addColorStop(0.5, 'rgba(52, 211, 153, 0.45)');
-        coreGrad.addColorStop(0.65, 'rgba(6, 182, 212, 0.25)');
-        coreGrad.addColorStop(1, 'rgba(6, 182, 212, 0)');
-      }
-      ctx.fillStyle = coreGrad;
-      ctx.fillRect(0, midY - 2.5, width, 5);
-      ctx.restore();
+      // Draw Each Volumetric Rounded Wave Layer
+      layers.forEach((layer) => {
+        const topPts: { x: number; y: number }[] = [];
+        const botPts: { x: number; y: number }[] = [];
+        const step = 2.5;
 
-      // Draw Each Harmonic Ribbon
-      ribbons.forEach((ribbon) => {
+        for (let x = xMin; x <= xMax; x += step) {
+          const u = (x - xMin) / waveW; // 0.0 to 1.0
+          // Smooth bell envelope strictly fading to 0 at ends
+          const env = Math.pow(Math.sin(u * Math.PI), 1.8);
+
+          const s1 = Math.sin(u * layer.f1 * Math.PI * 2 + phase + layer.phaseOffset);
+          const s2 = Math.sin(u * layer.f2 * Math.PI * 2 - phase * 0.75 + layer.phaseOffset * 1.4);
+          const combo = s1 * 0.65 + s2 * 0.35;
+
+          // Organic rounded mounds above and below center line
+          const topH = (Math.pow(Math.max(0, combo), 1.25) * layer.ampTop + Math.abs(combo) * 0.15 * layer.ampTop) * env;
+          const botH = (Math.pow(Math.max(0, -combo), 1.25) * layer.ampBot + Math.abs(combo) * 0.15 * layer.ampBot) * env;
+
+          topPts.push({ x, y: midY - topH });
+          botPts.push({ x, y: midY + botH });
+        }
+
+        if (topPts.length < 2) return;
+
+        // 1. Fill closed volumetric body with linear gradient (0 opacity at start/end, bright in center)
         ctx.save();
         ctx.beginPath();
-        ctx.lineWidth = ribbon.lineWidth;
-        ctx.strokeStyle = ribbon.stroke;
-        ctx.shadowBlur = isPlaying ? 10 : 6;
-        ctx.shadowColor = ribbon.glow;
-
-        const points: { x: number; y: number }[] = [];
-
-        for (let x = 0; x <= width; x += 3) {
-          const normX = x / width;
-          // Smooth bell envelope: 0 at edges, peaks gracefully in center
-          const envelope = Math.pow(Math.sin(normX * Math.PI), 1.6);
-
-          const y =
-            midY +
-            (Math.sin(x * ribbon.freq1 + phase + ribbon.phaseOffset) * ribbon.amp +
-              Math.sin(x * ribbon.freq2 - phase * 0.75 + ribbon.phaseOffset) * (ribbon.amp * 0.55)) *
-              envelope;
-
-          points.push({ x, y });
-
-          if (x === 0) {
-            ctx.moveTo(x, y);
-          } else {
-            ctx.lineTo(x, y);
-          }
+        ctx.moveTo(xMin, midY);
+        for (let i = 0; i < topPts.length; i++) {
+          ctx.lineTo(topPts[i].x, topPts[i].y);
         }
+        ctx.lineTo(xMax, midY);
+        for (let i = botPts.length - 1; i >= 0; i--) {
+          ctx.lineTo(botPts[i].x, botPts[i].y);
+        }
+        ctx.closePath();
+
+        const fillGrad = ctx.createLinearGradient(xMin, 0, xMax, 0);
+        fillGrad.addColorStop(0, 'rgba(0, 0, 0, 0)');
+        fillGrad.addColorStop(0.12, 'rgba(0, 0, 0, 0)');
+        fillGrad.addColorStop(0.25, layer.fillColor);
+        fillGrad.addColorStop(0.75, layer.fillColor);
+        fillGrad.addColorStop(0.88, 'rgba(0, 0, 0, 0)');
+        fillGrad.addColorStop(1.0, 'rgba(0, 0, 0, 0)');
+
+        ctx.fillStyle = fillGrad;
+        ctx.fill();
+        ctx.restore();
+
+        // 2. Stroke the upper glowing mound crest
+        ctx.save();
+        ctx.beginPath();
+        for (let i = 0; i < topPts.length; i++) {
+          if (i === 0) ctx.moveTo(topPts[i].x, topPts[i].y);
+          else ctx.lineTo(topPts[i].x, topPts[i].y);
+        }
+
+        const topStrokeGrad = ctx.createLinearGradient(xMin, 0, xMax, 0);
+        topStrokeGrad.addColorStop(0, 'rgba(0, 0, 0, 0)');
+        topStrokeGrad.addColorStop(0.12, 'rgba(0, 0, 0, 0)');
+        topStrokeGrad.addColorStop(0.25, layer.strokeColor);
+        topStrokeGrad.addColorStop(0.75, layer.strokeColor);
+        topStrokeGrad.addColorStop(0.88, 'rgba(0, 0, 0, 0)');
+        topStrokeGrad.addColorStop(1.0, 'rgba(0, 0, 0, 0)');
+
+        ctx.strokeStyle = topStrokeGrad;
+        ctx.lineWidth = layer.lineWidth;
+        ctx.shadowBlur = isPlaying ? 12 : 7;
+        ctx.shadowColor = layer.glowColor;
         ctx.stroke();
+        ctx.restore();
 
-        // Fill Soft Ribbon Glow Below
-        if (points.length > 0) {
-          ctx.beginPath();
-          ctx.moveTo(points[0].x, points[0].y);
-          for (let i = 1; i < points.length; i++) {
-            ctx.lineTo(points[i].x, points[i].y);
-          }
-          ctx.lineTo(width, midY);
-          ctx.lineTo(0, midY);
-          ctx.closePath();
-
-          const grad = ctx.createLinearGradient(0, midY - ribbon.amp, 0, midY + ribbon.amp);
-          grad.addColorStop(0, ribbon.fillGradient[0]);
-          grad.addColorStop(1, ribbon.fillGradient[1]);
-          ctx.fillStyle = grad;
-          ctx.shadowBlur = 0;
-          ctx.fill();
+        // 3. Stroke the lower glowing mound trough
+        ctx.save();
+        ctx.beginPath();
+        for (let i = 0; i < botPts.length; i++) {
+          if (i === 0) ctx.moveTo(botPts[i].x, botPts[i].y);
+          else ctx.lineTo(botPts[i].x, botPts[i].y);
         }
 
+        const botStrokeGrad = ctx.createLinearGradient(xMin, 0, xMax, 0);
+        botStrokeGrad.addColorStop(0, 'rgba(0, 0, 0, 0)');
+        botStrokeGrad.addColorStop(0.12, 'rgba(0, 0, 0, 0)');
+        botStrokeGrad.addColorStop(0.25, layer.strokeColor);
+        botStrokeGrad.addColorStop(0.75, layer.strokeColor);
+        botStrokeGrad.addColorStop(0.88, 'rgba(0, 0, 0, 0)');
+        botStrokeGrad.addColorStop(1.0, 'rgba(0, 0, 0, 0)');
+
+        ctx.strokeStyle = botStrokeGrad;
+        ctx.lineWidth = layer.lineWidth * 0.9;
+        ctx.shadowBlur = isPlaying ? 10 : 5;
+        ctx.shadowColor = layer.glowColor;
+        ctx.stroke();
         ctx.restore();
       });
+
+      // 4. Central Horizontal Specular Neon Beam (Image 2 exact match)
+      // Strictly spans between xMin + waveW * 0.08 and xMax - waveW * 0.08, fading softly to 0 at both ends
+      const beamStart = xMin + waveW * 0.08;
+      const beamEnd = xMax - waveW * 0.08;
+
+      ctx.save();
+      const beamGrad = ctx.createLinearGradient(beamStart, 0, beamEnd, 0);
+      if (isPurple) {
+        beamGrad.addColorStop(0, 'rgba(255, 42, 141, 0)');
+        beamGrad.addColorStop(0.15, 'rgba(255, 42, 141, 0.4)');
+        beamGrad.addColorStop(0.35, 'rgba(236, 72, 153, 0.85)');
+        beamGrad.addColorStop(0.48, 'rgba(255, 255, 255, 0.95)');
+        beamGrad.addColorStop(0.52, 'rgba(255, 255, 255, 1.0)');
+        beamGrad.addColorStop(0.65, 'rgba(168, 85, 247, 0.85)');
+        beamGrad.addColorStop(0.85, 'rgba(56, 189, 248, 0.4)');
+        beamGrad.addColorStop(1.0, 'rgba(56, 189, 248, 0)');
+      } else {
+        beamGrad.addColorStop(0, 'rgba(34, 211, 238, 0)');
+        beamGrad.addColorStop(0.15, 'rgba(34, 211, 238, 0.4)');
+        beamGrad.addColorStop(0.35, 'rgba(52, 211, 153, 0.85)');
+        beamGrad.addColorStop(0.48, 'rgba(255, 255, 255, 0.95)');
+        beamGrad.addColorStop(0.52, 'rgba(255, 255, 255, 1.0)');
+        beamGrad.addColorStop(0.65, 'rgba(16, 185, 129, 0.85)');
+        beamGrad.addColorStop(0.85, 'rgba(6, 182, 212, 0.4)');
+        beamGrad.addColorStop(1.0, 'rgba(6, 182, 212, 0)');
+      }
+
+      ctx.beginPath();
+      ctx.moveTo(beamStart, midY);
+      ctx.lineTo(beamEnd, midY);
+      ctx.strokeStyle = beamGrad;
+      ctx.lineWidth = 2.0;
+      ctx.shadowBlur = isPlaying ? 12 : 7;
+      ctx.shadowColor = isPurple ? '#ff2a8d' : '#22d3ee';
+      ctx.stroke();
+      ctx.restore();
+
+      // Specular hotspot lens flares in the center (visible in Image 2)
+      const flareX1 = beamStart + (beamEnd - beamStart) * 0.49;
+      const flareX2 = beamStart + (beamEnd - beamStart) * 0.53;
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(flareX1, midY, 2.0, 0, Math.PI * 2);
+      ctx.arc(flareX2, midY, 1.6, 0, Math.PI * 2);
+      ctx.fillStyle = '#ffffff';
+      ctx.shadowBlur = 10;
+      ctx.shadowColor = '#ffffff';
+      ctx.fill();
+      ctx.restore();
 
       animationFrameRef.current = requestAnimationFrame(renderWaveform);
     };

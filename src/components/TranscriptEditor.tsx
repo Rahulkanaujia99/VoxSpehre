@@ -38,6 +38,7 @@ import {
   ArrowRightCircle,
   CheckSquare,
   BookOpen,
+  MessageSquareText,
 } from 'lucide-react';
 import {
   TranscriptionResult,
@@ -66,6 +67,7 @@ interface TranscriptEditorProps {
   onPlaySegment?: (startTime: number, endTime: number, segmentId: string) => void;
   activePlayingSegmentId?: string | null;
   onUpdateResult: (updated: TranscriptionResult) => void;
+  onOpenChat?: () => void;
 }
 
 const TRANSLATION_LANGUAGES = [
@@ -102,6 +104,7 @@ export const TranscriptEditor: React.FC<TranscriptEditorProps> = ({
   onPlaySegment,
   activePlayingSegmentId,
   onUpdateResult,
+  onOpenChat,
 }) => {
   const [copied, setCopied] = useState(false);
   const [copiedAISummary, setCopiedAISummary] = useState(false);
@@ -675,6 +678,17 @@ export const TranscriptEditor: React.FC<TranscriptEditorProps> = ({
             <Compass className="w-4 h-4 text-teal-600" />
             <span className="hidden sm:inline">Tavily Research</span>
           </button>
+
+          {onOpenChat && (
+            <button
+              onClick={onOpenChat}
+              className="p-2 sm:px-3 sm:py-2 rounded-xl text-xs font-bold bg-purple-50 hover:bg-purple-100 border border-purple-200 text-purple-700 flex items-center gap-1.5 transition-all cursor-pointer shadow-2xs"
+              title="Chat with AI about this transcript"
+            >
+              <MessageSquareText className="w-4 h-4 text-purple-600" />
+              <span className="hidden sm:inline">AI Chat</span>
+            </button>
+          )}
 
           <button
             onClick={() => setShowSearchReplace(!showSearchReplace)}

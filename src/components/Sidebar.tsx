@@ -5,11 +5,23 @@ import {
   Plus,
   LayoutDashboard,
   FileText,
+  Scissors,
+  MessageSquareText,
+  BarChart3,
+  User,
+  Settings,
   LogOut,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 
-export type SidebarTab = 'dashboard' | 'recordings' | 'profile' | 'settings';
+export type SidebarTab =
+  | 'dashboard'
+  | 'recordings'
+  | 'trimmer'
+  | 'chat'
+  | 'analytics'
+  | 'profile'
+  | 'settings';
 
 interface SidebarProps {
   activeTab: SidebarTab;
@@ -34,6 +46,51 @@ export const Sidebar: React.FC<SidebarProps> = ({
     onTabChange(tab);
     if (onCloseMobile) onCloseMobile();
   };
+
+  const navItems = [
+    {
+      id: 'dashboard' as SidebarTab,
+      label: 'Dashboard',
+      icon: LayoutDashboard,
+      badge: null,
+    },
+    {
+      id: 'recordings' as SidebarTab,
+      label: 'Recordings',
+      icon: FileText,
+      badge: recordingsCount > 0 ? recordingsCount : null,
+    },
+    {
+      id: 'trimmer' as SidebarTab,
+      label: 'Audio Trimmer',
+      icon: Scissors,
+      badge: null,
+    },
+    {
+      id: 'chat' as SidebarTab,
+      label: 'AI Chat',
+      icon: MessageSquareText,
+      badge: null,
+    },
+    {
+      id: 'analytics' as SidebarTab,
+      label: 'Analytics',
+      icon: BarChart3,
+      badge: null,
+    },
+    {
+      id: 'profile' as SidebarTab,
+      label: 'User Profile',
+      icon: User,
+      badge: null,
+    },
+    {
+      id: 'settings' as SidebarTab,
+      label: 'Settings',
+      icon: Settings,
+      badge: null,
+    },
+  ];
 
   return (
     <>
@@ -65,55 +122,41 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </button>
 
           {/* Primary Navigation Menu */}
-          <div className="space-y-1.5 relative">
+          <div className="space-y-1 relative">
             <div className="px-3 pb-2 text-[11px] font-bold tracking-wider text-slate-400 uppercase">
-              TRANSCRIBE
+              STUDIO & TOOLS
             </div>
 
-            {/* 1. Dashboard */}
-            <button
-              onClick={() => handleSelectTab('dashboard')}
-              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all cursor-pointer ${
-                activeTab === 'dashboard'
-                  ? 'bg-indigo-50 text-indigo-700 font-bold shadow-2xs'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-              }`}
-            >
-              <LayoutDashboard
-                className={`w-4 h-4 ${
-                  activeTab === 'dashboard' ? 'text-indigo-600' : 'text-slate-400'
-                }`}
-              />
-              <span className="flex-1 text-left">Dashboard</span>
-              {activeTab === 'dashboard' && (
-                <div className="w-1.5 h-1.5 rounded-full bg-indigo-600" />
-              )}
-            </button>
-
-            {/* 2. Recordings */}
-            <button
-              onClick={() => handleSelectTab('recordings')}
-              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all cursor-pointer ${
-                activeTab === 'recordings'
-                  ? 'bg-indigo-50 text-indigo-700 font-bold shadow-2xs'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-              }`}
-            >
-              <FileText
-                className={`w-4 h-4 ${
-                  activeTab === 'recordings' ? 'text-indigo-600' : 'text-slate-400'
-                }`}
-              />
-              <span className="flex-1 text-left">Recordings</span>
-              {recordingsCount > 0 && (
-                <span className="text-[11px] font-bold px-1.5 py-0.5 rounded-full bg-indigo-100 text-indigo-800">
-                  {recordingsCount}
-                </span>
-              )}
-              {activeTab === 'recordings' && (
-                <div className="w-1.5 h-1.5 rounded-full bg-indigo-600" />
-              )}
-            </button>
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = activeTab === item.id;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => handleSelectTab(item.id)}
+                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all cursor-pointer ${
+                    isActive
+                      ? 'bg-indigo-50 text-indigo-700 font-bold shadow-2xs'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                  }`}
+                >
+                  <Icon
+                    className={`w-4 h-4 ${
+                      isActive ? 'text-indigo-600' : 'text-slate-400'
+                    }`}
+                  />
+                  <span className="flex-1 text-left">{item.label}</span>
+                  {item.badge !== null && (
+                    <span className="text-[11px] font-bold px-1.5 py-0.5 rounded-full bg-indigo-100 text-indigo-800">
+                      {item.badge}
+                    </span>
+                  )}
+                  {isActive && (
+                    <div className="w-1.5 h-1.5 rounded-full bg-indigo-600" />
+                  )}
+                </button>
+              );
+            })}
           </div>
         </div>
 

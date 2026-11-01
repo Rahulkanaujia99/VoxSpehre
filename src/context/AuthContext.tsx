@@ -16,6 +16,7 @@ interface AuthContextType {
   signInAsGuest: (email?: string, name?: string) => void;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ error: Error | null }>;
+  updateUserProfile: (fullName: string, avatarUrl?: string | null) => Promise<{ error: Error | null }>;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -29,6 +30,7 @@ const AuthContext = createContext<AuthContextType>({
   signInAsGuest: () => {},
   signOut: async () => {},
   resetPassword: async () => ({ error: null }),
+  updateUserProfile: async () => ({ error: null }),
 });
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -167,6 +169,54 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return { error };
   };
 
+  const updateUserProfile = async (fullName: string, avatarUrl?: string | null) => {
+    try {
+      if (configured && user && user.id !== 'demo-user-id') {
+        const supabase = createClient();
+        await supabase.auth.updateUser({
+          data: {
+            full_name: fullName,
+            ...(avatarUrl !== undefined ? { avatar_url: avatarUrl } : {}),
+          },
+        });
+
+        const updatePayload: Record<string, any> = {
+          full_name: fullName,
+          updated_at: new Date().toISOString(),
+        };
+        if (avatarUrl !== undefined) {
+          updatePayload.avatar_url = avatarUrl;
+        }
+
+        await supabase
+          .from('profiles')
+          .update(updatePayload)
+          .eq('id', user.id);
+      }
+
+      if (profile) {
+        setProfile({
+          ...profile,
+          full_name: fullName,
+          avatar_url: avatarUrl !== undefined ? avatarUrl : profile.avatar_url,
+        });
+      } else if (user) {
+        setProfile({
+          id: user.id,
+          email: user.email || '',
+          full_name: fullName,
+          avatar_url: avatarUrl || null,
+          created_at: user.created_at,
+          updated_at: new Date().toISOString(),
+        });
+      }
+
+      return { error: null };
+    } catch (err: unknown) {
+      return { error: err instanceof Error ? err : new Error('Failed to update profile') };
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -180,6 +230,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         signInAsGuest,
         signOut,
         resetPassword,
+        updateUserProfile,
       }}
     >
       {children}

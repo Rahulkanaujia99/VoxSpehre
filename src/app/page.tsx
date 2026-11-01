@@ -9,10 +9,11 @@ import { Footer } from '@/components/Footer';
 import { PenguinInfoModal } from '@/components/PenguinInfoModal';
 import { AuthView } from '@/components/AuthView';
 import { useAuth } from '@/context/AuthContext';
+import { SidebarTab } from '@/components/Sidebar';
 
 export default function Home() {
   const [currentView, setCurrentView] = useState<'home' | 'app' | 'auth'>('home');
-  const [dashboardTab, setDashboardTab] = useState<'dashboard' | 'recordings' | 'profile' | 'settings'>('dashboard');
+  const [dashboardTab, setDashboardTab] = useState<SidebarTab>('dashboard');
   const [isPenguinInfoOpen, setIsPenguinInfoOpen] = useState(false);
   const [penguinSection, setPenguinSection] = useState('about');
   const { user } = useAuth();

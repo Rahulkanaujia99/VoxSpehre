@@ -12,14 +12,15 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { AuthModal } from './AuthModal';
+import { SidebarTab } from './Sidebar';
 
 interface NavbarProps {
   onOpenStudio: (sampleId?: string) => void;
   onOpenPenguinInfo: (section?: string) => void;
   isAppView?: boolean;
   onBackToHome?: () => void;
-  activeTab?: 'dashboard' | 'recordings' | 'profile' | 'settings';
-  onNavigate?: (tab: 'dashboard' | 'recordings' | 'profile' | 'settings') => void;
+  activeTab?: SidebarTab;
+  onNavigate?: (tab: SidebarTab) => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -61,7 +62,7 @@ export const Navbar: React.FC<NavbarProps> = ({
     };
   }, [showUserDropdown]);
 
-  const handleSelectTab = (tab: 'dashboard' | 'recordings' | 'profile' | 'settings') => {
+  const handleSelectTab = (tab: SidebarTab) => {
     setShowUserDropdown(false);
     if (onNavigate) {
       onNavigate(tab);

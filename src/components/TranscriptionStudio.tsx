@@ -121,6 +121,13 @@ export const TranscriptionStudio: React.FC<TranscriptionStudioProps> = ({
   const [rowsPerPage, setRowsPerPage] = useState<number>(20);
   const [currentPage, setCurrentPage] = useState<number>(1);
 
+  // Exact segment playback state for "▶ Click to play from here"
+  const [activePlaySegment, setActivePlaySegment] = useState<{
+    startTime: number;
+    endTime: number;
+    id: string;
+  } | null>(null);
+
   // Audio Player Theme Settings & Interactive Live Preview State
   const { playerDesign, setPlayerDesign } = usePlayerSettings();
   const [settingsAudioUrl, setSettingsAudioUrl] = useState<string | null>(null);
@@ -592,7 +599,7 @@ export const TranscriptionStudio: React.FC<TranscriptionStudioProps> = ({
                     </button>
                   </div>
 
-                  {/* Audio Waveform Player */}
+                  {/* Audio Waveform Player with Segment Boundary Enforcement */}
                   {audioUrl && (
                     <AudioWaveformPlayer
                       audioUrl={audioUrl}
@@ -602,7 +609,12 @@ export const TranscriptionStudio: React.FC<TranscriptionStudioProps> = ({
                       title={transcriptionData.metadata.fileName}
                       onTimeUpdate={(t) => setCurrentTime(t)}
                       onPlayPause={(p) => setIsPlaying(p)}
-                      onSeek={(t) => setCurrentTime(t)}
+                      onSeek={(t) => {
+                        setActivePlaySegment(null);
+                        setCurrentTime(t);
+                      }}
+                      segmentPlayback={activePlaySegment}
+                      onSegmentComplete={() => setActivePlaySegment(null)}
                     />
                   )}
 
@@ -611,7 +623,23 @@ export const TranscriptionStudio: React.FC<TranscriptionStudioProps> = ({
                     data={transcriptionData}
                     currentTime={currentTime}
                     activeEngine="openai"
+                    activePlayingSegmentId={activePlaySegment?.id.split('___')[0] || null}
+                    onPlaySegment={(startTime, endTime, segmentId) => {
+                      if (activePlaySegment && activePlaySegment.id.startsWith(segmentId) && isPlaying) {
+                        setIsPlaying(false);
+                        setActivePlaySegment(null);
+                        return;
+                      }
+                      setCurrentTime(startTime);
+                      setActivePlaySegment({
+                        startTime,
+                        endTime,
+                        id: `${segmentId}___${Date.now()}`,
+                      });
+                      setIsPlaying(true);
+                    }}
                     onSeekAudio={(time) => {
+                      setActivePlaySegment(null);
                       setCurrentTime(time);
                       setIsPlaying(true);
                     }}

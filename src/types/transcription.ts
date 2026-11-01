@@ -31,10 +31,21 @@ export type TranscriptionStyle =
   | 'financial'
   | 'bilingual';
 
+export interface StructuredAISummary {
+  about?: string;
+  objective?: string | null;
+  keyDiscussionAreas?: string[];
+  insights?: string[];
+  decisions?: string[];
+  actionItems?: string[];
+  conclusion?: string;
+}
+
 export interface ComprehensiveSummaries {
   summary?: string;
   paragraph?: string;
   aiSummary?: string;
+  structuredAISummary?: StructuredAISummary;
   translatedText?: string;
   executive?: string;
   detailed?: string;

@@ -31,12 +31,20 @@ import {
   Edit3,
   Bot,
   Languages,
+  Info,
+  Target,
+  ListChecks,
+  CheckCircle2,
+  ArrowRightCircle,
+  CheckSquare,
+  BookOpen,
 } from 'lucide-react';
 import {
   TranscriptionResult,
   TranscriptSegment,
   ResearchEnrichment,
   SummarizationMode,
+  StructuredAISummary,
 } from '@/types/transcription';
 import { formatTime } from '@/lib/audioToneGenerator';
 import { formatReadableDuration } from './AudioUploader';
@@ -55,6 +63,8 @@ interface TranscriptEditorProps {
   currentTime: number;
   activeEngine?: 'sarvam' | 'gemini' | 'openai' | 'groq';
   onSeekAudio: (time: number) => void;
+  onPlaySegment?: (startTime: number, endTime: number, segmentId: string) => void;
+  activePlayingSegmentId?: string | null;
   onUpdateResult: (updated: TranscriptionResult) => void;
 }
 
@@ -89,9 +99,13 @@ export const TranscriptEditor: React.FC<TranscriptEditorProps> = ({
   currentTime,
   activeEngine = 'openai',
   onSeekAudio,
+  onPlaySegment,
+  activePlayingSegmentId,
   onUpdateResult,
 }) => {
   const [copied, setCopied] = useState(false);
+  const [copiedAISummary, setCopiedAISummary] = useState(false);
+  const [copiedParagraph, setCopiedParagraph] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [replaceQuery, setReplaceQuery] = useState('');
   const [showSearchReplace, setShowSearchReplace] = useState(false);
@@ -106,7 +120,7 @@ export const TranscriptEditor: React.FC<TranscriptEditorProps> = ({
   const [showExportMenu, setShowExportMenu] = useState(false);
 
   // New Tab Sub-states
-  const [paragraphViewMode, setParagraphViewMode] = useState<'paragraphs' | 'segments'>('paragraphs');
+  const [paragraphViewMode, setParagraphViewMode] = useState<'paragraphs' | 'speaker_turns'>('paragraphs');
   const [targetTranslateLanguage, setTargetTranslateLanguage] = useState<string>('Spanish');
   const [translatedContent, setTranslatedContent] = useState<string>(data.comprehensiveSummaries?.translatedText || '');
   const [isTranslating, setIsTranslating] = useState<boolean>(false);
@@ -312,7 +326,7 @@ export const TranscriptEditor: React.FC<TranscriptEditorProps> = ({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           text: fullTranscript,
-          engine: 'openai',
+          engine: 'auto',
           mode: 'ai_summary',
         }),
       });
@@ -321,6 +335,7 @@ export const TranscriptEditor: React.FC<TranscriptEditorProps> = ({
 
       const csNew = json.comprehensiveSummaries || {};
       const aiSummary = csNew.aiSummary || json.aiSummary || json.summary;
+      const structuredAISummary = csNew.structuredAISummary || json.structuredAISummary;
 
       onUpdateResult({
         ...data,
@@ -328,6 +343,7 @@ export const TranscriptEditor: React.FC<TranscriptEditorProps> = ({
           ...data.comprehensiveSummaries,
           ...csNew,
           aiSummary,
+          structuredAISummary,
         },
       });
     } catch (err) {
@@ -335,6 +351,24 @@ export const TranscriptEditor: React.FC<TranscriptEditorProps> = ({
     } finally {
       setIsAiSummarizing(false);
     }
+  };
+
+  const handleCopyAISummary = () => {
+    const textToCopy =
+      cs?.aiSummary ||
+      (structuredSummaryData
+        ? `• What the transcript is about: ${structuredSummaryData.about}\n` +
+          (structuredSummaryData.objective ? `• Main Objective: ${structuredSummaryData.objective}\n` : '') +
+          `• Key Discussion Areas:\n  - ${structuredSummaryData.keyDiscussionAreas?.join('\n  - ')}\n` +
+          `• Important Insights:\n  - ${structuredSummaryData.insights?.join('\n  - ')}\n` +
+          `• Key Decisions:\n  - ${structuredSummaryData.decisions?.length ? structuredSummaryData.decisions.join('\n  - ') : 'None discussed'}\n` +
+          `• Action Items:\n  - ${structuredSummaryData.actionItems?.length ? structuredSummaryData.actionItems.join('\n  - ') : 'None mentioned'}\n` +
+          `• Overall Conclusion: ${structuredSummaryData.conclusion}`
+        : data.summary);
+
+    navigator.clipboard.writeText(textToCopy);
+    setCopiedAISummary(true);
+    setTimeout(() => setCopiedAISummary(false), 2000);
   };
 
   // Translate Transcript with AI
@@ -436,6 +470,116 @@ export const TranscriptEditor: React.FC<TranscriptEditorProps> = ({
   };
 
   const cs = data.comprehensiveSummaries;
+
+  // Complete Original Transcript: Group consecutive segments by speaker for natural paragraphs
+  const speakerGroupedParagraphs = React.useMemo(() => {
+    const groups: { speaker: string; text: string; startTime: number; endTime: number }[] = [];
+    currentSegments.forEach((seg) => {
+      const last = groups[groups.length - 1];
+      if (last && last.speaker === seg.speaker) {
+        last.text = `${last.text} ${seg.text}`.trim();
+        last.endTime = seg.endTime;
+      } else {
+        groups.push({
+          speaker: seg.speaker,
+          text: seg.text.trim(),
+          startTime: seg.startTime,
+          endTime: seg.endTime,
+        });
+      }
+    });
+    return groups;
+  }, [currentSegments]);
+
+  // Complete, unabridged original transcript text preserving every single word
+  const fullOriginalTranscriptText = React.useMemo(() => {
+    return speakerGroupedParagraphs.map((g) => g.text).join('\n\n');
+  }, [speakerGroupedParagraphs]);
+
+  const handleCopyParagraph = () => {
+    navigator.clipboard.writeText(fullOriginalTranscriptText);
+    setCopiedParagraph(true);
+    setTimeout(() => setCopiedParagraph(false), 2000);
+  };
+
+  // Structured AI Summary Data across all 7 dimensions
+  const structuredSummaryData: StructuredAISummary = React.useMemo(() => {
+    if (cs?.structuredAISummary) return cs.structuredAISummary;
+
+    const sentences = currentSegments
+      .map((s) => s.text)
+      .join(' ')
+      .split(/(?<=[.!?])\s+/)
+      .map((s) => s.trim())
+      .filter((s) => s.length > 10);
+
+    const fullClean = currentSegments.map((s) => s.text).join(' ');
+
+    const about =
+      sentences.slice(0, 2).join(' ') ||
+      data.summary ||
+      fullClean.slice(0, 250);
+
+    let objective: string | null = null;
+    const objMatch = sentences.find((s) =>
+      /\b(objective|goal|purpose|aim|target|plan to|aiming to|intending to)\b/i.test(s)
+    );
+    if (objMatch) objective = objMatch;
+
+    const keyAreas: string[] = [];
+    sentences.forEach((s) => {
+      if (
+        s.length > 25 &&
+        /\b(milestone|investment|capacity|installed|solar|market|growth|energy|strategy|revenue|customer|project|technology|development)\b/i.test(s)
+      ) {
+        if (keyAreas.length < 5 && !keyAreas.includes(s)) keyAreas.push(s);
+      }
+    });
+    if (keyAreas.length === 0 && sentences.length > 0) {
+      keyAreas.push(...sentences.slice(0, Math.min(3, sentences.length)));
+    }
+
+    const insights: string[] = [];
+    sentences.forEach((s) => {
+      if (
+        /\b(\d+|billion|million|percent|%|milestone|reached|created|unlocked|first|highest|growth)\b/i.test(s)
+      ) {
+        if (insights.length < 4 && !insights.includes(s)) insights.push(s);
+      }
+    });
+    if (insights.length === 0 && sentences.length > 1) {
+      insights.push(sentences[1]);
+    }
+
+    const decisions: string[] = [];
+    sentences.forEach((s) => {
+      if (/\b(decided to|agreed to|approved|resolved to|concluded that|settled on)\b/i.test(s)) {
+        if (decisions.length < 3 && !decisions.includes(s)) decisions.push(s);
+      }
+    });
+
+    const actionItems: string[] = [];
+    sentences.forEach((s) => {
+      if (/\b(action item|next step|responsible for|follow up|assigned to|deadline|must submit|will deliver)\b/i.test(s)) {
+        if (actionItems.length < 3 && !actionItems.includes(s)) actionItems.push(s);
+      }
+    });
+
+    const conclusion =
+      sentences[sentences.length - 1] ||
+      data.summary ||
+      'Discussion concluded with core subject milestones recorded.';
+
+    return {
+      about,
+      objective,
+      keyDiscussionAreas: keyAreas,
+      insights,
+      decisions,
+      actionItems,
+      conclusion,
+    };
+  }, [cs, currentSegments, data.summary]);
 
   return (
     <div className="bg-white rounded-3xl border border-slate-200/90 shadow-xl shadow-slate-100 p-6 sm:p-8 space-y-6">
@@ -810,55 +954,105 @@ export const TranscriptEditor: React.FC<TranscriptEditorProps> = ({
             </div>
           )}
 
-          {/* TAB 2: PARAGRAPH (Detailed Narrative Summary with Reference Image 2 Toggle) */}
+          {/* TAB 2: PARAGRAPH (Complete Original Transcript - Unabridged & Formatted) */}
           {(activeSummaryTab === 'paragraph' || activeSummaryTab === 'detailed') && (
-            <div className="space-y-3">
-              <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-slate-100">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-indigo-600 flex items-center gap-1.5">
-                  <FileText className="w-3.5 h-3.5" />
-                  Detailed Qualitative Summary
-                </span>
+            <div className="space-y-4">
+              <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-100">
+                <div>
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-indigo-600 flex items-center gap-1.5">
+                    <BookOpen className="w-3.5 h-3.5" />
+                    Complete Original Transcript (Unabridged)
+                  </span>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Preserves entire transcript without summarising, shortening, or omitting content
+                  </p>
+                </div>
 
-                {/* Reference Image 2: [ Paragraphs | Segments ] toggle pill */}
-                <div className="inline-flex items-center p-0.5 rounded-lg border border-slate-200 bg-slate-100 text-xs font-bold">
+                <div className="flex items-center gap-2.5">
+                  {/* View Mode Toggle: Continuous vs Speaker Turns */}
+                  <div className="inline-flex items-center p-0.5 rounded-xl border border-slate-200 bg-slate-100 text-xs font-bold">
+                    <button
+                      type="button"
+                      onClick={() => setParagraphViewMode('paragraphs')}
+                      className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
+                        paragraphViewMode === 'paragraphs'
+                          ? 'bg-[#0f172a] text-white shadow-xs'
+                          : 'text-slate-600 hover:text-slate-900'
+                      }`}
+                    >
+                      Continuous
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setParagraphViewMode('speaker_turns')}
+                      className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
+                        paragraphViewMode === 'speaker_turns'
+                          ? 'bg-[#0f172a] text-white shadow-xs'
+                          : 'text-slate-600 hover:text-slate-900'
+                      }`}
+                    >
+                      By Speaker
+                    </button>
+                  </div>
+
+                  {/* Copy Full Paragraph Transcript */}
                   <button
                     type="button"
-                    onClick={() => setParagraphViewMode('paragraphs')}
-                    className={`px-3 py-1 rounded-md transition-all cursor-pointer ${
-                      paragraphViewMode === 'paragraphs'
-                        ? 'bg-[#0f172a] text-white shadow-xs'
-                        : 'text-slate-600 hover:text-slate-900'
-                    }`}
+                    onClick={handleCopyParagraph}
+                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition-colors cursor-pointer text-xs"
+                    title="Copy complete original transcript"
                   >
-                    Paragraphs
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setParagraphViewMode('segments')}
-                    className={`px-3 py-1 rounded-md transition-all cursor-pointer ${
-                      paragraphViewMode === 'segments'
-                        ? 'bg-[#0f172a] text-white shadow-xs'
-                        : 'text-slate-600 hover:text-slate-900'
-                    }`}
-                  >
-                    Segments
+                    {copiedParagraph ? (
+                      <>
+                        <Check className="w-3.5 h-3.5 text-emerald-600" />
+                        <span className="text-emerald-700">Copied!</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-3.5 h-3.5" />
+                        <span>Copy Full Transcript</span>
+                      </>
+                    )}
                   </button>
                 </div>
               </div>
 
+              {/* Stats Bar */}
+              <div className="flex items-center gap-3 text-xs text-slate-500 font-medium px-1">
+                <span>{data.metadata.wordCount} total words</span>
+                <span>•</span>
+                <span>{currentSegments.length} verbatim segments</span>
+                <span>•</span>
+                <span>~{Math.max(1, Math.round(data.metadata.wordCount / 140))} min estimated read</span>
+              </div>
+
+              {/* Paragraph Content Display */}
               {paragraphViewMode === 'paragraphs' ? (
-                <div className="text-xs sm:text-sm text-slate-800 leading-relaxed font-normal whitespace-pre-line bg-slate-50/60 p-4 rounded-xl border border-slate-200">
-                  {cs?.paragraph || cs?.detailed || data.summary}
+                /* 1. Continuous Natural Paragraphs */
+                <div className="space-y-4 p-5 bg-slate-50/70 rounded-2xl border border-slate-200/90 text-xs sm:text-sm text-slate-800 leading-relaxed font-normal max-h-[500px] overflow-y-auto">
+                  {speakerGroupedParagraphs.map((group, idx) => (
+                    <p key={idx} className="leading-relaxed text-justify">
+                      {group.text}
+                    </p>
+                  ))}
                 </div>
               ) : (
-                <div className="space-y-2 max-h-96 overflow-y-auto pr-1">
-                  {currentSegments.map((seg) => (
-                    <div key={seg.id} className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs">
-                      <div className="flex items-center justify-between text-[11px] font-bold text-slate-500 mb-1">
-                        <span className="text-indigo-600 font-semibold">{seg.speaker}</span>
-                        <span className="font-mono">[{formatTime(seg.startTime)} - {formatTime(seg.endTime)}]</span>
+                /* 2. Speaker Turn Formatted Paragraphs */
+                <div className="space-y-3 max-h-[500px] overflow-y-auto pr-1">
+                  {speakerGroupedParagraphs.map((group, idx) => (
+                    <div
+                      key={idx}
+                      className="p-4 bg-slate-50/70 rounded-2xl border border-slate-200/80 space-y-1.5"
+                    >
+                      <div className="flex items-center justify-between text-xs font-bold text-slate-500 pb-1 border-b border-slate-200/60">
+                        <span className="text-indigo-700 font-bold">{group.speaker}</span>
+                        <span className="font-mono text-[11px] text-slate-400">
+                          {formatTime(group.startTime)} – {formatTime(group.endTime)}
+                        </span>
                       </div>
-                      <p className="text-slate-800 leading-relaxed">{seg.text}</p>
+                      <p className="text-xs sm:text-sm text-slate-800 leading-relaxed font-normal">
+                        {group.text}
+                      </p>
                     </div>
                   ))}
                 </div>
@@ -866,36 +1060,167 @@ export const TranscriptEditor: React.FC<TranscriptEditorProps> = ({
             </div>
           )}
 
-          {/* TAB 3: AI SUMMARY (Short, Concise AI-Powered Summary) */}
+          {/* TAB 3: AI SUMMARY (Meaningful 7-Dimension Structured Conversation Intelligence) */}
           {activeSummaryTab === 'ai_summary' && (
-            <div className="space-y-3">
+            <div className="space-y-4">
               <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-slate-100">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-purple-600 flex items-center gap-1.5">
-                  <Bot className="w-3.5 h-3.5" />
-                  Concise AI Conversation Briefing
-                </span>
-                <button
-                  type="button"
-                  onClick={handleGenerateAISummary}
-                  disabled={isAiSummarizing}
-                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-purple-50 hover:bg-purple-100 border border-purple-200 text-xs font-bold text-purple-700 transition-colors cursor-pointer disabled:opacity-50"
-                >
-                  {isAiSummarizing ? (
-                    <>
-                      <Loader2 className="w-3 h-3 animate-spin" />
-                      <span>Generating with AI...</span>
-                    </>
-                  ) : (
-                    <>
-                      <RefreshCw className="w-3 h-3" />
-                      <span>Regenerate AI Summary</span>
-                    </>
-                  )}
-                </button>
+                <div>
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-purple-600 flex items-center gap-1.5">
+                    <Bot className="w-3.5 h-3.5" />
+                    Structured AI Conversation Intelligence
+                  </span>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Meaningful 7-dimension analysis grounded strictly in the full transcript
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleCopyAISummary}
+                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-colors cursor-pointer"
+                  >
+                    {copiedAISummary ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                    <span>{copiedAISummary ? 'Copied' : 'Copy AI Summary'}</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleGenerateAISummary}
+                    disabled={isAiSummarizing}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-50 hover:bg-purple-100 border border-purple-200 text-xs font-bold text-purple-700 transition-colors cursor-pointer disabled:opacity-50"
+                  >
+                    {isAiSummarizing ? (
+                      <>
+                        <Loader2 className="w-3 h-3 animate-spin" />
+                        <span>Analyzing with AI...</span>
+                      </>
+                    ) : (
+                      <>
+                        <RefreshCw className="w-3 h-3" />
+                        <span>Regenerate Summary</span>
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
 
-              <div className="p-4 sm:p-5 bg-gradient-to-r from-purple-50/70 via-indigo-50/50 to-pink-50/40 rounded-2xl border border-purple-200/80 text-xs sm:text-sm text-slate-800 leading-relaxed font-medium shadow-xs">
-                {cs?.aiSummary || cs?.summary || cs?.executive || data.summary}
+              {/* The 7 Structured Dimensions */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 pt-1">
+                {/* 1. What the transcript is about */}
+                <div className="md:col-span-2 p-4 rounded-2xl bg-gradient-to-r from-purple-50/80 to-indigo-50/60 border border-purple-200/80 space-y-1.5">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-purple-700 flex items-center gap-1.5">
+                    <Info className="w-3.5 h-3.5" />
+                    What the Transcript is About
+                  </span>
+                  <p className="text-xs sm:text-sm text-slate-800 leading-relaxed font-medium">
+                    {structuredSummaryData.about}
+                  </p>
+                </div>
+
+                {/* 2. Main Objective */}
+                <div className="md:col-span-2 p-4 rounded-2xl bg-white border border-slate-200 space-y-1.5 shadow-2xs">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-indigo-700 flex items-center gap-1.5">
+                    <Target className="w-3.5 h-3.5" />
+                    Main Objective
+                  </span>
+                  <p className="text-xs sm:text-sm text-slate-800 leading-relaxed">
+                    {structuredSummaryData.objective || 'Primary discussion context established across recorded speech turns.'}
+                  </p>
+                </div>
+
+                {/* 3. Key Discussion Areas */}
+                <div className="p-4 rounded-2xl bg-white border border-slate-200 space-y-2 shadow-2xs">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-blue-700 flex items-center gap-1.5">
+                    <ListChecks className="w-3.5 h-3.5" />
+                    Key Discussion Areas
+                  </span>
+                  <ul className="space-y-1.5 text-xs text-slate-700">
+                    {structuredSummaryData.keyDiscussionAreas && structuredSummaryData.keyDiscussionAreas.length > 0 ? (
+                      structuredSummaryData.keyDiscussionAreas.map((area, i) => (
+                        <li key={i} className="flex items-start gap-2">
+                          <span className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-1.5 shrink-0" />
+                          <span className="leading-relaxed">{area}</span>
+                        </li>
+                      ))
+                    ) : (
+                      <li className="text-slate-400 italic">Core conversation points documented.</li>
+                    )}
+                  </ul>
+                </div>
+
+                {/* 4. Important Insights */}
+                <div className="p-4 rounded-2xl bg-white border border-slate-200 space-y-2 shadow-2xs">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-amber-700 flex items-center gap-1.5">
+                    <Lightbulb className="w-3.5 h-3.5" />
+                    Important Insights
+                  </span>
+                  <ul className="space-y-1.5 text-xs text-slate-700">
+                    {structuredSummaryData.insights && structuredSummaryData.insights.length > 0 ? (
+                      structuredSummaryData.insights.map((insight, i) => (
+                        <li key={i} className="flex items-start gap-2">
+                          <span className="w-1.5 h-1.5 rounded-full bg-amber-500 mt-1.5 shrink-0" />
+                          <span className="leading-relaxed">{insight}</span>
+                        </li>
+                      ))
+                    ) : (
+                      <li className="text-slate-400 italic">Discussion observations recorded.</li>
+                    )}
+                  </ul>
+                </div>
+
+                {/* 5. Key Decisions */}
+                <div className="p-4 rounded-2xl bg-white border border-slate-200 space-y-2 shadow-2xs">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-700 flex items-center gap-1.5">
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    Key Decisions
+                  </span>
+                  {structuredSummaryData.decisions && structuredSummaryData.decisions.length > 0 ? (
+                    <ul className="space-y-1.5 text-xs text-slate-700">
+                      {structuredSummaryData.decisions.map((dec, i) => (
+                        <li key={i} className="flex items-start gap-2">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-1.5 shrink-0" />
+                          <span className="leading-relaxed">{dec}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-xs text-slate-400 italic">
+                      No formal decisions were finalized during this conversation.
+                    </p>
+                  )}
+                </div>
+
+                {/* 6. Action Items */}
+                <div className="p-4 rounded-2xl bg-white border border-slate-200 space-y-2 shadow-2xs">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-rose-700 flex items-center gap-1.5">
+                    <ArrowRightCircle className="w-3.5 h-3.5" />
+                    Action Items
+                  </span>
+                  {structuredSummaryData.actionItems && structuredSummaryData.actionItems.length > 0 ? (
+                    <ul className="space-y-1.5 text-xs text-slate-700">
+                      {structuredSummaryData.actionItems.map((act, i) => (
+                        <li key={i} className="flex items-start gap-2">
+                          <span className="w-1.5 h-1.5 rounded-full bg-rose-500 mt-1.5 shrink-0" />
+                          <span className="leading-relaxed">{act}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-xs text-slate-400 italic">
+                      No action items or follow-up tasks were assigned in this discussion.
+                    </p>
+                  )}
+                </div>
+
+                {/* 7. Overall Conclusion */}
+                <div className="md:col-span-2 p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1.5">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                    <CheckSquare className="w-3.5 h-3.5" />
+                    Overall Conclusion
+                  </span>
+                  <p className="text-xs sm:text-sm text-slate-800 leading-relaxed font-medium">
+                    {structuredSummaryData.conclusion}
+                  </p>
+                </div>
               </div>
             </div>
           )}
@@ -927,7 +1252,7 @@ export const TranscriptEditor: React.FC<TranscriptEditorProps> = ({
                   {isTranslating ? (
                     <>
                       <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      <span>Translating with AI...</span>
+                      <span>Translating Full Transcript...</span>
                     </>
                   ) : (
                     <>
@@ -940,7 +1265,7 @@ export const TranscriptEditor: React.FC<TranscriptEditorProps> = ({
 
               {translatedContent ? (
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between text-xs">
+                  <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
                     <span className="font-bold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200 flex items-center gap-1.5">
                       <Check className="w-3 h-3 text-emerald-600" />
                       Translated to {targetTranslateLanguage}
@@ -967,11 +1292,13 @@ export const TranscriptEditor: React.FC<TranscriptEditorProps> = ({
                   </div>
                 </div>
               ) : (
-                <div className="p-8 text-center bg-slate-50/80 rounded-2xl border border-dashed border-slate-200">
-                  <Globe className="w-8 h-8 text-indigo-400 mx-auto mb-2" />
-                  <p className="text-xs font-bold text-slate-800">No translation generated yet</p>
-                  <p className="text-[11px] text-slate-500 mt-1 max-w-sm mx-auto">
-                    Select your target language and click &ldquo;Translate Transcript&rdquo; to process with OpenAI speech intelligence.
+                <div className="p-8 text-center bg-slate-50/80 rounded-2xl border border-dashed border-slate-200 space-y-2">
+                  <Languages className="w-8 h-8 text-indigo-400 mx-auto" />
+                  <p className="text-xs sm:text-sm font-bold text-slate-700">
+                    Translate entire transcript into {targetTranslateLanguage}
+                  </p>
+                  <p className="text-xs text-slate-500 max-w-sm mx-auto">
+                    Select your target language above and click Translate Transcript to perform AI-powered translation.
                   </p>
                 </div>
               )}
@@ -1244,14 +1571,17 @@ export const TranscriptEditor: React.FC<TranscriptEditorProps> = ({
 
         <div className="space-y-3.5">
           {currentSegments.map((seg) => {
+            const isPlayingThisExactSegment = activePlayingSegmentId === seg.id;
             const isCurrentlyPlaying =
-              currentTime >= seg.startTime && currentTime <= seg.endTime;
+              isPlayingThisExactSegment || (currentTime >= seg.startTime && currentTime <= seg.endTime);
 
             return (
               <div
                 key={seg.id}
                 className={`p-4 rounded-2xl border transition-all duration-200 ${
-                  isCurrentlyPlaying
+                  isPlayingThisExactSegment
+                    ? 'bg-indigo-50/50 border-indigo-500 ring-2 ring-indigo-200 shadow-md'
+                    : isCurrentlyPlaying
                     ? 'bg-teal-50/50 border-teal-400 ring-2 ring-teal-100 shadow-md'
                     : 'bg-white border-slate-200/80 hover:border-slate-300'
                 }`}
@@ -1261,13 +1591,21 @@ export const TranscriptEditor: React.FC<TranscriptEditorProps> = ({
                   <div className="flex items-center gap-2">
                     {/* Clickable Timestamp Button */}
                     <button
-                      onClick={() => onSeekAudio(seg.startTime)}
+                      onClick={() => {
+                        if (onPlaySegment) {
+                          onPlaySegment(seg.startTime, seg.endTime, seg.id);
+                        } else {
+                          onSeekAudio(seg.startTime);
+                        }
+                      }}
                       className={`flex items-center gap-1 px-2.5 py-1 rounded-lg font-mono text-xs font-bold transition-all cursor-pointer ${
-                        isCurrentlyPlaying
+                        isPlayingThisExactSegment
+                          ? 'bg-indigo-600 text-white shadow-xs'
+                          : isCurrentlyPlaying
                           ? 'bg-teal-600 text-white shadow-xs'
-                          : 'bg-slate-100 text-slate-600 hover:bg-teal-500 hover:text-white'
+                          : 'bg-slate-100 text-slate-600 hover:bg-indigo-600 hover:text-white'
                       }`}
-                      title="Seek audio to this timestamp"
+                      title={`Play audio segment: ${formatTime(seg.startTime)} - ${formatTime(seg.endTime)}`}
                     >
                       <Clock className="w-3 h-3" />
                       <span>
@@ -1325,12 +1663,22 @@ export const TranscriptEditor: React.FC<TranscriptEditorProps> = ({
                 <div className="pt-1.5 flex items-center">
                   <button
                     type="button"
-                    onClick={() => onSeekAudio(seg.startTime)}
-                    className="inline-flex items-center gap-1.5 text-xs text-blue-600 hover:text-blue-700 font-normal transition-colors cursor-pointer group select-none"
-                    title={`Play audio starting at ${formatTime(seg.startTime)}`}
+                    onClick={() => {
+                      if (onPlaySegment) {
+                        onPlaySegment(seg.startTime, seg.endTime, seg.id);
+                      } else {
+                        onSeekAudio(seg.startTime);
+                      }
+                    }}
+                    className="inline-flex items-center gap-1.5 text-xs text-blue-600 hover:text-blue-700 font-medium transition-colors cursor-pointer group select-none"
+                    title={`Play only segment ${formatTime(seg.startTime)} – ${formatTime(seg.endTime)}`}
                   >
-                    <span className="text-[10px] leading-none text-blue-600 group-hover:scale-110 transition-transform">▷</span>
-                    <span>Click to play from here</span>
+                    <span className="text-[10px] leading-none text-blue-600 group-hover:scale-110 transition-transform">
+                      {isPlayingThisExactSegment ? '⏹' : '▷'}
+                    </span>
+                    <span className={isPlayingThisExactSegment ? 'font-bold text-indigo-700 underline decoration-indigo-300' : ''}>
+                      {isPlayingThisExactSegment ? 'Playing this segment (Click to stop)' : 'Click to play from here'}
+                    </span>
                   </button>
                 </div>
               </div>

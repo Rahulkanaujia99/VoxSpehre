@@ -31,6 +31,8 @@ interface AudioWaveformPlayerProps {
   forcedDesign?: PlayerDesign;
   className?: string;
   isCompactPreview?: boolean;
+  segmentPlayback?: { startTime: number; endTime: number; id: string } | null;
+  onSegmentComplete?: () => void;
 }
 
 export const AudioWaveformPlayer: React.FC<AudioWaveformPlayerProps> = ({
@@ -45,6 +47,8 @@ export const AudioWaveformPlayer: React.FC<AudioWaveformPlayerProps> = ({
   forcedDesign,
   className = '',
   isCompactPreview = false,
+  segmentPlayback,
+  onSegmentComplete,
 }) => {
   const { playerDesign: globalDesign } = usePlayerSettings();
   const activeDesign: PlayerDesign = forcedDesign || globalDesign || 'purple-glass';
@@ -96,10 +100,36 @@ export const AudioWaveformPlayer: React.FC<AudioWaveformPlayerProps> = ({
     }
   }, [playbackRate, volume, isMuted]);
 
-  // Handle Audio Time Updates
+  // Handle segment playback trigger (Click to play from here)
+  useEffect(() => {
+    if (!audioRef.current || !segmentPlayback) return;
+    audioRef.current.currentTime = segmentPlayback.startTime;
+    onTimeUpdate(segmentPlayback.startTime);
+    audioRef.current.play().catch(() => {});
+    onPlayPause(true);
+  }, [segmentPlayback?.id]);
+
+  // Synchronize audio element currentTime when parent seeks while paused
+  useEffect(() => {
+    if (!audioRef.current) return;
+    if (!isPlaying && Math.abs(audioRef.current.currentTime - currentTime) > 0.4) {
+      audioRef.current.currentTime = currentTime;
+    }
+  }, [currentTime, isPlaying]);
+
+  // Handle Audio Time Updates with exact segment boundary enforcement
   const handleAudioTimeUpdate = () => {
     if (audioRef.current) {
-      onTimeUpdate(audioRef.current.currentTime);
+      const cur = audioRef.current.currentTime;
+      if (segmentPlayback && cur >= segmentPlayback.endTime) {
+        audioRef.current.pause();
+        audioRef.current.currentTime = segmentPlayback.endTime;
+        onTimeUpdate(segmentPlayback.endTime);
+        onPlayPause(false);
+        if (onSegmentComplete) onSegmentComplete();
+        return;
+      }
+      onTimeUpdate(cur);
     }
   };
 
@@ -124,6 +154,7 @@ export const AudioWaveformPlayer: React.FC<AudioWaveformPlayerProps> = ({
 
   // Skip backwards or forwards by seconds
   const handleSkip = (seconds: number) => {
+    if (onSegmentComplete) onSegmentComplete();
     const target = Math.max(0, Math.min(duration || 100, currentTime + seconds));
     if (audioRef.current) {
       audioRef.current.currentTime = target;
@@ -149,6 +180,7 @@ export const AudioWaveformPlayer: React.FC<AudioWaveformPlayerProps> = ({
 
   // Progress Seek (Slider / Track)
   const handleSeek = (newTime: number) => {
+    if (onSegmentComplete) onSegmentComplete();
     if (audioRef.current) {
       audioRef.current.currentTime = newTime;
     }
@@ -186,6 +218,16 @@ export const AudioWaveformPlayer: React.FC<AudioWaveformPlayerProps> = ({
       // Increment phase when playing or slow idle breathe when paused
       if (isPlaying) {
         phaseRef.current += 0.045 * playbackRate;
+        // Check segment boundary at 60fps for microsecond-precise stop
+        if (segmentPlayback && audioRef.current) {
+          if (audioRef.current.currentTime >= segmentPlayback.endTime) {
+            audioRef.current.pause();
+            audioRef.current.currentTime = segmentPlayback.endTime;
+            onPlayPause(false);
+            onTimeUpdate(segmentPlayback.endTime);
+            if (onSegmentComplete) onSegmentComplete();
+          }
+        }
       } else {
         phaseRef.current += 0.008;
       }

@@ -117,3 +117,4 @@ Return ONLY the translated transcript without markdown code fences or commentary
     return NextResponse.json({ error: msg }, { status: 500 });
   }
 }
+

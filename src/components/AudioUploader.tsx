@@ -178,24 +178,18 @@ export const AudioUploader: React.FC<AudioUploaderProps> = ({
     // Read audio duration from metadata
     const tempAudio = new Audio(url);
     tempAudio.onloadedmetadata = () => {
-      setUploadProgress(85);
+      setUploadProgress(100);
       if (tempAudio.duration && isFinite(tempAudio.duration)) {
         setAudioDuration(tempAudio.duration);
       } else {
         // Fallback estimate based on file size (~128kbps)
         setAudioDuration(Math.max(10, Math.round(file.size / 16000)));
       }
-      setTimeout(() => {
-        setUploadProgress(100);
-        setTimeout(() => setIsUploadingFile(false), 300);
-      }, 250);
+      setIsUploadingFile(false);
     };
     tempAudio.onerror = () => {
       setAudioDuration(Math.max(10, Math.round(file.size / 16000)));
-      setTimeout(() => {
-        setUploadProgress(100);
-        setTimeout(() => setIsUploadingFile(false), 300);
-      }, 250);
+      setIsUploadingFile(false);
     };
   };
 
@@ -310,12 +304,20 @@ export const AudioUploader: React.FC<AudioUploaderProps> = ({
         /* 2. FILE LOADED STATE WITH METADATA, PLAYER & CONTROLS    */
         /* ======================================================== */
         <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/90 shadow-md space-y-6 animate-fade-in">
-          {/* Upload & Preparation Waveform Loading Bar */}
+          {/* Normal File Preparation Loading State (Standard Spinner & Progress Bar) */}
           {isUploadingFile && (
-            <WaveformLoadingBar
-              progress={uploadProgress}
-              stageText={uploadStageText}
-            />
+            <div className="p-3.5 rounded-2xl bg-indigo-50/80 border border-indigo-200 text-indigo-900 text-xs flex items-center gap-3 animate-pulse">
+              <Loader2 className="w-4 h-4 animate-spin text-indigo-600 shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-slate-700 truncate">{uploadStageText || 'Preparing audio file...'}</p>
+                <div className="w-full bg-indigo-200/60 rounded-full h-1.5 mt-1.5 overflow-hidden">
+                  <div
+                    className="bg-indigo-600 h-1.5 rounded-full transition-all duration-300"
+                    style={{ width: `${Math.max(5, uploadProgress)}%` }}
+                  />
+                </div>
+              </div>
+            </div>
           )}
 
           {/* File Metadata Header */}

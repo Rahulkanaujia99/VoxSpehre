@@ -73,7 +73,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   return (
     <>
-      <header className="sticky top-0 z-50 w-full bg-white/75 backdrop-blur-md border-b border-slate-200/50 transition-all shadow-2xs">
+      <header className="sticky top-0 z-50 w-full bg-white/30 backdrop-blur-md border-b border-slate-200/30 transition-all">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
           {/* Brand Logo - Using Official Penguin International Logo & VoxSphere */}
           <div
@@ -123,7 +123,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               )}
             </div>
           ) : (
-            <nav className="hidden md:flex items-center bg-slate-50/90 border border-slate-200/80 rounded-full px-5 py-2 shadow-xs space-x-6 text-[13px] font-semibold text-slate-700">
+            <nav className="hidden sm:flex items-center bg-white/80 backdrop-blur-md border border-slate-200/70 rounded-full px-5 py-2 shadow-xs space-x-5 text-[13px] font-semibold text-slate-700">
               <button
                 id="nav-about"
                 onClick={() => onOpenPenguinInfo('about')}
@@ -142,11 +142,12 @@ export const Navbar: React.FC<NavbarProps> = ({
               >
                 Contact us
               </button>
+              <div className="h-4 w-px bg-slate-200" />
               <a
                 href="https://www.penguin-international.com/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-teal-700 hover:text-teal-900 font-bold flex items-center gap-1 transition-colors pl-1 border-l border-slate-200"
+                className="text-teal-700 hover:text-teal-900 font-bold flex items-center gap-1 transition-colors"
               >
                 <span>Penguin International</span>
                 <ExternalLink className="w-3 h-3 text-teal-600" />

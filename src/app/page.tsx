@@ -73,26 +73,38 @@ export default function Home() {
   };
 
   return (
-    <main className="min-h-screen bg-slate-50 text-slate-900 selection:bg-indigo-500 selection:text-white flex flex-col justify-between">
-      {/* Navigation Bar - Preserved exact website header (Image 3) */}
-      <Navbar
-        isAppView={currentView === 'app'}
-        onBackToHome={handleBackToHome}
-        onOpenStudio={handleStartTranscribing}
-        onOpenSignIn={() => transitionNavigate('/login')}
-        onOpenPenguinInfo={handleOpenPenguinInfo}
-        activeTab={dashboardTab}
-        onNavigate={(tab) => {
-          setDashboardTab(tab);
-          if (currentView !== 'app') setCurrentView('app');
-        }}
-      />
+    <main className="min-h-screen home-premium-bg text-slate-900 selection:bg-indigo-500 selection:text-white flex flex-col justify-between relative overflow-x-hidden">
+      {/* Full Viewport Ambient Gradient Glow Layer (matching Image 2) */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden z-0 transform-gpu" style={{ contain: 'strict' }}>
+        {/* Upper-Left Light Blue & Soft Teal Glow */}
+        <div className="absolute -top-32 -left-28 w-[700px] h-[700px] rounded-full bg-gradient-to-br from-[#EAF4FF] via-[#E8FAF7]/80 to-transparent blur-[90px] opacity-85 transform-gpu" />
+        {/* Upper-Right Pale Purple & Soft Lavender Glow */}
+        <div className="absolute -top-36 -right-28 w-[750px] h-[750px] rounded-full bg-gradient-to-bl from-[#F8F2FF] via-[#F1EEFF]/85 to-transparent blur-[90px] opacity-90 transform-gpu" />
+        {/* Subtle Central Teal Mist */}
+        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[800px] h-[600px] rounded-full bg-gradient-to-b from-[#E8FAF7]/30 via-[#EAF4FF]/40 to-transparent blur-[100px] opacity-75 transform-gpu" />
+      </div>
+
+      {/* Navigation Bar - Preserved exact website header (Image 1 & 2) */}
+      <div className="relative z-10 w-full">
+        <Navbar
+          isAppView={currentView === 'app'}
+          onBackToHome={handleBackToHome}
+          onOpenStudio={handleStartTranscribing}
+          onOpenSignIn={() => transitionNavigate('/login')}
+          onOpenPenguinInfo={handleOpenPenguinInfo}
+          activeTab={dashboardTab}
+          onNavigate={(tab) => {
+            setDashboardTab(tab);
+            if (currentView !== 'app') setCurrentView('app');
+          }}
+        />
+      </div>
 
       {currentView === 'home' && (
         /* ======================================================== */
-        /* LANDING PAGE (Home Page) - Image 1 Home Page UI          */
+        /* LANDING PAGE (Home Page) - Image 1 & 2 Home Page UI      */
         /* ======================================================== */
-        <div className="flex-1 flex flex-col justify-between animate-fadeIn">
+        <div className="flex-1 flex flex-col justify-between relative z-10">
           {/* Hero Section with Start Transcribing & Try Sample Audio CTAs */}
           <HeroSection
             onOpenStudio={handleStartTranscribing}
@@ -119,7 +131,7 @@ export default function Home() {
         /* AUDIO TRANSCRIPTION DASHBOARD (AUTHENTICATED / ACTIVE)   */
         /* Footer is hidden on authenticated dashboard pages        */
         /* ======================================================== */
-        <div className="flex-1 flex flex-col animate-fadeIn">
+        <div className="flex-1 flex flex-col relative z-10">
           <TranscriptionStudio
             onBackToHome={handleBackToHome}
             activeTab={dashboardTab}

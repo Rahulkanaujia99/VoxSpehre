@@ -946,31 +946,52 @@ export const VoxRobot: React.FC<{
   useEffect(() => {
     if (!containerRef.current) return;
 
-    const bot = mountVoxRobot(containerRef.current, {
-      brand,
-      brand2,
-    });
+    let bot: VoxRobotHandle | null = null;
+    let cleanupListeners: (() => void) | null = null;
+    let isDisposed = false;
 
-    window.__voxRobot = bot;
+    const handleCustomMood = (e: Event) => {
+      const customEvent = e as CustomEvent<string>;
+      if (bot && (customEvent.detail === 'happy' || customEvent.detail === 'curious' || customEvent.detail === 'annoyed')) {
+        bot.setMood(customEvent.detail as any);
+      }
+    };
+    const handleCustomGesture = (e: Event) => {
+      const customEvent = e as CustomEvent<string>;
+      if (bot) bot.gesture(customEvent.detail as any);
+    };
 
-    const attachInteractiveListeners = () => {
+    window.addEventListener('voxrobot:mood', handleCustomMood);
+    window.addEventListener('voxrobot:gesture', handleCustomGesture);
+
+    // Defer mount by 1 animation frame so Home page paints instantly without frame drop
+    const animFrame = requestAnimationFrame(() => {
+      if (isDisposed || !containerRef.current) return;
+
+      bot = mountVoxRobot(containerRef.current, {
+        brand,
+        brand2,
+      });
+
+      window.__voxRobot = bot;
+
       const ctaHero = document.getElementById('cta');
       const ctaHeader = document.getElementById('cta-header');
       const sampleBtn = document.getElementById('sample');
       const navAbout = document.getElementById('nav-about');
 
       const onCtaEnter = () => {
-        bot.setMood('happy');
-        bot.gesture('yes');
+        bot?.setMood('happy');
+        bot?.gesture('yes');
       };
       const onCtaLeave = () => {
-        bot.setMood('curious');
+        bot?.setMood('curious');
       };
       const onSampleEnter = () => {
-        bot.gesture('wink');
+        bot?.gesture('wink');
       };
       const onAboutEnter = () => {
-        bot.trick();
+        bot?.trick();
       };
 
       ctaHero?.addEventListener('mouseenter', onCtaEnter);
@@ -980,7 +1001,7 @@ export const VoxRobot: React.FC<{
       sampleBtn?.addEventListener('mouseenter', onSampleEnter);
       navAbout?.addEventListener('mouseenter', onAboutEnter);
 
-      return () => {
+      cleanupListeners = () => {
         ctaHero?.removeEventListener('mouseenter', onCtaEnter);
         ctaHero?.removeEventListener('mouseleave', onCtaLeave);
         ctaHeader?.removeEventListener('mouseenter', onCtaEnter);
@@ -988,29 +1009,15 @@ export const VoxRobot: React.FC<{
         sampleBtn?.removeEventListener('mouseenter', onSampleEnter);
         navAbout?.removeEventListener('mouseenter', onAboutEnter);
       };
-    };
-
-    const cleanupListeners = attachInteractiveListeners();
-
-    const handleCustomMood = (e: Event) => {
-      const customEvent = e as CustomEvent<string>;
-      if (customEvent.detail === 'happy' || customEvent.detail === 'curious' || customEvent.detail === 'annoyed') {
-        bot.setMood(customEvent.detail as any);
-      }
-    };
-    const handleCustomGesture = (e: Event) => {
-      const customEvent = e as CustomEvent<string>;
-      bot.gesture(customEvent.detail as any);
-    };
-
-    window.addEventListener('voxrobot:mood', handleCustomMood);
-    window.addEventListener('voxrobot:gesture', handleCustomGesture);
+    });
 
     return () => {
-      cleanupListeners();
+      isDisposed = true;
+      cancelAnimationFrame(animFrame);
+      if (cleanupListeners) cleanupListeners();
       window.removeEventListener('voxrobot:mood', handleCustomMood);
       window.removeEventListener('voxrobot:gesture', handleCustomGesture);
-      bot.destroy();
+      if (bot) bot.destroy();
       window.__voxRobot = null;
     };
   }, [brand, brand2]);

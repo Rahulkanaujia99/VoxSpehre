@@ -2,21 +2,23 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { usePageTransition } from '@/components/PageTransition';
 import { Navbar } from '@/components/Navbar';
 import { AuthView } from '@/components/AuthView';
 import { PenguinInfoModal } from '@/components/PenguinInfoModal';
 
 export default function LoginPage() {
   const router = useRouter();
+  const { navigate: transitionNavigate } = usePageTransition();
   const [isPenguinInfoOpen, setIsPenguinInfoOpen] = useState(false);
   const [penguinSection, setPenguinSection] = useState('about');
 
   const handleSuccess = () => {
-    router.push('/#studio');
+    transitionNavigate('/#studio');
   };
 
   const handleBackToHome = () => {
-    router.push('/');
+    transitionNavigate('/');
   };
 
   const handleOpenPenguinInfo = (section: string = 'about') => {
@@ -69,7 +71,7 @@ export default function LoginPage() {
         <Navbar
           isAppView={false}
           onBackToHome={handleBackToHome}
-          onOpenStudio={() => router.push('/#studio')}
+          onOpenStudio={() => transitionNavigate('/#studio')}
           onOpenSignIn={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
           onOpenPenguinInfo={handleOpenPenguinInfo}
         />

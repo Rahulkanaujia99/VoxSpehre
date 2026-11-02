@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/context/AuthContext';
+import { usePageTransition } from '@/components/PageTransition';
 import { Navbar } from '@/components/Navbar';
 import { HeroSection } from '@/components/HeroSection';
 import { TranscriptionStudio } from '@/components/TranscriptionStudio';
@@ -12,6 +14,8 @@ import { SidebarTab } from '@/components/Sidebar';
 
 export default function Home() {
   const router = useRouter();
+  const { user } = useAuth();
+  const { navigate: transitionNavigate } = usePageTransition();
   const [currentView, setCurrentView] = useState<'home' | 'app'>('home');
   const [dashboardTab, setDashboardTab] = useState<SidebarTab>('dashboard');
   const [isPenguinInfoOpen, setIsPenguinInfoOpen] = useState(false);
@@ -30,7 +34,7 @@ export default function Home() {
       ) {
         setCurrentView('app');
       } else if (hash === '#login' || hash === '#signin') {
-        router.push('/login');
+        transitionNavigate('/login');
       } else {
         setCurrentView('home');
       }
@@ -43,14 +47,18 @@ export default function Home() {
       window.removeEventListener('popstate', handleUrlState);
       window.removeEventListener('hashchange', handleUrlState);
     };
-  }, [router]);
+  }, [transitionNavigate]);
 
   // Handle clicking "Start Transcribing" from Home page:
-  // Opens the studio dashboard directly
-  const handleStartTranscribing = () => {
-    setCurrentView('app');
-    window.history.pushState(null, '', '#studio');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+  // Smoothly transitions to login page if unauthenticated, or opens studio dashboard
+  const handleStartTranscribing = (sampleId?: string) => {
+    if (user) {
+      setCurrentView('app');
+      window.history.pushState(null, '', '#studio');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      transitionNavigate('/login');
+    }
   };
 
   const handleBackToHome = () => {
@@ -71,7 +79,7 @@ export default function Home() {
         isAppView={currentView === 'app'}
         onBackToHome={handleBackToHome}
         onOpenStudio={handleStartTranscribing}
-        onOpenSignIn={() => router.push('/login')}
+        onOpenSignIn={() => transitionNavigate('/login')}
         onOpenPenguinInfo={handleOpenPenguinInfo}
         activeTab={dashboardTab}
         onNavigate={(tab) => {
@@ -88,7 +96,11 @@ export default function Home() {
           {/* Hero Section with Start Transcribing & Try Sample Audio CTAs */}
           <HeroSection
             onOpenStudio={handleStartTranscribing}
-            onLoadSample={handleStartTranscribing}
+            onLoadSample={(sampleId) => {
+              setCurrentView('app');
+              window.history.pushState(null, '', '#studio');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
           />
 
           {/* Pipeline & Intelligence Features Section */}

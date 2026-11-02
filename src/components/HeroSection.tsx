@@ -71,7 +71,6 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                 id="sample"
                 onClick={() => {
                   onLoadSample('sample-pe-due-diligence');
-                  onOpenStudio('sample-pe-due-diligence');
                 }}
                 onMouseEnter={() => {
                   if (typeof window !== 'undefined' && window.__voxRobot) {

@@ -38,3 +38,130 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
 }
+
+/* Snitch Auth Interface Animations & Keyframes */
+@keyframes meshOrbit1 {
+  0% { transform: translate(0px, 0px) scale(1) rotate(0deg); }
+  33% { transform: translate(60px, -70px) scale(1.15) rotate(120deg); }
+  66% { transform: translate(-50px, 50px) scale(0.9) rotate(240deg); }
+  100% { transform: translate(0px, 0px) scale(1) rotate(360deg); }
+}
+@keyframes meshOrbit2 {
+  0% { transform: translate(0px, 0px) scale(1.05) rotate(0deg); }
+  33% { transform: translate(-70px, 60px) scale(0.95) rotate(-120deg); }
+  66% { transform: translate(65px, -40px) scale(1.18) rotate(-240deg); }
+  100% { transform: translate(0px, 0px) scale(1.05) rotate(-360deg); }
+}
+@keyframes meshOrbit3 {
+  0% { transform: translate(0px, 0px) scale(0.95); }
+  50% { transform: translate(80px, 70px) scale(1.12); }
+  100% { transform: translate(0px, 0px) scale(0.95); }
+}
+@keyframes meshOrbit4 {
+  0% { transform: translate(0px, 0px) scale(1); }
+  50% { transform: translate(-60px, -50px) scale(1.2); }
+  100% { transform: translate(0px, 0px) scale(1); }
+}
+
+.animate-mesh-1 { animation: meshOrbit1 20s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
+.animate-mesh-2 { animation: meshOrbit2 24s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
+.animate-mesh-3 { animation: meshOrbit3 28s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
+.animate-mesh-4 { animation: meshOrbit4 22s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
+
+/* Thick, Smooth Soundwave Pill Bar Animations */
+@keyframes soundwavePulse1 {
+  0%, 100% { height: 28%; opacity: 0.85; }
+  50% { height: 95%; opacity: 1; }
+}
+@keyframes soundwavePulse2 {
+  0%, 100% { height: 60%; opacity: 0.9; }
+  30% { height: 25%; opacity: 0.75; }
+  75% { height: 92%; opacity: 1; }
+}
+@keyframes soundwavePulse3 {
+  0%, 100% { height: 85%; opacity: 1; }
+  40% { height: 35%; opacity: 0.8; }
+  80% { height: 100%; opacity: 1; }
+}
+@keyframes soundwavePulse4 {
+  0%, 100% { height: 38%; opacity: 0.8; }
+  60% { height: 88%; opacity: 1; }
+}
+@keyframes soundwavePulse5 {
+  0%, 100% { height: 50%; opacity: 0.85; }
+  45% { height: 98%; opacity: 1; }
+  85% { height: 30%; opacity: 0.75; }
+}
+
+.sw-bar-1 { animation: soundwavePulse1 1.4s ease-in-out infinite; }
+.sw-bar-2 { animation: soundwavePulse2 1.6s ease-in-out infinite; }
+.sw-bar-3 { animation: soundwavePulse3 1.25s ease-in-out infinite; }
+.sw-bar-4 { animation: soundwavePulse4 1.7s ease-in-out infinite; }
+.sw-bar-5 { animation: soundwavePulse5 1.5s ease-in-out infinite; }
+
+/* Starburst / Radial Acoustic Ray Rotating & Pulsing Animation */
+@keyframes acousticRaySpin {
+  0% {
+    transform: rotate(0deg) scale(1);
+    filter: drop-shadow(0 0 10px rgba(56, 189, 248, 0.25));
+  }
+  50% {
+    transform: rotate(180deg) scale(1.08);
+    filter: drop-shadow(0 0 20px rgba(99, 102, 241, 0.45));
+  }
+  100% {
+    transform: rotate(360deg) scale(1);
+    filter: drop-shadow(0 0 10px rgba(56, 189, 248, 0.25));
+  }
+}
+.animate-acoustic-ray {
+  animation: acousticRaySpin 45s linear infinite;
+  transform-origin: center center;
+}
+
+@keyframes centerHubPulse {
+  0%, 100% { transform: scale(1); opacity: 0.8; }
+  50% { transform: scale(1.4); opacity: 1; }
+}
+.animate-hub-glow {
+  animation: centerHubPulse 3s ease-in-out infinite;
+}
+
+/* Shimmer Pill Effect */
+@keyframes shimmerMove {
+  0% { transform: translateX(-150%); }
+  100% { transform: translateX(150%); }
+}
+.shimmer-pill::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.22) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  animation: shimmerMove 3.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+/* Live transcription stream subtle glow animation */
+@keyframes liveStreamPulse {
+  0%, 100% { opacity: 0.95; }
+  50% { opacity: 0.45; }
+}
+.animate-stream-live {
+  animation: liveStreamPulse 2s ease-in-out infinite;
+}
+
+/* Sculpted silhouettes matching Snitch SVG definitions */
+.sculpted-main-notch {
+  clip-path: url(#main-sculpted-clip);
+}
+
+.sculpted-floating-step {
+  clip-path: url(#floating-step-clip);
+}

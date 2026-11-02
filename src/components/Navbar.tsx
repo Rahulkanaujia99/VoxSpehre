@@ -16,6 +16,7 @@ import { SidebarTab } from './Sidebar';
 
 interface NavbarProps {
   onOpenStudio: (sampleId?: string) => void;
+  onOpenSignIn?: () => void;
   onOpenPenguinInfo: (section?: string) => void;
   isAppView?: boolean;
   onBackToHome?: () => void;
@@ -25,6 +26,7 @@ interface NavbarProps {
 
 export const Navbar: React.FC<NavbarProps> = ({
   onOpenStudio,
+  onOpenSignIn,
   onOpenPenguinInfo,
   isAppView = false,
   onBackToHome,
@@ -257,8 +259,11 @@ export const Navbar: React.FC<NavbarProps> = ({
             ) : (
               <button
                 onClick={() => {
-                  setAuthModalMode('signin');
-                  setShowAuthModal(true);
+                  if (onOpenSignIn) {
+                    onOpenSignIn();
+                  } else {
+                    onOpenStudio();
+                  }
                 }}
                 className="text-xs sm:text-sm font-semibold text-slate-700 hover:text-indigo-600 px-3 py-1.5 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer flex items-center gap-1.5"
               >

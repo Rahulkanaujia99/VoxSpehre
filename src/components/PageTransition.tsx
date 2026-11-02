@@ -31,57 +31,73 @@ export const PageTransitionProvider: React.FC<PageTransitionProviderProps> = ({
 }) => {
   const router = useRouter();
   const pathname = usePathname();
-  const [isExiting, setIsExiting] = useState(false);
+  const [transitionState, setTransitionState] = useState<'idle' | 'entering' | 'exiting'>('idle');
   const isNavigatingRef = useRef(false);
-  const exitTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const exitTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const enterTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Pre-fetch primary target routes on initial load for instant zero-lag transitions
+  useEffect(() => {
+    try {
+      router.prefetch('/');
+      router.prefetch('/login');
+      router.prefetch('/signup');
+    } catch {}
+  }, [router]);
 
   // When pathname changes (either via router.push or browser back/forward popstate)
   useEffect(() => {
-    setIsExiting(false);
-    isNavigatingRef.current = false;
-    if (exitTimeoutRef.current) {
-      clearTimeout(exitTimeoutRef.current);
-      exitTimeoutRef.current = null;
+    if (exitTimerRef.current) {
+      clearTimeout(exitTimerRef.current);
+      exitTimerRef.current = null;
     }
+    isNavigatingRef.current = false;
+
+    // Trigger smooth, fast GPU-composited enter transition
+    setTransitionState('entering');
+
+    if (enterTimerRef.current) clearTimeout(enterTimerRef.current);
+    enterTimerRef.current = setTimeout(() => {
+      // Revert to idle so no residual transforms or will-change remain
+      setTransitionState('idle');
+    }, 280);
+
+    return () => {
+      if (enterTimerRef.current) clearTimeout(enterTimerRef.current);
+    };
   }, [pathname]);
 
-  // Clean up timer on unmount and listen to popstate
+  // Handle popstate for browser Back & Forward buttons
   useEffect(() => {
     const handlePopState = () => {
-      setIsExiting(false);
       isNavigatingRef.current = false;
-      if (exitTimeoutRef.current) {
-        clearTimeout(exitTimeoutRef.current);
-        exitTimeoutRef.current = null;
+      if (exitTimerRef.current) {
+        clearTimeout(exitTimerRef.current);
+        exitTimerRef.current = null;
       }
     };
 
     window.addEventListener('popstate', handlePopState);
     return () => {
       window.removeEventListener('popstate', handlePopState);
-      if (exitTimeoutRef.current) {
-        clearTimeout(exitTimeoutRef.current);
-      }
+      if (exitTimerRef.current) clearTimeout(exitTimerRef.current);
+      if (enterTimerRef.current) clearTimeout(enterTimerRef.current);
     };
   }, []);
 
   const navigate = useCallback(
     (targetHref: string) => {
-      // Clean paths to compare
       const targetPath = targetHref.split('?')[0].split('#')[0] || '/';
       const currentPath = pathname.split('?')[0].split('#')[0] || '/';
 
-      // If already on the target path and no hash change is requested, just scroll to top
       if (targetPath === currentPath && !targetHref.includes('#')) {
         window.scrollTo({ top: 0, behavior: 'smooth' });
         return;
       }
 
-      // Prevent overlapping navigations
       if (isNavigatingRef.current) return;
       isNavigatingRef.current = true;
 
-      // Check user preference for reduced motion
       const prefersReducedMotion =
         typeof window !== 'undefined' &&
         window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -92,30 +108,35 @@ export const PageTransitionProvider: React.FC<PageTransitionProviderProps> = ({
         return;
       }
 
-      // Trigger subtle exit transition
-      setIsExiting(true);
+      // Snappy micro-fadeout (70ms) before route switch for zero perceived latency
+      setTransitionState('exiting');
 
-      exitTimeoutRef.current = setTimeout(() => {
-        // Instant top scroll before new page enters
+      exitTimerRef.current = setTimeout(() => {
         window.scrollTo({ top: 0, behavior: 'instant' });
         router.push(targetHref);
 
-        // Safety timeout in case navigation is delayed or cancelled
-        exitTimeoutRef.current = setTimeout(() => {
-          setIsExiting(false);
+        // Fallback safety timeout
+        exitTimerRef.current = setTimeout(() => {
+          setTransitionState('idle');
           isNavigatingRef.current = false;
-        }, 400);
-      }, 160);
+        }, 350);
+      }, 70);
     },
     [pathname, router]
   );
 
   return (
-    <PageTransitionContext.Provider value={{ isNavigating: isExiting, navigate }}>
+    <PageTransitionContext.Provider
+      value={{ isNavigating: transitionState === 'exiting', navigate }}
+    >
       <div
         key={pathname}
         className={`page-transition-wrapper min-h-screen flex flex-col flex-1 w-full ${
-          isExiting ? 'page-transition-exit' : 'page-transition-enter'
+          transitionState === 'exiting'
+            ? 'page-transition-exit'
+            : transitionState === 'entering'
+            ? 'page-transition-enter'
+            : ''
         }`}
       >
         {children}

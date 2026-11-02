@@ -444,7 +444,7 @@ export function mountVoxRobot(el: HTMLElement, opts: MountOptions = {}): VoxRobo
   scene.add(head);
   const body = new THREE.Group();
   head.add(body);
-  const sphereGeo = new THREE.SphereGeometry(1.2, 128, 96);
+  const sphereGeo = new THREE.SphereGeometry(1.2, 64, 48);
   sphereGeo.computeBoundingSphere();
   const shell = new THREE.Mesh(
     sphereGeo,

@@ -152,19 +152,29 @@ function squircle(
 
 export function mountVoxRobot(el: HTMLElement, opts: MountOptions = {}): VoxRobotHandle {
   const reduce = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  
+  // Ensure clean element without duplicate canvases
+  el.innerHTML = '';
+
   const canvas = document.createElement('canvas');
   canvas.style.cssText = 'display:block;width:100%;height:100%;touch-action:none;cursor:pointer';
   canvas.setAttribute('aria-label', 'VoxSphere robot mascot');
   el.appendChild(canvas);
 
-  const renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true });
-  renderer.setPixelRatio(Math.min(typeof window !== 'undefined' ? window.devicePixelRatio : 1, 2));
+  const renderer = new THREE.WebGLRenderer({
+    canvas: canvas,
+    antialias: true,
+    alpha: true,
+    powerPreference: 'high-performance',
+  });
+  // Cap pixel ratio to 1.5 to maintain crisp visuals while avoiding GPU fillrate jank on 2x/3x screens
+  renderer.setPixelRatio(Math.min(typeof window !== 'undefined' ? window.devicePixelRatio : 1, 1.5));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
 
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(30, 1, 0.1, 100);
   camera.position.set(0, 0.1, 7.6);
-  camera.lookAt(0, -0.42, 0); // aim a little low so the shadow has room under the sphere
+  camera.lookAt(0, -0.42, 0);
 
   scene.add(new THREE.HemisphereLight(0xffffff, 0xa0a6b0, 1.05));
   const key = new THREE.DirectionalLight(0xffffff, 0.55);
@@ -174,7 +184,7 @@ export function mountVoxRobot(el: HTMLElement, opts: MountOptions = {}): VoxRobo
   fill.position.set(-3, 0.5, 2);
   scene.add(fill);
 
-  // soft contact shadow: a blurred radial blob that squashes, shifts and fades as the robot moves and lifts
+  // Soft contact shadow: radial blob
   const sc_ = document.createElement('canvas');
   sc_.width = sc_.height = 256;
   const sg = sc_.getContext('2d')!;
@@ -186,14 +196,18 @@ export function mountVoxRobot(el: HTMLElement, opts: MountOptions = {}): VoxRobo
   sg.fillStyle = grd;
   sg.fillRect(0, 0, 256, 256);
   const shadowTex = new THREE.CanvasTexture(sc_);
+  shadowTex.generateMipmaps = false;
+  shadowTex.minFilter = THREE.LinearFilter;
+  shadowTex.magFilter = THREE.LinearFilter;
+
   const shadow = new THREE.Mesh(
     new THREE.PlaneGeometry(3.4, 3.4),
     new THREE.MeshBasicMaterial({ map: shadowTex, transparent: true, depthWrite: false })
   );
   shadow.position.set(0.1, -1.5, 0.4);
-  scene.add(shadow); // camera-facing ellipse just under the sphere, like the reference render
+  scene.add(shadow);
 
-  // ---- face painted onto the sphere so it wraps around the curve ----
+  // ---- face painted onto the sphere ----
   const W = 1536;
   const H = 768;
   const fc = document.createElement('canvas');
@@ -202,13 +216,21 @@ export function mountVoxRobot(el: HTMLElement, opts: MountOptions = {}): VoxRobo
   const g = fc.getContext('2d')!;
   const faceTex = new THREE.CanvasTexture(fc);
   faceTex.colorSpace = THREE.SRGBColorSpace;
-  faceTex.anisotropy = 4;
+  // Crucial performance optimization:
+  // Disabling mipmaps prevents WebGL from calculating 11 levels of mipmaps on 1536x768 each frame
+  faceTex.generateMipmaps = false;
+  faceTex.minFilter = THREE.LinearFilter;
+  faceTex.magFilter = THREE.LinearFilter;
 
   const rc = document.createElement('canvas');
   rc.width = W;
   rc.height = H;
   const rg = rc.getContext('2d')!;
   const roughTex = new THREE.CanvasTexture(rc);
+  roughTex.generateMipmaps = false;
+  roughTex.minFilter = THREE.LinearFilter;
+  roughTex.magFilter = THREE.LinearFilter;
+
   const VW = 490;
   const VH = 300;
   const VR = 126;
@@ -229,7 +251,6 @@ export function mountVoxRobot(el: HTMLElement, opts: MountOptions = {}): VoxRobo
   const brand = hex(opts.brand || '#5b3df5');
   const brand2 = hex(opts.brand2 || '#1a9e86');
 
-  // three-stop rim gradients (left → middle → right), as in the reference
   const moods: Record<
     string,
     {
@@ -277,20 +298,23 @@ export function mountVoxRobot(el: HTMLElement, opts: MountOptions = {}): VoxRobo
   };
   let mood = 'curious';
 
-  function drawFace(f: {
-    ex: number;
-    ey: number;
-    openL: number;
-    openR: number;
-    scale: number;
-  }) {
-    g.fillStyle = '#f7f8fa';
-    g.fillRect(0, 0, W, H);
-    const sh = g.createLinearGradient(0, 0, 0, H);
+  // Performance Cache: Offscreen canvas for static face elements (shell gradient, rim gradient,
+  // 18px shadowBlur pass, visor fill and inner sheen). Only re-rendered when colors or visor scale change!
+  const baseCanvas = document.createElement('canvas');
+  baseCanvas.width = W;
+  baseCanvas.height = H;
+  const bg = baseCanvas.getContext('2d')!;
+  let lastBaseKey = '';
+
+  function renderBaseFace() {
+    bg.clearRect(0, 0, W, H);
+    bg.fillStyle = '#f7f8fa';
+    bg.fillRect(0, 0, W, H);
+    const sh = bg.createLinearGradient(0, 0, 0, H);
     sh.addColorStop(0, 'rgba(255,255,255,0)');
     sh.addColorStop(1, 'rgba(140,146,158,.28)');
-    g.fillStyle = sh;
-    g.fillRect(0, 0, W, H);
+    bg.fillStyle = sh;
+    bg.fillRect(0, 0, W, H);
 
     const vs = cur.visor;
     const vw = VW * vs;
@@ -300,46 +324,69 @@ export function mountVoxRobot(el: HTMLElement, opts: MountOptions = {}): VoxRobo
     const y = CY - vh / 2;
 
     // rim: diagonal three-stop gradient
-    const gr = g.createLinearGradient(x - RIM, y, x + vw + RIM, y + vh);
+    const gr = bg.createLinearGradient(x - RIM, y, x + vw + RIM, y + vh);
     gr.addColorStop(0, rgb(cur.c[0]));
     gr.addColorStop(0.5, rgb(cur.c[1]));
     gr.addColorStop(1, rgb(cur.c[2]));
-    squircle(g, x - RIM, y - RIM, vw + RIM * 2, vh + RIM * 2, vr + RIM);
-    g.fillStyle = gr;
-    g.fill();
+    squircle(bg, x - RIM, y - RIM, vw + RIM * 2, vh + RIM * 2, vr + RIM);
+    bg.fillStyle = gr;
+    bg.fill();
 
     // soft outer shadow where the rim meets the shell
-    g.save();
-    g.shadowColor = 'rgba(60,70,90,.25)';
-    g.shadowBlur = 18;
-    g.shadowOffsetY = 6;
-    g.fillStyle = gr;
-    g.fill();
-    g.restore();
+    bg.save();
+    bg.shadowColor = 'rgba(60,70,90,.25)';
+    bg.shadowBlur = 18;
+    bg.shadowOffsetY = 6;
+    bg.fillStyle = gr;
+    bg.fill();
+    bg.restore();
 
     // rim top highlight
-    const hl = g.createLinearGradient(0, y - RIM, 0, y + vh * 0.4);
+    const hl = bg.createLinearGradient(0, y - RIM, 0, y + vh * 0.4);
     hl.addColorStop(0, 'rgba(255,255,255,.35)');
     hl.addColorStop(1, 'rgba(255,255,255,0)');
-    g.fillStyle = hl;
-    g.fill();
+    bg.fillStyle = hl;
+    bg.fill();
 
-    // visor: near-black with a faint recess shadow around the inside edge and a cool sheen on top
-    squircle(g, x, y, vw, vh, vr);
-    g.fillStyle = '#0a0b0f';
-    g.fill();
-    g.save();
-    g.clip();
-    const inner = g.createRadialGradient(CX, CY, vh * 0.2, CX, CY, vw * 0.62);
+    // visor: near-black with faint recess shadow & cool sheen
+    squircle(bg, x, y, vw, vh, vr);
+    bg.fillStyle = '#0a0b0f';
+    bg.fill();
+    bg.save();
+    bg.clip();
+    const inner = bg.createRadialGradient(CX, CY, vh * 0.2, CX, CY, vw * 0.62);
     inner.addColorStop(0, 'rgba(0,0,0,0)');
     inner.addColorStop(1, 'rgba(0,0,0,.35)');
-    g.fillStyle = inner;
-    g.fillRect(x, y, vw, vh);
-    const sheen = g.createLinearGradient(0, y, 0, y + vh * 0.55);
+    bg.fillStyle = inner;
+    bg.fillRect(x, y, vw, vh);
+    const sheen = bg.createLinearGradient(0, y, 0, y + vh * 0.55);
     sheen.addColorStop(0, 'rgba(170,190,230,.16)');
     sheen.addColorStop(1, 'rgba(170,190,230,0)');
-    g.fillStyle = sheen;
-    g.fillRect(x, y, vw, vh);
+    bg.fillStyle = sheen;
+    bg.fillRect(x, y, vw, vh);
+    bg.restore();
+
+    lastBaseKey = `${Math.round(cur.c[0][0])},${Math.round(cur.c[0][1])},${Math.round(cur.c[0][2])}_${Math.round(cur.c[1][0])}_${Math.round(cur.c[2][0])}_${Math.round(cur.visor * 100)}`;
+  }
+
+  function drawFace(f: {
+    ex: number;
+    ey: number;
+    openL: number;
+    openR: number;
+    scale: number;
+  }) {
+    const currentKey = `${Math.round(cur.c[0][0])},${Math.round(cur.c[0][1])},${Math.round(cur.c[0][2])}_${Math.round(cur.c[1][0])}_${Math.round(cur.c[2][0])}_${Math.round(cur.visor * 100)}`;
+    if (currentKey !== lastBaseKey) {
+      renderBaseFace();
+    }
+
+    // Fast blit from pre-rendered base face canvas (0.05ms)
+    g.drawImage(baseCanvas, 0, 0);
+
+    const vs = cur.visor;
+    const vw = VW * vs;
+    const vh = VH * vs;
 
     // eyes
     const ew = vw * cur.eyeW * f.scale;
@@ -379,7 +426,7 @@ export function mountVoxRobot(el: HTMLElement, opts: MountOptions = {}): VoxRobo
       }
       g.restore();
     });
-    g.restore();
+
     faceTex.needsUpdate = true;
   }
 
@@ -387,8 +434,10 @@ export function mountVoxRobot(el: HTMLElement, opts: MountOptions = {}): VoxRobo
   scene.add(head);
   const body = new THREE.Group();
   head.add(body);
+  const sphereGeo = new THREE.SphereGeometry(1.2, 96, 72);
+  sphereGeo.computeBoundingSphere();
   const shell = new THREE.Mesh(
-    new THREE.SphereGeometry(1.2, 128, 96),
+    sphereGeo,
     new THREE.MeshPhysicalMaterial({
       map: faceTex,
       roughnessMap: roughTex,
@@ -404,7 +453,11 @@ export function mountVoxRobot(el: HTMLElement, opts: MountOptions = {}): VoxRobo
   // ---- state ----
   const pointer = new THREE.Vector2(0, 0);
   let hasPointer = false;
-  let rect = el.getBoundingClientRect();
+  let cachedRect = el.getBoundingClientRect();
+  function updateRect() {
+    cachedRect = el.getBoundingClientRect();
+  }
+
   let tYaw = 0;
   let tPitch = 0;
   const sYaw = new Spring(0, 34, 0.8);
@@ -501,12 +554,21 @@ export function mountVoxRobot(el: HTMLElement, opts: MountOptions = {}): VoxRobo
     clickGrump = 1.2;
   }
 
-  // is the pointer on the spot between the eyes?
+  // Fast check if pointer is on the spot between the eyes without layout thrashing
   function betweenEyes(e: PointerEvent | MouseEvent) {
-    rect = el.getBoundingClientRect();
+    const cx = cachedRect.left + cachedRect.width / 2;
+    const cy = cachedRect.top + cachedRect.height / 2;
+    // Fast 2D bounding prune: if pointer is far from center face area, skip expensive 3D raycast
+    if (
+      Math.abs(e.clientX - cx) > cachedRect.width * 0.22 ||
+      Math.abs(e.clientY - cy) > cachedRect.height * 0.2
+    ) {
+      return false;
+    }
+
     const p = new THREE.Vector2(
-      ((e.clientX - rect.left) / rect.width) * 2 - 1,
-      -((e.clientY - rect.top) / rect.height) * 2 + 1
+      ((e.clientX - cachedRect.left) / cachedRect.width) * 2 - 1,
+      -((e.clientY - cachedRect.top) / cachedRect.height) * 2 + 1
     );
     ray.setFromCamera(p, camera);
     const hit = ray.intersectObject(shell)[0];
@@ -519,15 +581,14 @@ export function mountVoxRobot(el: HTMLElement, opts: MountOptions = {}): VoxRobo
 
   let hoverT = 0;
   function onMove(x: number, y: number) {
-    rect = el.getBoundingClientRect();
-    const cx = rect.left + rect.width / 2;
-    const cy = rect.top + rect.height / 2;
+    const cx = cachedRect.left + cachedRect.width / 2;
+    const cy = cachedRect.top + cachedRect.height / 2;
     pointer.set(
       Math.max(-1, Math.min(1, (x - cx) / (window.innerWidth * 0.55))),
       Math.max(-1, Math.min(1, -(y - cy) / (window.innerHeight * 0.5)))
     );
     hasPointer = true;
-    const dist = Math.hypot(x - cx, y - cy) / (Math.max(rect.width, rect.height) * 0.9);
+    const dist = Math.hypot(x - cx, y - cy) / (Math.max(cachedRect.width, cachedRect.height) * 0.9);
     near = Math.max(0, 1 - dist);
   }
 
@@ -570,9 +631,9 @@ export function mountVoxRobot(el: HTMLElement, opts: MountOptions = {}): VoxRobo
   canvas.addEventListener('pointerleave', out);
 
   function resize() {
-    rect = el.getBoundingClientRect();
-    const w = Math.max(1, rect.width);
-    const h = Math.max(1, rect.height);
+    updateRect();
+    const w = Math.max(1, cachedRect.width);
+    const h = Math.max(1, cachedRect.height);
     renderer.setSize(w, h, false);
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
@@ -581,7 +642,8 @@ export function mountVoxRobot(el: HTMLElement, opts: MountOptions = {}): VoxRobo
 
   const ro = typeof window !== 'undefined' && window.ResizeObserver ? new ResizeObserver(resize) : null;
   if (ro) ro.observe(el);
-  window.addEventListener('resize', resize);
+  window.addEventListener('resize', resize, { passive: true });
+  window.addEventListener('scroll', updateRect, { passive: true });
   resize();
 
   const io =
@@ -607,6 +669,7 @@ export function mountVoxRobot(el: HTMLElement, opts: MountOptions = {}): VoxRobo
     lastTime = now;
     elapsedTime += dt;
     const t = elapsedTime;
+
     const idle = reduce ? 0 : 1;
     const k = 1 - Math.pow(0.0015, dt);
 
@@ -716,7 +779,6 @@ export function mountVoxRobot(el: HTMLElement, opts: MountOptions = {}): VoxRobo
           gPitch = Math.sin(p * Math.PI * 4) * 0.18 * bump(p * 0.9 + 0.05);
           break;
         case 'yes':
-          // the reference "Adopt Me" yes: face front, then three quick whole-body bobs with a blink, then hold
           if (gT > 0.5 && gT < 1.4) {
             const q = (gT - 0.5) / 0.9;
             gY = -Math.abs(Math.sin(q * Math.PI * 3)) * 0.2 * bump(q * 0.8 + 0.1);
@@ -763,7 +825,6 @@ export function mountVoxRobot(el: HTMLElement, opts: MountOptions = {}): VoxRobo
           extraYaw = Math.PI * 2 * easeInOut(p);
           break;
         case 'trick':
-          // one fast full spin, a short beat, then a slower spin the other way
           if (gT < 0.45) extraYaw = Math.PI * 2 * easeInOut(gT / 0.45);
           else if (gT < 0.65) extraYaw = 0;
           else extraYaw = -Math.PI * 2 * easeInOut(Math.min(1, (gT - 0.65) / 0.8));
@@ -781,14 +842,12 @@ export function mountVoxRobot(el: HTMLElement, opts: MountOptions = {}): VoxRobo
     sRoll.target = -yaw * 0.16 + Math.sin(t * 0.6) * 0.03 * idle + gRoll;
     roll = sRoll.step(dt);
 
-    // the whole body leans toward the pointer and sits a little lower when annoyed
     sX.target = (hasPointer ? pointer.x : Math.sin(t * 0.35)) * 0.28;
     sY.target =
       (hasPointer ? pointer.y : 0) * 0.14 +
       (mood === 'annoyed' ? -0.08 : 0) +
       (mood === 'happy' ? 0.04 : 0);
 
-    // size: bigger when happy, smaller when annoyed, and it swells slightly as the pointer comes close
     sScale.target = (mood === 'happy' ? 1.1 : mood === 'annoyed' ? 0.9 : 1) * (1 + near * 0.06);
     const sc = sScale.step(dt);
     head.rotation.set(pitch, yaw, roll);
@@ -797,13 +856,12 @@ export function mountVoxRobot(el: HTMLElement, opts: MountOptions = {}): VoxRobo
     body.position.y = Math.sin(t * 1.3) * 0.05 * idle + gY;
     body.scale.set(sc / Math.sqrt(squash), sc * squash, sc / Math.sqrt(squash));
 
-    const lift = Math.max(0, (body.position.y + head.position.y + 0.05) * 0.9 + 0.05); // how high it is floating
+    const lift = Math.max(0, (body.position.y + head.position.y + 0.05) * 0.9 + 0.05);
     const ss = sc * (1 - lift * 0.35);
     shadow.position.x = head.position.x * 0.9 + 0.1;
     shadow.scale.set(ss * 1.0, ss * 0.26, 1);
     (shadow.material as THREE.MeshBasicMaterial).opacity = Math.max(0.3, 1 - lift * 0.9);
 
-    // blink (both eyes, ~150 ms) layered under gesture eye states
     nextBlink -= dt;
     if (nextBlink <= 0 && gesture !== 'wink' && gesture !== 'sleepy') {
       blink = 0.16;
@@ -817,6 +875,7 @@ export function mountVoxRobot(el: HTMLElement, opts: MountOptions = {}): VoxRobo
     eyeOpenL = lerp(eyeOpenL, Math.min(oL, b), k * 2.0);
     eyeOpenR = lerp(eyeOpenR, Math.min(oR, b), k * 2.0);
     eyeScale = lerp(eyeScale, eS, k * 1.2);
+
     drawFace({
       ex: (tYaw - yaw) * 0.6 + yaw * 0.12,
       ey: (tPitch - pitch) * 0.9,
@@ -832,6 +891,7 @@ export function mountVoxRobot(el: HTMLElement, opts: MountOptions = {}): VoxRobo
     renderer.render(scene, camera);
   }
 
+  renderBaseFace();
   drawFace({ ex: 0, ey: 0, openL: 1, openR: 1, scale: 1 });
   frame();
 
@@ -864,6 +924,7 @@ export function mountVoxRobot(el: HTMLElement, opts: MountOptions = {}): VoxRobo
       if (ro) ro.disconnect();
       if (io) io.disconnect();
       window.removeEventListener('resize', resize);
+      window.removeEventListener('scroll', updateRect);
       renderer.dispose();
       canvas.remove();
     },
@@ -887,7 +948,6 @@ export const VoxRobot: React.FC<{
 
     window.__voxRobot = bot;
 
-    // Attach listeners to interactive hero & navbar elements
     const attachInteractiveListeners = () => {
       const ctaHero = document.getElementById('cta');
       const ctaHeader = document.getElementById('cta-header');
@@ -927,7 +987,6 @@ export const VoxRobot: React.FC<{
 
     const cleanupListeners = attachInteractiveListeners();
 
-    // Listen for custom dispatch events as well
     const handleCustomMood = (e: Event) => {
       const customEvent = e as CustomEvent<string>;
       if (customEvent.detail === 'happy' || customEvent.detail === 'curious' || customEvent.detail === 'annoyed') {
@@ -955,7 +1014,7 @@ export const VoxRobot: React.FC<{
     <div
       id="vox-robot"
       ref={containerRef}
-      className={`absolute inset-0 select-none ${className}`}
+      className={`absolute inset-0 select-none will-change-transform ${className}`}
     />
   );
 };

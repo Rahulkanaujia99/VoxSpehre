@@ -16,7 +16,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
   return (
     <section className="relative pt-8 pb-16 md:pt-14 md:pb-24 overflow-hidden">
       {/* Background Subtle Gradient Blobs */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[500px] bg-gradient-to-tr from-sky-100/40 via-indigo-50/30 to-teal-50/25 rounded-full blur-3xl pointer-events-none -z-10" />
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[500px] bg-gradient-to-tr from-sky-100/40 via-indigo-50/30 to-teal-50/25 rounded-full blur-3xl pointer-events-none -z-10 transform-gpu" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
@@ -104,7 +104,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
 
           {/* Right Column: 3D Interactive Mascot */}
           <div className="lg:col-span-5 flex justify-center lg:justify-end">
-            <div className="mascot relative aspect-square w-full max-w-[360px] sm:max-w-[420px] lg:max-w-[500px]">
+            <div className="mascot relative aspect-square w-full max-w-[360px] sm:max-w-[420px] lg:max-w-[500px] transform-gpu">
               {/* Subtle Hexagonal Background Overlay */}
               <div
                 className="hexes absolute inset-0 pointer-events-none opacity-60 sm:opacity-70 [mask-image:radial-gradient(circle,#000_25%,transparent_70%)] [-webkit-mask-image:radial-gradient(circle,#000_25%,transparent_70%)]"

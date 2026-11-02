@@ -165,3 +165,15 @@ body {
 .sculpted-floating-step {
   clip-path: url(#floating-step-clip);
 }
+
+/* Premium Multi-Layered Gradient Background inspired by Penguin Scout */
+.scout-premium-bg {
+  background-color: #FFFFFF;
+  background-image: 
+    radial-gradient(circle at 12% 15%, #EAF4FF 0%, rgba(234, 244, 255, 0.45) 35%, transparent 65%),
+    radial-gradient(circle at 88% 14%, #F8F2FF 0%, rgba(241, 238, 255, 0.7) 30%, transparent 65%),
+    radial-gradient(circle at 90% 88%, #E8FAF7 0%, rgba(232, 250, 247, 0.55) 35%, transparent 65%),
+    radial-gradient(circle at 10% 85%, #F1EEFF 0%, rgba(241, 238, 255, 0.45) 30%, transparent 60%),
+    linear-gradient(135deg, #F1EEFF 0%, #FFFFFF 35%, #FFFFFF 65%, #EAF4FF 85%, #E8FAF7 100%);
+  background-attachment: fixed;
+}

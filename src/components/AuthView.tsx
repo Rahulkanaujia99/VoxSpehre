@@ -133,12 +133,42 @@ export const AuthView: React.FC<AuthViewProps> = ({
         </defs>
       </svg>
 
-      {/* Ambient Moving Mesh Gradient and Dot Matrix Background localized behind login card */}
+      {/* Ambient Multi-Layered Gradient Lighting & Subtle Translucent Accents (Penguin Scout Inspired) */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden -z-10">
-        <div className="animate-mesh-1 absolute -top-40 -left-20 w-[600px] h-[600px] rounded-full bg-gradient-to-br from-indigo-500/15 via-indigo-400/10 to-purple-400/10 blur-[90px]"></div>
-        <div className="animate-mesh-2 absolute top-1/4 -right-28 w-[560px] h-[560px] rounded-full bg-gradient-to-bl from-emerald-400/15 via-teal-300/10 to-cyan-400/10 blur-[100px]"></div>
-        <div className="animate-mesh-3 absolute -bottom-36 left-1/4 w-[650px] h-[650px] rounded-full bg-gradient-to-tr from-pink-400/15 via-purple-300/10 to-indigo-300/10 blur-[110px]"></div>
-        <div className="absolute inset-0 bg-[radial-gradient(#94a3b8_1.15px,transparent_1.15px)] [background-size:24px_24px] opacity-30"></div>
+        {/* Upper-Left Light Blue & Soft Teal Ambient Radial Glow */}
+        <div className="absolute -top-32 -left-28 w-[680px] h-[680px] rounded-full bg-gradient-to-br from-[#EAF4FF] via-[#E8FAF7]/80 to-transparent blur-[120px] opacity-85"></div>
+
+        {/* Upper-Right Soft Purple & Lavender Ambient Radial Glow */}
+        <div className="absolute -top-36 -right-28 w-[720px] h-[720px] rounded-full bg-gradient-to-bl from-[#F8F2FF] via-[#F1EEFF]/85 to-transparent blur-[130px] opacity-90"></div>
+
+        {/* Bottom-Right Subtle Teal Gradient Glow */}
+        <div className="absolute -bottom-36 right-0 w-[640px] h-[640px] rounded-full bg-gradient-to-tl from-[#E8FAF7] via-[#EAF4FF]/60 to-transparent blur-[120px] opacity-80"></div>
+
+        {/* Bottom-Left Soft Lavender Mist */}
+        <div className="absolute -bottom-28 -left-16 w-[560px] h-[560px] rounded-full bg-gradient-to-tr from-[#F1EEFF] via-[#F8F2FF]/60 to-transparent blur-[110px] opacity-75"></div>
+
+        {/* Subtle Decorative Constellation Lines in Corners (Low Opacity, Non-Distracting) */}
+        <svg className="absolute -top-6 -left-6 w-80 h-80 opacity-[0.14] text-indigo-400 pointer-events-none" viewBox="0 0 300 300" fill="none">
+          <circle cx="40" cy="40" r="3.5" fill="currentColor" />
+          <circle cx="160" cy="70" r="3.5" fill="currentColor" />
+          <circle cx="90" cy="180" r="3.5" fill="currentColor" />
+          <circle cx="240" cy="120" r="3" fill="currentColor" />
+          <line x1="40" y1="40" x2="160" y2="70" stroke="currentColor" strokeWidth="1" strokeDasharray="3 3" />
+          <line x1="40" y1="40" x2="90" y2="180" stroke="currentColor" strokeWidth="1" />
+          <line x1="160" y1="70" x2="240" y2="120" stroke="currentColor" strokeWidth="1" strokeDasharray="2 2" />
+          <line x1="90" y1="180" x2="240" y2="120" stroke="currentColor" strokeWidth="0.8" />
+        </svg>
+
+        <svg className="absolute -top-6 -right-6 w-80 h-80 opacity-[0.14] text-purple-400 pointer-events-none" viewBox="0 0 300 300" fill="none">
+          <circle cx="260" cy="50" r="3.5" fill="currentColor" />
+          <circle cx="140" cy="80" r="3.5" fill="currentColor" />
+          <circle cx="210" cy="190" r="3.5" fill="currentColor" />
+          <circle cx="70" cy="140" r="3" fill="currentColor" />
+          <line x1="260" y1="50" x2="140" y2="80" stroke="currentColor" strokeWidth="1" strokeDasharray="3 3" />
+          <line x1="260" y1="50" x2="210" y2="190" stroke="currentColor" strokeWidth="1" />
+          <line x1="140" y1="80" x2="70" y2="140" stroke="currentColor" strokeWidth="1" strokeDasharray="2 2" />
+          <line x1="210" y1="190" x2="70" y2="140" stroke="currentColor" strokeWidth="0.8" />
+        </svg>
       </div>
 
       <div className="w-full max-w-7xl mx-auto px-3 sm:px-5 lg:px-6">
@@ -146,10 +176,10 @@ export const AuthView: React.FC<AuthViewProps> = ({
         {/* DESIRED LOGIN UI (IMAGE 2) - FROSTED MASTER CARD         */}
         {/* Adjusted proportions to fit 1920x1080 without scrolling */}
         {/* ======================================================== */}
-        <div className="relative w-full rounded-2xl sm:rounded-3xl p-4 sm:p-5 lg:p-5 xl:p-6 bg-white/92 backdrop-blur-2xl border border-slate-200/90 shadow-2xl shadow-indigo-100/60 overflow-visible">
+        <div className="relative w-full rounded-2xl sm:rounded-3xl p-4 sm:p-5 lg:p-5 xl:p-6 bg-white/95 backdrop-blur-2xl border border-white/90 shadow-2xl shadow-indigo-100/60 overflow-visible">
           {/* Interior Subtle Ambient Lights */}
-          <div className="absolute -top-24 -left-24 w-80 h-80 bg-indigo-100/40 rounded-full blur-3xl pointer-events-none"></div>
-          <div className="absolute top-1/2 right-1/4 w-96 h-96 bg-emerald-50/50 rounded-full blur-3xl pointer-events-none"></div>
+          <div className="absolute -top-24 -left-24 w-80 h-80 bg-[#EAF4FF]/50 rounded-full blur-3xl pointer-events-none"></div>
+          <div className="absolute top-1/2 right-1/4 w-96 h-96 bg-[#E8FAF7]/50 rounded-full blur-3xl pointer-events-none"></div>
 
           {/* Main Split Grid: Left Auth Form + Right Live Acoustic Engine Dashboard */}
           <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-stretch">

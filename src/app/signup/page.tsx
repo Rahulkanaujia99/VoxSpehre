@@ -25,7 +25,7 @@ export default function SignUpPage() {
   };
 
   return (
-    <main className="min-h-screen lg:h-screen lg:max-h-screen bg-slate-50 text-slate-900 selection:bg-indigo-500 selection:text-white flex flex-col overflow-y-auto lg:overflow-hidden">
+    <main className="min-h-screen lg:h-screen lg:max-h-screen scout-premium-bg text-slate-900 selection:bg-indigo-500 selection:text-white flex flex-col overflow-y-auto lg:overflow-hidden relative">
       {/* Retain the exact original website header (Image 3) */}
       <Navbar
         isAppView={false}

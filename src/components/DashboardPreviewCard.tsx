@@ -31,23 +31,6 @@ export const DashboardPreviewCard: React.FC<DashboardPreviewCardProps> = ({
       <div className="absolute -inset-1.5 bg-gradient-to-r from-teal-500/20 via-indigo-500/20 to-sky-500/20 rounded-[2.5rem] blur-xl opacity-75 group-hover:opacity-100 transition duration-1000 group-hover:duration-200"></div>
 
       <div className="relative bg-white rounded-3xl shadow-2xl shadow-slate-200/80 border border-slate-200/90 overflow-hidden transition-all duration-300 hover:shadow-indigo-100">
-        {/* Dark Top Header Bar (matches Image 1) */}
-        <div className="bg-[#0b1329] px-6 py-3.5 flex items-center justify-between text-white text-xs font-semibold tracking-wider">
-          <div className="flex items-center gap-2">
-            <span className="relative flex h-2.5 w-2.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
-            </span>
-            <span className="text-slate-100 uppercase tracking-wider text-[11px] font-bold">
-              VOXSPHERE LIVE ACOUSTIC & BATCH ENGINE
-            </span>
-          </div>
-
-          <div className="bg-slate-800/90 text-slate-300 px-2.5 py-1 rounded-md text-[10px] font-mono border border-slate-700/60 flex items-center gap-1.5">
-            <span>AI SPEECH RECOGNITION</span>
-            <span className="w-1.5 h-1.5 rounded-full bg-teal-400"></span>
-          </div>
-        </div>
 
         {/* Card Body */}
         <div className="p-6 sm:p-7 space-y-6">

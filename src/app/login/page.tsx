@@ -2,9 +2,7 @@
 
 import React from 'react';
 import { useRouter } from 'next/navigation';
-import { Navbar } from '@/components/Navbar';
 import { AuthView } from '@/components/AuthView';
-import { Footer } from '@/components/Footer';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -18,24 +16,11 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="min-h-screen bg-slate-50 text-slate-900 flex flex-col justify-between">
-      <Navbar
-        isAppView={false}
+    <main className="min-h-screen bg-[#FAF8FF]">
+      <AuthView
+        initialMode="signin"
+        onSuccess={handleSuccess}
         onBackToHome={handleBackToHome}
-        onOpenStudio={() => router.push('/login')}
-        onOpenPenguinInfo={() => router.push('/')}
-      />
-
-      <div className="flex-1 flex items-center justify-center">
-        <AuthView
-          initialMode="signin"
-          onSuccess={handleSuccess}
-          onBackToHome={handleBackToHome}
-        />
-      </div>
-
-      <Footer
-        onOpenStudio={() => router.push('/login')}
         onOpenPenguinInfo={() => router.push('/')}
       />
     </main>

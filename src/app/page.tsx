@@ -84,22 +84,24 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-slate-50 text-slate-900 selection:bg-indigo-500 selection:text-white flex flex-col justify-between">
       {/* Navigation Bar */}
-      <Navbar
-        isAppView={currentView === 'app'}
-        onBackToHome={handleBackToHome}
-        onOpenStudio={handleStartTranscribing}
-        onOpenSignIn={() => {
-          setCurrentView('auth');
-          window.history.pushState(null, '', '#login');
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-        }}
-        onOpenPenguinInfo={handleOpenPenguinInfo}
-        activeTab={dashboardTab}
-        onNavigate={(tab) => {
-          setDashboardTab(tab);
-          if (currentView !== 'app') setCurrentView('app');
-        }}
-      />
+      {currentView !== 'auth' && (
+        <Navbar
+          isAppView={currentView === 'app'}
+          onBackToHome={handleBackToHome}
+          onOpenStudio={handleStartTranscribing}
+          onOpenSignIn={() => {
+            setCurrentView('auth');
+            window.history.pushState(null, '', '#login');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }}
+          onOpenPenguinInfo={handleOpenPenguinInfo}
+          activeTab={dashboardTab}
+          onNavigate={(tab) => {
+            setDashboardTab(tab);
+            if (currentView !== 'app') setCurrentView('app');
+          }}
+        />
+      )}
 
       {currentView === 'home' && (
         /* ======================================================== */
@@ -125,18 +127,13 @@ export default function Home() {
 
       {currentView === 'auth' && (
         /* ======================================================== */
-        /* SIGN IN / SIGN UP PAGE - Image 2 Login Card Only         */
+        /* SIGN IN / SIGN UP PAGE - Snitch UI Experience            */
         /* ======================================================== */
-        <div className="flex-1 flex flex-col justify-between animate-fadeIn">
+        <div className="flex-1 flex flex-col justify-between animate-fadeIn min-h-screen">
           <AuthView
             initialMode="signin"
             onSuccess={handleAuthSuccess}
             onBackToHome={handleBackToHome}
-          />
-
-          {/* Landing Page Footer */}
-          <Footer
-            onOpenStudio={handleStartTranscribing}
             onOpenPenguinInfo={handleOpenPenguinInfo}
           />
         </div>

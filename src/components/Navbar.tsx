@@ -78,7 +78,13 @@ export const Navbar: React.FC<NavbarProps> = ({
           {/* Brand Logo - Using Official Penguin International Logo & VoxSphere */}
           <div
             className="flex items-center gap-2.5 sm:gap-3 cursor-pointer transition-opacity hover:opacity-90 py-1"
-            onClick={isAppView && onBackToHome ? onBackToHome : () => window.scrollTo({ top: 0, behavior: 'smooth' })}
+            onClick={() => {
+              if (onBackToHome) {
+                onBackToHome();
+              } else {
+                window.location.href = '/';
+              }
+            }}
             title="VoxSphere • Penguin International"
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}

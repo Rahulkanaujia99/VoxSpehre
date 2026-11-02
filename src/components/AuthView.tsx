@@ -158,12 +158,22 @@ export const AuthView: React.FC<AuthViewProps> = ({
             <div className="lg:col-span-5 flex flex-col justify-between py-0.5 sm:py-1 pr-0 lg:pr-2">
               <div>
                 {/* Brand Logo - Official Penguin International + VoxSphere (Image 3) */}
-                <div className="flex items-center gap-2.5 sm:gap-3 mb-3.5 xl:mb-4">
+                <div
+                  onClick={() => {
+                    if (onBackToHome) {
+                      onBackToHome();
+                    } else {
+                      window.location.href = '/';
+                    }
+                  }}
+                  className="inline-flex items-center gap-2.5 sm:gap-3 mb-3.5 xl:mb-4 cursor-pointer transition-all hover:opacity-90 group"
+                  title="Return to Home Page"
+                >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src="/images/penguin-international-logo.png"
                     alt="Penguin International — Strategic Intelligence | AI × Human"
-                    className="h-8 sm:h-9 w-auto max-w-[170px] sm:max-w-[190px] object-contain shrink-0"
+                    className="h-8 sm:h-9 w-auto max-w-[170px] sm:max-w-[190px] object-contain shrink-0 group-hover:scale-[1.02] transition-transform"
                   />
                   <div className="h-6 w-px bg-slate-200 hidden sm:block" />
                   <div className="flex flex-col">

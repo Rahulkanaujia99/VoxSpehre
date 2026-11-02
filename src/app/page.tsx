@@ -1,41 +1,36 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Navbar } from '@/components/Navbar';
 import { HeroSection } from '@/components/HeroSection';
 import { TranscriptionStudio } from '@/components/TranscriptionStudio';
 import { FeaturesSection } from '@/components/FeaturesSection';
 import { Footer } from '@/components/Footer';
 import { PenguinInfoModal } from '@/components/PenguinInfoModal';
-import { AuthView } from '@/components/AuthView';
-import { useAuth } from '@/context/AuthContext';
 import { SidebarTab } from '@/components/Sidebar';
 
 export default function Home() {
-  const [currentView, setCurrentView] = useState<'home' | 'app' | 'auth'>('home');
+  const router = useRouter();
+  const [currentView, setCurrentView] = useState<'home' | 'app'>('home');
   const [dashboardTab, setDashboardTab] = useState<SidebarTab>('dashboard');
   const [isPenguinInfoOpen, setIsPenguinInfoOpen] = useState(false);
   const [penguinSection, setPenguinSection] = useState('about');
-  const { user } = useAuth();
 
   // Sync with browser URL hash & history
   useEffect(() => {
     const handleUrlState = () => {
       const hash = window.location.hash;
       const search = new URLSearchParams(window.location.search);
-      if (hash === '#login' || hash === '#signin' || search.get('auth') === 'true') {
-        setCurrentView('auth');
-      } else if (
+      if (
         hash === '#studio' ||
         hash === '#app' ||
         search.get('app') === 'true' ||
         search.get('view') === 'studio'
       ) {
-        if (!user) {
-          setCurrentView('auth');
-        } else {
-          setCurrentView('app');
-        }
+        setCurrentView('app');
+      } else if (hash === '#login' || hash === '#signin') {
+        router.push('/login');
       } else {
         setCurrentView('home');
       }
@@ -48,23 +43,11 @@ export default function Home() {
       window.removeEventListener('popstate', handleUrlState);
       window.removeEventListener('hashchange', handleUrlState);
     };
-  }, [user]);
+  }, [router]);
 
-  // Handle clicking "Start Transcribing" from Home page
-  // Redirects to Sign In / Sign Up if not logged in, otherwise opens dashboard
+  // Handle clicking "Start Transcribing" from Home page:
+  // Opens the studio dashboard directly
   const handleStartTranscribing = () => {
-    if (!user) {
-      setCurrentView('auth');
-      window.history.pushState(null, '', '#login');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    } else {
-      setCurrentView('app');
-      window.history.pushState(null, '', '#studio');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-  };
-
-  const handleAuthSuccess = () => {
     setCurrentView('app');
     window.history.pushState(null, '', '#studio');
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -83,16 +66,12 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-slate-50 text-slate-900 selection:bg-indigo-500 selection:text-white flex flex-col justify-between">
-      {/* Navigation Bar - Preserved across Landing Page and Auth Page (Image 3) */}
+      {/* Navigation Bar - Preserved exact website header (Image 3) */}
       <Navbar
         isAppView={currentView === 'app'}
         onBackToHome={handleBackToHome}
         onOpenStudio={handleStartTranscribing}
-        onOpenSignIn={() => {
-          setCurrentView('auth');
-          window.history.pushState(null, '', '#login');
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-        }}
+        onOpenSignIn={() => router.push('/login')}
         onOpenPenguinInfo={handleOpenPenguinInfo}
         activeTab={dashboardTab}
         onNavigate={(tab) => {
@@ -103,10 +82,10 @@ export default function Home() {
 
       {currentView === 'home' && (
         /* ======================================================== */
-        /* LANDING PAGE (Home Page) - Public View with Footer       */
+        /* LANDING PAGE (Home Page) - Image 1 Home Page UI          */
         /* ======================================================== */
         <div className="flex-1 flex flex-col justify-between animate-fadeIn">
-          {/* Hero Section with Start Transcribing CTA */}
+          {/* Hero Section with Start Transcribing & Try Sample Audio CTAs */}
           <HeroSection
             onOpenStudio={handleStartTranscribing}
             onLoadSample={handleStartTranscribing}
@@ -123,27 +102,9 @@ export default function Home() {
         </div>
       )}
 
-      {currentView === 'auth' && (
-        /* ======================================================== */
-        /* SIGN IN / SIGN UP PAGE - Image 2 UI with Original Header/Footer */
-        /* ======================================================== */
-        <div className="flex-1 flex flex-col justify-between animate-fadeIn">
-          <AuthView
-            initialMode="signin"
-            onSuccess={handleAuthSuccess}
-            onBackToHome={handleBackToHome}
-            onOpenPenguinInfo={handleOpenPenguinInfo}
-          />
-          <Footer
-            onOpenStudio={handleStartTranscribing}
-            onOpenPenguinInfo={handleOpenPenguinInfo}
-          />
-        </div>
-      )}
-
       {currentView === 'app' && (
         /* ======================================================== */
-        /* AUDIO TRANSCRIPTION DASHBOARD (AUTHENTICATED)            */
+        /* AUDIO TRANSCRIPTION DASHBOARD (AUTHENTICATED / ACTIVE)   */
         /* Footer is hidden on authenticated dashboard pages        */
         /* ======================================================== */
         <div className="flex-1 flex flex-col animate-fadeIn">

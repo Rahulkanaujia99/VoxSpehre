@@ -118,7 +118,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
   };
 
   return (
-    <section className="relative w-full py-8 sm:py-12 lg:py-16 flex items-center justify-center">
+    <section className="relative w-full flex items-center justify-center py-1 sm:py-2 lg:py-0 my-auto">
       {/* Responsive SVG ClipPath Definitions for Image 2 Sculpted Shapes */}
       <svg aria-hidden="true" className="absolute w-0 h-0 pointer-events-none" focusable="false">
         <defs>
@@ -135,46 +135,53 @@ export const AuthView: React.FC<AuthViewProps> = ({
 
       {/* Ambient Moving Mesh Gradient and Dot Matrix Background localized behind login card */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden -z-10">
-        <div className="animate-mesh-1 absolute -top-40 -left-20 w-[680px] h-[680px] rounded-full bg-gradient-to-br from-indigo-500/15 via-indigo-400/10 to-purple-400/10 blur-[100px]"></div>
-        <div className="animate-mesh-2 absolute top-1/4 -right-28 w-[640px] h-[640px] rounded-full bg-gradient-to-bl from-emerald-400/15 via-teal-300/10 to-cyan-400/10 blur-[110px]"></div>
-        <div className="animate-mesh-3 absolute -bottom-36 left-1/4 w-[740px] h-[740px] rounded-full bg-gradient-to-tr from-pink-400/15 via-purple-300/10 to-indigo-300/10 blur-[120px]"></div>
-        <div className="absolute inset-0 bg-[radial-gradient(#94a3b8_1.15px,transparent_1.15px)] [background-size:24px_24px] opacity-35"></div>
+        <div className="animate-mesh-1 absolute -top-40 -left-20 w-[600px] h-[600px] rounded-full bg-gradient-to-br from-indigo-500/15 via-indigo-400/10 to-purple-400/10 blur-[90px]"></div>
+        <div className="animate-mesh-2 absolute top-1/4 -right-28 w-[560px] h-[560px] rounded-full bg-gradient-to-bl from-emerald-400/15 via-teal-300/10 to-cyan-400/10 blur-[100px]"></div>
+        <div className="animate-mesh-3 absolute -bottom-36 left-1/4 w-[650px] h-[650px] rounded-full bg-gradient-to-tr from-pink-400/15 via-purple-300/10 to-indigo-300/10 blur-[110px]"></div>
+        <div className="absolute inset-0 bg-[radial-gradient(#94a3b8_1.15px,transparent_1.15px)] [background-size:24px_24px] opacity-30"></div>
       </div>
 
-      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="w-full max-w-7xl mx-auto px-3 sm:px-5 lg:px-6">
         {/* ======================================================== */}
         {/* DESIRED LOGIN UI (IMAGE 2) - FROSTED MASTER CARD         */}
+        {/* Adjusted proportions to fit 1920x1080 without scrolling */}
         {/* ======================================================== */}
-        <div className="relative w-full rounded-3xl p-5 sm:p-7 md:p-8 bg-white/92 backdrop-blur-2xl border border-slate-200/90 shadow-2xl shadow-indigo-100/60 overflow-visible">
+        <div className="relative w-full rounded-2xl sm:rounded-3xl p-4 sm:p-5 lg:p-5 xl:p-6 bg-white/92 backdrop-blur-2xl border border-slate-200/90 shadow-2xl shadow-indigo-100/60 overflow-visible">
           {/* Interior Subtle Ambient Lights */}
           <div className="absolute -top-24 -left-24 w-80 h-80 bg-indigo-100/40 rounded-full blur-3xl pointer-events-none"></div>
           <div className="absolute top-1/2 right-1/4 w-96 h-96 bg-emerald-50/50 rounded-full blur-3xl pointer-events-none"></div>
 
           {/* Main Split Grid: Left Auth Form + Right Live Acoustic Engine Dashboard */}
-          <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-stretch">
+          <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-stretch">
             
-            {/* ================= LEFT COLUMN: LIGHT THEMED LOGIN FORM (IMAGE 2) ================= */}
-            <div className="lg:col-span-5 flex flex-col justify-between py-1 sm:py-2 pr-0 lg:pr-2">
+            {/* ================= LEFT COLUMN: LIGHT THEMED LOGIN FORM ================= */}
+            <div className="lg:col-span-5 flex flex-col justify-between py-0.5 sm:py-1 pr-0 lg:pr-2">
               <div>
-                {/* Brand Mark Waveform Accent */}
-                <div className="flex items-center gap-3 mb-7">
-                  <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-emerald-500 flex items-center justify-center shadow-lg shadow-indigo-500/25 text-white">
-                    <span className="material-symbols-outlined text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>
-                      graphic_eq
-                    </span>
-                  </div>
+                {/* Brand Logo - Official Penguin International + VoxSphere (Image 3) */}
+                <div className="flex items-center gap-2.5 sm:gap-3 mb-3.5 xl:mb-4">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src="/images/penguin-international-logo.png"
+                    alt="Penguin International — Strategic Intelligence | AI × Human"
+                    className="h-8 sm:h-9 w-auto max-w-[170px] sm:max-w-[190px] object-contain shrink-0"
+                  />
+                  <div className="h-6 w-px bg-slate-200 hidden sm:block" />
                   <div className="flex flex-col">
-                    <span className="font-display text-lg font-bold text-slate-900 tracking-tight">VoxSphere</span>
-                    <span className="font-mono text-[11px] font-semibold text-emerald-700 tracking-wider uppercase">Speech Intelligence</span>
+                    <span className="text-base sm:text-lg font-black tracking-tight bg-gradient-to-r from-indigo-700 via-indigo-600 to-teal-600 bg-clip-text text-transparent leading-none">
+                      VoxSphere
+                    </span>
+                    <span className="text-[9px] font-semibold tracking-wider uppercase text-slate-400 mt-0.5 hidden sm:inline">
+                      AI Speech Suite
+                    </span>
                   </div>
                 </div>
 
                 {/* Header Titles */}
-                <div className="mb-6">
-                  <h1 className="font-display text-3xl sm:text-4xl text-slate-900 font-extrabold tracking-tight mb-2">
+                <div className="mb-3 xl:mb-4">
+                  <h1 className="font-display text-2xl sm:text-3xl text-slate-900 font-extrabold tracking-tight mb-1">
                     {mode === 'signin' ? 'Welcome back' : mode === 'signup' ? 'Create Account' : 'Reset Password'}
                   </h1>
-                  <p className="text-sm text-slate-500 leading-relaxed font-normal">
+                  <p className="text-xs sm:text-sm text-slate-500 leading-relaxed font-normal">
                     {mode === 'signin'
                       ? 'Please enter your enterprise credentials to access live acoustic transcripts.'
                       : mode === 'signup'
@@ -185,36 +192,36 @@ export const AuthView: React.FC<AuthViewProps> = ({
 
                 {/* Feedback Messages */}
                 {errorMessage && (
-                  <div className="mb-4 p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-start gap-2.5">
+                  <div className="mb-3 p-3 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-start gap-2.5">
                     <span className="material-symbols-outlined text-rose-600 text-base shrink-0 mt-0.5">error</span>
                     <span>{errorMessage}</span>
                   </div>
                 )}
 
                 {successMessage && (
-                  <div className="mb-4 p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-start gap-2.5">
+                  <div className="mb-3 p-3 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-start gap-2.5">
                     <span className="material-symbols-outlined text-emerald-600 text-base shrink-0 mt-0.5">check_circle</span>
                     <span>{successMessage}</span>
                   </div>
                 )}
 
                 {/* Form Fields Container */}
-                <form className="space-y-4" onSubmit={handleSubmit}>
+                <form className="space-y-3 xl:space-y-3.5" onSubmit={handleSubmit}>
                   {mode === 'signup' && (
-                    <div className="space-y-1.5">
-                      <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600" htmlFor="name">
+                    <div className="space-y-1">
+                      <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-600" htmlFor="name">
                         Full Name
                       </label>
                       <div className="relative">
                         <input
-                          className="w-full bg-slate-50 hover:bg-slate-100/60 border border-slate-200/90 rounded-full px-5 py-3.5 text-slate-900 placeholder:text-slate-400 text-sm font-medium shadow-inner transition-all duration-200 outline-none focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
+                          className="w-full bg-slate-50 hover:bg-slate-100/60 border border-slate-200/90 rounded-full px-4 sm:px-5 py-2.5 sm:py-3 text-slate-900 placeholder:text-slate-400 text-sm font-medium shadow-inner transition-all duration-200 outline-none focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
                           id="name"
                           placeholder="Rahul Kanaujia"
                           type="text"
                           value={fullName}
                           onChange={(e) => setFullName(e.target.value)}
                         />
-                        <span className="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 text-lg pointer-events-none">
+                        <span className="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 text-base pointer-events-none">
                           person
                         </span>
                       </div>
@@ -222,20 +229,20 @@ export const AuthView: React.FC<AuthViewProps> = ({
                   )}
 
                   {/* Work Email Field */}
-                  <div className="space-y-1.5">
-                    <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600" htmlFor="email">
+                  <div className="space-y-1">
+                    <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-600" htmlFor="email">
                       Work Email
                     </label>
                     <div className="relative">
                       <input
-                        className="w-full bg-slate-50 hover:bg-slate-100/60 border border-slate-200/90 rounded-full px-5 py-3.5 text-slate-900 placeholder:text-slate-400 text-sm font-medium shadow-inner transition-all duration-200 outline-none focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
+                        className="w-full bg-slate-50 hover:bg-slate-100/60 border border-slate-200/90 rounded-full px-4 sm:px-5 py-2.5 sm:py-3 text-slate-900 placeholder:text-slate-400 text-sm font-medium shadow-inner transition-all duration-200 outline-none focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
                         id="email"
                         placeholder="rahul@penguin-international.com"
                         type="email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                       />
-                      <span className="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 text-lg pointer-events-none">
+                      <span className="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 text-base pointer-events-none">
                         alternate_email
                       </span>
                     </div>
@@ -243,13 +250,13 @@ export const AuthView: React.FC<AuthViewProps> = ({
 
                   {/* Security Key / Password Field */}
                   {mode !== 'forgot' && (
-                    <div className="space-y-1.5">
-                      <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600" htmlFor="login-password">
+                    <div className="space-y-1">
+                      <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-600" htmlFor="login-password">
                         Security Key / Password
                       </label>
                       <div className="relative">
                         <input
-                          className="w-full bg-slate-50 hover:bg-slate-100/60 border border-slate-200/90 rounded-full px-5 py-3.5 text-slate-900 placeholder:text-slate-400 text-sm font-medium shadow-inner transition-all duration-200 outline-none focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 tracking-wider"
+                          className="w-full bg-slate-50 hover:bg-slate-100/60 border border-slate-200/90 rounded-full px-4 sm:px-5 py-2.5 sm:py-3 text-slate-900 placeholder:text-slate-400 text-sm font-medium shadow-inner transition-all duration-200 outline-none focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 tracking-wider"
                           id="login-password"
                           placeholder="••••••••••••"
                           type={showPassword ? 'text' : 'password'}
@@ -262,7 +269,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
                           onClick={() => setShowPassword(!showPassword)}
                           type="button"
                         >
-                          <span className="material-symbols-outlined text-lg">
+                          <span className="material-symbols-outlined text-base">
                             {showPassword ? 'visibility_off' : 'visibility'}
                           </span>
                         </button>
@@ -271,7 +278,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
                   )}
 
                   {/* Utilities: Keep logged in & Forgot password */}
-                  <div className="flex items-center justify-between pt-1 pb-1 text-xs">
+                  <div className="flex items-center justify-between pt-0.5 pb-0.5 text-xs">
                     <label className="flex items-center gap-2 cursor-pointer select-none text-slate-600 hover:text-slate-900 font-medium transition-colors">
                       <input
                         checked={keepLoggedIn}
@@ -311,7 +318,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
                   {/* Main CTA Button - Purple/Indigo Gradient Pill */}
                   <button
                     disabled={isLoading}
-                    className="w-full relative overflow-hidden group rounded-full py-3.5 px-6 font-display text-sm font-semibold text-white bg-gradient-to-r from-indigo-600 via-indigo-700 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 transition-all duration-200 active:scale-[0.99] flex items-center justify-center gap-2 cursor-pointer shimmer-pill disabled:opacity-75"
+                    className="w-full relative overflow-hidden group rounded-full py-2.5 sm:py-3 px-5 sm:px-6 font-display text-sm font-semibold text-white bg-gradient-to-r from-indigo-600 via-indigo-700 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-md shadow-indigo-500/25 hover:shadow-indigo-500/40 transition-all duration-200 active:scale-[0.99] flex items-center justify-center gap-2 cursor-pointer shimmer-pill disabled:opacity-75"
                     type="submit"
                   >
                     {isLoading ? (
@@ -327,25 +334,25 @@ export const AuthView: React.FC<AuthViewProps> = ({
                   </button>
                 </form>
 
-                {/* Divider */}
-                <div className="relative my-6 text-center">
+                {/* Single Sign-On Divider */}
+                <div className="relative my-3 xl:my-4 text-center">
                   <div className="absolute inset-0 flex items-center">
                     <div className="w-full bg-slate-200 h-px"></div>
                   </div>
-                  <span className="relative px-3 bg-white font-mono text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                  <span className="relative px-3 bg-white font-mono text-[10px] font-semibold uppercase tracking-wider text-slate-500">
                     Single Sign-On
                   </span>
                 </div>
 
                 {/* Social SSO Buttons (Google, Microsoft, SAML/Okta) */}
-                <div className="flex items-center justify-center gap-4">
+                <div className="flex items-center justify-center gap-3.5">
                   <button
                     type="button"
                     onClick={() => handleSSO('Google')}
                     aria-label="Sign in with Google"
-                    className="w-12 h-12 rounded-full bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-all transform hover:scale-105 shadow-xs hover:shadow-md flex items-center justify-center cursor-pointer"
+                    className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-all transform hover:scale-105 shadow-xs hover:shadow-md flex items-center justify-center cursor-pointer"
                   >
-                    <svg className="w-5 h-5" viewBox="0 0 24 24">
+                    <svg className="w-4 h-4 sm:w-5 sm:h-5" viewBox="0 0 24 24">
                       <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"></path>
                       <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"></path>
                       <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" fill="#FBBC05"></path>
@@ -356,9 +363,9 @@ export const AuthView: React.FC<AuthViewProps> = ({
                     type="button"
                     onClick={() => handleSSO('Microsoft')}
                     aria-label="Sign in with Microsoft"
-                    className="w-12 h-12 rounded-full bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-all transform hover:scale-105 shadow-xs hover:shadow-md flex items-center justify-center cursor-pointer"
+                    className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-all transform hover:scale-105 shadow-xs hover:shadow-md flex items-center justify-center cursor-pointer"
                   >
-                    <svg className="w-5 h-5" viewBox="0 0 23 23">
+                    <svg className="w-4 h-4 sm:w-5 sm:h-5" viewBox="0 0 23 23">
                       <path d="M1 1h10v10H1z" fill="#f35325"></path>
                       <path d="M12 1h10v10H12z" fill="#81bc06"></path>
                       <path d="M1 12h10v10H1z" fill="#05a6f0"></path>
@@ -369,15 +376,15 @@ export const AuthView: React.FC<AuthViewProps> = ({
                     type="button"
                     onClick={() => handleSSO('Enterprise SAML')}
                     aria-label="Sign in with Enterprise SAML"
-                    className="w-12 h-12 rounded-full bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-all transform hover:scale-105 shadow-xs hover:shadow-md flex items-center justify-center cursor-pointer"
+                    className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-all transform hover:scale-105 shadow-xs hover:shadow-md flex items-center justify-center cursor-pointer"
                   >
-                    <span className="material-symbols-outlined text-indigo-600 text-xl">vpn_key</span>
+                    <span className="material-symbols-outlined text-indigo-600 text-lg">vpn_key</span>
                   </button>
                 </div>
               </div>
 
               {/* Compliance & Security Microcopy */}
-              <div className="mt-8 pt-4 border-t border-slate-100 flex items-center justify-between text-slate-500 font-mono text-[11px]">
+              <div className="mt-4 xl:mt-5 pt-3 border-t border-slate-100 flex items-center justify-between text-slate-500 font-mono text-[10px] xl:text-[11px]">
                 <span className="flex items-center gap-1.5 font-medium">
                   <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
                   SOC2 Type II &amp; HIPAA Encrypted
@@ -387,17 +394,17 @@ export const AuthView: React.FC<AuthViewProps> = ({
             </div>
 
             {/* ================= RIGHT COLUMN: SCULPTED GEOMETRIC CARD (IMAGE 2) ================= */}
-            <div className="lg:col-span-7 flex flex-col justify-between relative pb-12 sm:pb-16 lg:pb-10">
+            <div className="lg:col-span-7 flex flex-col justify-between relative pb-10 sm:pb-12 lg:pb-8">
               {/* 1. SCULPTED MAIN CONTAINER: Matching Reference Distinctive Scooped Top-Right Notch Silhouette */}
               <div className="relative w-full filter drop-shadow-[0_20px_45px_rgba(11,19,41,0.22)]">
-                <div className="sculpted-main-notch relative bg-gradient-to-b from-[#0c1427] via-[#091024] to-[#060b18] p-6 sm:p-8 pt-8 border border-slate-800/90 flex flex-col gap-5 overflow-hidden">
+                <div className="sculpted-main-notch relative bg-gradient-to-b from-[#0c1427] via-[#091024] to-[#060b18] p-4 sm:p-5 lg:p-5 xl:p-6 pt-5 sm:pt-6 border border-slate-800/90 flex flex-col gap-3.5 xl:gap-4 overflow-hidden">
                   {/* Ambient Shimmer Glows */}
                   <div className="absolute -top-16 -right-16 w-56 h-56 bg-indigo-600/25 rounded-full blur-3xl pointer-events-none"></div>
                   <div className="absolute top-1/2 -left-20 w-64 h-64 bg-emerald-500/15 rounded-full blur-3xl pointer-events-none"></div>
                   <div className="absolute bottom-16 right-1/4 w-72 h-72 bg-sky-500/10 rounded-full blur-3xl pointer-events-none"></div>
 
-                  {/* Enhanced Rotating Radial Acoustic Starburst Rays with Navy, Indigo & Cyan Highlights */}
-                  <div className="absolute -right-8 bottom-6 w-96 h-96 pointer-events-none z-0 flex items-center justify-center opacity-65 overflow-visible">
+                  {/* Enhanced Rotating Radial Acoustic Starburst Rays */}
+                  <div className="absolute -right-8 bottom-6 w-80 h-80 xl:w-96 xl:h-96 pointer-events-none z-0 flex items-center justify-center opacity-60 overflow-visible">
                     <svg className="animate-acoustic-ray w-full h-full text-indigo-400/70" fill="none" viewBox="0 0 320 320">
                       <defs>
                         <radialGradient cx="50%" cy="50%" fx="50%" fy="50%" id="acousticRayGrad" r="50%">
@@ -415,12 +422,10 @@ export const AuthView: React.FC<AuthViewProps> = ({
                           </feMerge>
                         </filter>
                       </defs>
-                      {/* Concentric harmonic radar circles */}
                       <circle cx="160" cy="160" r="32" stroke="#6366f1" strokeDasharray="3 3" strokeOpacity="0.25" strokeWidth="1"></circle>
                       <circle cx="160" cy="160" r="64" stroke="#38bdf8" strokeDasharray="4 4" strokeOpacity="0.3" strokeWidth="1"></circle>
                       <circle cx="160" cy="160" r="98" stroke="#818cf8" strokeDasharray="2 4" strokeOpacity="0.25" strokeWidth="1"></circle>
                       <circle cx="160" cy="160" r="132" stroke="#0ea5e9" strokeDasharray="5 5" strokeOpacity="0.2" strokeWidth="0.8"></circle>
-                      {/* 16 Radial Acoustic Rays emanating from center with varying dashed/solid weights */}
                       <g filter="url(#glowFilter)" stroke="url(#acousticRayGrad)">
                         <line strokeWidth="2" x1="160" x2="160" y1="20" y2="300"></line>
                         <line strokeWidth="2" x1="20" x2="300" y1="160" y2="160"></line>
@@ -439,7 +444,6 @@ export const AuthView: React.FC<AuthViewProps> = ({
                         <line strokeWidth="1" x1="160" x2="20" y1="160" y2="135"></line>
                         <line strokeWidth="1" x1="160" x2="300" y1="160" y2="185"></line>
                       </g>
-                      {/* Center radiating acoustic focal node */}
                       <circle cx="160" cy="160" fill="#38bdf8" fillOpacity="0.3" r="14"></circle>
                       <circle className="animate-hub-glow" cx="160" cy="160" fill="#a5b4fc" fillOpacity="0.75" r="7"></circle>
                       <circle cx="160" cy="160" fill="#ffffff" r="3.5"></circle>
@@ -447,62 +451,62 @@ export const AuthView: React.FC<AuthViewProps> = ({
                   </div>
 
                   {/* 1. Top HUD Status Bar */}
-                  <div className="relative z-10 flex flex-wrap items-center justify-between gap-2.5 pb-3 border-b border-slate-800/80 mr-0 sm:mr-24">
+                  <div className="relative z-10 flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-slate-800/80 mr-0 sm:mr-24">
                     <div className="flex items-center gap-2">
                       <span className="relative flex h-2.5 w-2.5">
                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                         <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
                       </span>
-                      <span className="font-mono text-[11px] font-bold tracking-wider uppercase text-emerald-400">
+                      <span className="font-mono text-[10px] sm:text-[11px] font-bold tracking-wider uppercase text-emerald-400">
                         VOXSPHERE LIVE ACOUSTIC &amp; BATCH ENGINE
                       </span>
                     </div>
-                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-indigo-500/15 border border-indigo-400/30 text-indigo-300 font-mono text-[10px] font-semibold tracking-wider uppercase">
+                    <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-indigo-500/15 border border-indigo-400/30 text-indigo-300 font-mono text-[10px] font-semibold tracking-wider uppercase">
                       <span className="w-1.5 h-1.5 rounded-full bg-indigo-400"></span>
                     </div>
                   </div>
 
                   {/* 2. Headline & Action Row */}
-                  <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
                     <div>
-                      <h2 className="font-display text-xl sm:text-2xl text-white font-extrabold tracking-tight">
+                      <h2 className="font-display text-lg sm:text-xl xl:text-2xl text-white font-extrabold tracking-tight">
                         Executive Meetings &amp; Consultations
                       </h2>
-                      <p className="font-mono text-[11px] text-slate-400 tracking-wider uppercase mt-0.5">
+                      <p className="font-mono text-[10px] xl:text-[11px] text-slate-400 tracking-wider uppercase mt-0.5">
                         AUDIO RECORDING • TIMESTAMPED SEGMENTS • CLEAR USABLE RECORDS
                       </p>
                     </div>
-                    <div className="inline-flex items-center self-start sm:self-auto gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/15 border border-emerald-400/30 text-emerald-300 text-xs font-semibold whitespace-nowrap shadow-xs">
+                    <div className="inline-flex items-center self-start sm:self-auto gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/15 border border-emerald-400/30 text-emerald-300 text-xs font-semibold whitespace-nowrap shadow-xs">
                       <span className="material-symbols-outlined text-sm">check_circle</span>
                       <span>EXPORT TO WORD &amp; PDF</span>
                     </div>
                   </div>
 
                   {/* 3. Top Metrics Row */}
-                  <div className="relative z-10 grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                  <div className="relative z-10 grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {/* Card 1: Precision High Fidelity */}
-                    <div className="bg-slate-900/85 backdrop-blur-sm rounded-2xl p-3.5 border border-slate-800/90 flex flex-col justify-between">
-                      <div className="flex items-center justify-between text-slate-400 text-[11px] font-mono uppercase tracking-wider mb-2">
+                    <div className="bg-slate-900/85 backdrop-blur-sm rounded-xl sm:rounded-2xl p-2.5 sm:p-3 border border-slate-800/90 flex flex-col justify-between">
+                      <div className="flex items-center justify-between text-slate-400 text-[10px] xl:text-[11px] font-mono uppercase tracking-wider mb-1.5">
                         <span>SPEECH-TO-TEXT PRECISION</span>
-                        <span className="material-symbols-outlined text-emerald-400 text-base">verified</span>
+                        <span className="material-symbols-outlined text-emerald-400 text-sm">verified</span>
                       </div>
                       <div className="flex items-baseline gap-2">
-                        <span className="font-display text-2xl font-black text-white">High Fidelity</span>
+                        <span className="font-display text-xl sm:text-2xl font-black text-white">High Fidelity</span>
                         <span className="text-xs font-semibold text-emerald-400">99.8% precision</span>
                       </div>
-                      <p className="text-xs text-slate-400 mt-1 leading-snug">Multi-speaker conversations converted to text</p>
+                      <p className="text-[11px] sm:text-xs text-slate-400 mt-1 leading-snug">Multi-speaker conversations converted to text</p>
                     </div>
 
                     {/* Card 2: Live Animated Thick Pill-Shaped Soundwave Visualizer */}
-                    <div className="bg-slate-900/85 backdrop-blur-sm rounded-2xl p-3.5 border border-slate-800/90 flex flex-col justify-between">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="font-mono text-[11px] text-slate-400 uppercase tracking-wider">PROCESSING SPEED</span>
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold font-mono uppercase bg-indigo-500/20 text-indigo-300 border border-indigo-400/30">
+                    <div className="bg-slate-900/85 backdrop-blur-sm rounded-xl sm:rounded-2xl p-2.5 sm:p-3 border border-slate-800/90 flex flex-col justify-between">
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="font-mono text-[10px] xl:text-[11px] text-slate-400 uppercase tracking-wider">PROCESSING SPEED</span>
+                        <span className="px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-bold font-mono uppercase bg-indigo-500/20 text-indigo-300 border border-indigo-400/30">
                           FAST AUTOMATION
                         </span>
                       </div>
                       {/* Thick, Smooth Pill-Shaped Animated Soundwave Bars */}
-                      <div className="flex items-center justify-between gap-1.5 h-10 px-2 py-1 bg-black/40 rounded-xl border border-slate-800/60 overflow-hidden shadow-inner">
+                      <div className="flex items-center justify-between gap-1.5 h-8 sm:h-9 px-2 py-1 bg-black/40 rounded-xl border border-slate-800/60 overflow-hidden shadow-inner">
                         <span className="w-2.5 rounded-full bg-gradient-to-t from-purple-500 to-violet-300 sw-bar-1 origin-center shadow-[0_0_8px_rgba(168,85,247,0.4)]" style={{ animationDelay: '-0.2s' }}></span>
                         <span className="w-2.5 rounded-full bg-gradient-to-t from-emerald-500 to-teal-300 sw-bar-4 origin-center shadow-[0_0_8px_rgba(52,211,153,0.4)]" style={{ animationDelay: '-0.8s' }}></span>
                         <span className="w-2.5 rounded-full bg-gradient-to-t from-teal-400 to-cyan-300 sw-bar-2 origin-center shadow-[0_0_8px_rgba(34,211,238,0.4)]" style={{ animationDelay: '-0.4s' }}></span>
@@ -518,7 +522,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
                         <span className="w-2.5 rounded-full bg-gradient-to-t from-indigo-500 to-purple-300 sw-bar-4 origin-center shadow-[0_0_8px_rgba(99,102,241,0.35)]" style={{ animationDelay: '-0.75s' }}></span>
                         <span className="w-2.5 rounded-full bg-gradient-to-t from-purple-500 to-violet-200 sw-bar-1 origin-center shadow-[0_0_8px_rgba(168,85,247,0.45)]" style={{ animationDelay: '-0.45s' }}></span>
                       </div>
-                      <div className="flex items-center justify-between text-[11px] font-mono text-slate-400 mt-2">
+                      <div className="flex items-center justify-between text-[10px] xl:text-[11px] font-mono text-slate-400 mt-1.5">
                         <span>Multi-speaker diarization</span>
                         <span className="text-indigo-300 font-semibold flex items-center gap-1">
                           <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping"></span>
@@ -529,43 +533,43 @@ export const AuthView: React.FC<AuthViewProps> = ({
                   </div>
 
                   {/* 4. Live Timestamped Transcription Stream Cards */}
-                  <div className="relative z-10 flex flex-col gap-2.5">
+                  <div className="relative z-10 flex flex-col gap-2">
                     {/* Card 1 */}
-                    <div className="p-3 rounded-2xl bg-slate-900/85 hover:bg-slate-900 border border-slate-800 transition-all duration-200 group">
-                      <div className="flex flex-wrap items-center justify-between gap-1.5 mb-1.5">
-                        <div className="flex items-center gap-2">
-                          <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-indigo-950/90 text-indigo-300 border border-indigo-700/50">
+                    <div className="p-2 sm:p-2.5 rounded-xl bg-slate-900/85 hover:bg-slate-900 border border-slate-800 transition-all duration-200 group">
+                      <div className="flex flex-wrap items-center justify-between gap-1 mb-1">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-indigo-950/90 text-indigo-300 border border-indigo-700/50">
                             STRATEGIC INTELLIGENCE
                           </span>
-                          <span className="text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded bg-emerald-950/80 text-emerald-400 border border-emerald-700/50 flex items-center gap-1">
+                          <span className="text-[9px] font-mono font-semibold px-1 py-0.5 rounded bg-emerald-950/80 text-emerald-400 border border-emerald-700/50 flex items-center gap-1">
                             Verified ✓
                           </span>
                         </div>
-                        <div className="flex items-center gap-1.5 text-[11px] font-mono text-emerald-400">
-                          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-stream-live"></span>
+                        <div className="flex items-center gap-1 text-[10px] xl:text-[11px] font-mono text-emerald-400">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-stream-live"></span>
                           <span>00:00 - 00:18 Direct Stream</span>
                         </div>
                       </div>
                       <div className="text-xs font-semibold text-white mb-0.5">
                         Gautam Jain <span className="text-slate-400 font-normal">• Founder &amp; CEO, Penguin International</span>
                       </div>
-                      <p className="text-xs text-slate-300 leading-relaxed font-light">
+                      <p className="text-[11px] sm:text-xs text-slate-300 leading-snug font-light">
                         &quot;Synthesizing primary research and qualitative expert calls. Real-time speech transcription with acoustic diarization...&quot;
                       </p>
                     </div>
 
                     {/* Card 2 */}
-                    <div className="p-3 rounded-2xl bg-slate-900/85 hover:bg-slate-900 border border-slate-800 transition-all duration-200 group">
-                      <div className="flex flex-wrap items-center justify-between gap-1.5 mb-1.5">
-                        <div className="flex items-center gap-2">
-                          <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-cyan-950/90 text-cyan-300 border border-cyan-700/50">
+                    <div className="p-2 sm:p-2.5 rounded-xl bg-slate-900/85 hover:bg-slate-900 border border-slate-800 transition-all duration-200 group">
+                      <div className="flex flex-wrap items-center justify-between gap-1 mb-1">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-cyan-950/90 text-cyan-300 border border-cyan-700/50">
                             GLOBAL ADVISORY
                           </span>
-                          <span className="text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded bg-emerald-950/80 text-emerald-400 border border-emerald-700/50 flex items-center gap-1">
+                          <span className="text-[9px] font-mono font-semibold px-1 py-0.5 rounded bg-emerald-950/80 text-emerald-400 border border-emerald-700/50 flex items-center gap-1">
                             Verified ✓
                           </span>
                         </div>
-                        <div className="flex items-center gap-1.5 text-[11px] font-mono text-slate-400">
+                        <div className="flex items-center gap-1 text-[10px] xl:text-[11px] font-mono text-slate-400">
                           <span className="w-1.5 h-1.5 rounded-full bg-slate-500"></span>
                           <span>00:19 - 00:44 Direct Stream</span>
                         </div>
@@ -573,53 +577,53 @@ export const AuthView: React.FC<AuthViewProps> = ({
                       <div className="text-xs font-semibold text-white mb-0.5">
                         Principal Partner <span className="text-slate-400 font-normal">• Top Management Consulting Firm</span>
                       </div>
-                      <p className="text-xs text-slate-300 leading-relaxed font-light">
+                      <p className="text-[11px] sm:text-xs text-slate-300 leading-snug font-light">
                         &quot;Penguin International&apos;s AI transcription and analyst verification delivered rapid qualitative boardroom synthesis.&quot;
                       </p>
                     </div>
                   </div>
 
-                  <div className="relative z-10 flex items-center justify-between pt-2 pb-6 border-t border-slate-800/80 font-mono text-[11px]">
+                  <div className="relative z-10 flex items-center justify-between pt-1 pb-3 border-t border-slate-800/80 font-mono text-[11px]">
                     <div className="flex items-center gap-2"></div>
                   </div>
                 </div>
               </div>
 
               {/* 2. SCULPTED OVERLAPPING FLOATING CARD: Matching Reference Silhouette */}
-              <div className="relative -mt-10 sm:-mt-14 lg:-mt-12 -ml-2 sm:-ml-4 z-30 w-full sm:w-[96%] filter drop-shadow-[0_24px_50px_rgba(244,114,182,0.18)] drop-shadow-[0_12px_24px_rgba(15,23,42,0.14)]">
-                <div className="sculpted-floating-step relative bg-gradient-to-r from-pink-50/90 via-white to-white p-5 sm:p-7 pt-7 sm:pt-8 border border-white/80 transition-all duration-300 group hover:shadow-pink-200/50">
+              <div className="relative -mt-7 sm:-mt-9 lg:-mt-8 xl:-mt-10 -ml-2 sm:-ml-3 z-30 w-full sm:w-[96%] filter drop-shadow-[0_24px_50px_rgba(244,114,182,0.18)] drop-shadow-[0_12px_24px_rgba(15,23,42,0.14)]">
+                <div className="sculpted-floating-step relative bg-gradient-to-r from-pink-50/90 via-white to-white p-3.5 sm:p-4 xl:p-5 pt-4 sm:pt-5 border border-white/80 transition-all duration-300 group hover:shadow-pink-200/50">
                   {/* Subtle organic ambient gradient glow inside card */}
                   <div className="absolute bottom-0 left-0 w-48 h-32 bg-gradient-to-tr from-pink-200/35 via-rose-100/20 to-transparent rounded-full blur-2xl pointer-events-none"></div>
-                  <div className="relative z-10 flex flex-col md:flex-row items-start md:items-end justify-between gap-4">
+                  <div className="relative z-10 flex flex-col md:flex-row items-start md:items-end justify-between gap-3">
                     {/* Content on left & center */}
                     <div className="max-w-md">
-                      <h3 className="font-display text-lg sm:text-xl font-extrabold text-slate-900 tracking-tight leading-snug">
+                      <h3 className="font-display text-base sm:text-lg font-extrabold text-slate-900 tracking-tight leading-snug">
                         Get your transcripts and audio intelligence now
                       </h3>
-                      <p className="text-xs sm:text-sm text-slate-600 font-normal leading-relaxed mt-1.5">
+                      <p className="text-[11px] sm:text-xs text-slate-600 font-normal leading-relaxed mt-1">
                         Experience the fastest way to transcribe, analyze, and export executive meetings with verified accuracy.
                       </p>
                     </div>
                     {/* Right Side: User Avatars Stack & Launch Studio Action Button */}
-                    <div className="flex flex-wrap items-center gap-3 self-end sm:self-auto">
+                    <div className="flex flex-wrap items-center gap-2.5 self-end sm:self-auto">
                       {/* Avatars Stack */}
                       <div className="flex items-center -space-x-2 mr-1">
                         <img
                           alt="Lead Strategist"
-                          className="w-8 h-8 rounded-full border-2 border-white object-cover shadow-xs"
+                          className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 border-white object-cover shadow-xs"
                           src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&h=120&q=80"
                         />
                         <img
                           alt="Principal Analyst"
-                          className="w-8 h-8 rounded-full border-2 border-white object-cover shadow-xs"
+                          className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 border-white object-cover shadow-xs"
                           src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=120&h=120&q=80"
                         />
                         <img
                           alt="Partner Director"
-                          className="w-8 h-8 rounded-full border-2 border-white object-cover shadow-xs"
+                          className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 border-white object-cover shadow-xs"
                           src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=120&h=120&q=80"
                         />
-                        <div className="w-8 h-8 rounded-full bg-slate-900 border-2 border-white text-white flex items-center justify-center text-[10px] font-bold font-mono shadow-xs">
+                        <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-slate-900 border-2 border-white text-white flex items-center justify-center text-[9px] sm:text-[10px] font-bold font-mono shadow-xs">
                           +12
                         </div>
                       </div>
@@ -630,7 +634,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
                           signInAsGuest(email || 'rahul@penguin-international.com', fullName || 'Rahul Kanaujia');
                           onSuccess();
                         }}
-                        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full font-display text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 shadow-md shadow-indigo-600/25 transition-all cursor-pointer active:scale-95 whitespace-nowrap group/btn"
+                        className="inline-flex items-center gap-1.5 px-3.5 py-1.5 sm:py-2 rounded-full font-display text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 shadow-md shadow-indigo-600/25 transition-all cursor-pointer active:scale-95 whitespace-nowrap group/btn"
                       >
                         <span>Launch Studio</span>
                         <span className="material-symbols-outlined text-sm group-hover/btn:translate-x-0.5 transition-transform">

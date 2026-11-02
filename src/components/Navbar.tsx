@@ -125,7 +125,13 @@ export const Navbar: React.FC<NavbarProps> = ({
           ) : (
             <nav className="hidden md:flex items-center bg-slate-50/90 border border-slate-200/80 rounded-full px-5 py-2 shadow-xs space-x-6 text-[13px] font-semibold text-slate-700">
               <button
+                id="nav-about"
                 onClick={() => onOpenPenguinInfo('about')}
+                onMouseEnter={() => {
+                  if (typeof window !== 'undefined' && (window as any).__voxRobot) {
+                    (window as any).__voxRobot.trick();
+                  }
+                }}
                 className="hover:text-indigo-600 transition-colors cursor-pointer"
               >
                 About us
@@ -290,7 +296,19 @@ export const Navbar: React.FC<NavbarProps> = ({
             ) : (
               /* Landing Page Mode: Start Transcribing */
               <button
+                id="cta-header"
                 onClick={() => onOpenStudio('sample-pe-due-diligence')}
+                onMouseEnter={() => {
+                  if (typeof window !== 'undefined' && (window as any).__voxRobot) {
+                    (window as any).__voxRobot.setMood('happy');
+                    (window as any).__voxRobot.gesture('yes');
+                  }
+                }}
+                onMouseLeave={() => {
+                  if (typeof window !== 'undefined' && (window as any).__voxRobot) {
+                    (window as any).__voxRobot.setMood('curious');
+                  }
+                }}
                 className="flex items-center gap-2 px-4 sm:px-5 py-2 sm:py-2.5 text-xs sm:text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 active:scale-95 rounded-xl shadow-md shadow-indigo-200 transition-all cursor-pointer"
               >
                 <Sparkles className="w-4 h-4 text-indigo-200" />

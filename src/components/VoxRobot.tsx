@@ -93,10 +93,10 @@ function easeInOut(t: number): number {
 }
 
 function bump(t: number): number {
-  return Math.sin(Math.max(0, Math.min(1, t)) * Math.PI); // 0→1→0
+  return Math.sin(Math.max(0, Math.min(1, t)) * Math.PI);
 }
 
-// critically-damped-ish spring: smooth settle with a hint of overshoot, like the reference motion
+// critically-damped spring matching the exact floating motion from reference
 class Spring {
   v: number;
   target: number;
@@ -153,7 +153,6 @@ function squircle(
 export function mountVoxRobot(el: HTMLElement, opts: MountOptions = {}): VoxRobotHandle {
   const reduce = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   
-  // Ensure clean element without duplicate canvases
   el.innerHTML = '';
 
   const canvas = document.createElement('canvas');
@@ -167,24 +166,36 @@ export function mountVoxRobot(el: HTMLElement, opts: MountOptions = {}): VoxRobo
     alpha: true,
     powerPreference: 'high-performance',
   });
-  // Cap pixel ratio to 1.5 to maintain crisp visuals while avoiding GPU fillrate jank on 2x/3x screens
-  renderer.setPixelRatio(Math.min(typeof window !== 'undefined' ? window.devicePixelRatio : 1, 1.5));
+  // Maintain sharp, crisp pixel density while preventing GPU fillrate stalls
+  renderer.setPixelRatio(Math.min(typeof window !== 'undefined' ? window.devicePixelRatio : 1, 2));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
+  // Use NoToneMapping so whites are pure brilliant #ffffff and gradients stay vivid
+  renderer.toneMapping = THREE.NoToneMapping;
 
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(30, 1, 0.1, 100);
   camera.position.set(0, 0.1, 7.6);
   camera.lookAt(0, -0.42, 0);
 
-  scene.add(new THREE.HemisphereLight(0xffffff, 0xa0a6b0, 1.05));
-  const key = new THREE.DirectionalLight(0xffffff, 0.55);
+  // Modern Three.js divides light intensities by PI.
+  // In r128 (the version voxsphere-hero.html was built with), lighting was legacy unscaled (1.05 + 0.55 = 1.60).
+  // Scaling by Math.PI reproduces the exact brilliant, vibrant, luminous white robot appearance of Image 1!
+  const hemi = new THREE.HemisphereLight(0xffffff, 0xb8c0d0, 1.25 * Math.PI);
+  scene.add(hemi);
+
+  const key = new THREE.DirectionalLight(0xffffff, 0.75 * Math.PI);
   key.position.set(1.5, 4, 3);
   scene.add(key);
-  const fill = new THREE.DirectionalLight(0xe4ecff, 0.25);
+
+  const fill = new THREE.DirectionalLight(0xedf2ff, 0.45 * Math.PI);
   fill.position.set(-3, 0.5, 2);
   scene.add(fill);
 
-  // Soft contact shadow: radial blob
+  // Ambient fill to keep the white shell completely luminous and eliminate muddy shadows
+  const ambient = new THREE.AmbientLight(0xffffff, 0.7);
+  scene.add(ambient);
+
+  // Soft contact shadow: radial blob matching Image 1
   const sc_ = document.createElement('canvas');
   sc_.width = sc_.height = 256;
   const sg = sc_.getContext('2d')!;
@@ -216,8 +227,6 @@ export function mountVoxRobot(el: HTMLElement, opts: MountOptions = {}): VoxRobo
   const g = fc.getContext('2d')!;
   const faceTex = new THREE.CanvasTexture(fc);
   faceTex.colorSpace = THREE.SRGBColorSpace;
-  // Crucial performance optimization:
-  // Disabling mipmaps prevents WebGL from calculating 11 levels of mipmaps on 1536x768 each frame
   faceTex.generateMipmaps = false;
   faceTex.minFilter = THREE.LinearFilter;
   faceTex.magFilter = THREE.LinearFilter;
@@ -227,6 +236,7 @@ export function mountVoxRobot(el: HTMLElement, opts: MountOptions = {}): VoxRobo
   rc.height = H;
   const rg = rc.getContext('2d')!;
   const roughTex = new THREE.CanvasTexture(rc);
+  roughTex.colorSpace = THREE.NoColorSpace;
   roughTex.generateMipmaps = false;
   roughTex.minFilter = THREE.LinearFilter;
   roughTex.magFilter = THREE.LinearFilter;
@@ -248,8 +258,9 @@ export function mountVoxRobot(el: HTMLElement, opts: MountOptions = {}): VoxRobo
   rg.fill();
   roughTex.needsUpdate = true;
 
-  const brand = hex(opts.brand || '#5b3df5');
-  const brand2 = hex(opts.brand2 || '#1a9e86');
+  // Use the vivid, electric default colors from Image 1: #c84dff (bright magenta-purple) and #4bb86f
+  const brand = hex(opts.brand || '#c84dff');
+  const brand2 = hex(opts.brand2 || '#4bb86f');
 
   const moods: Record<
     string,
@@ -298,8 +309,7 @@ export function mountVoxRobot(el: HTMLElement, opts: MountOptions = {}): VoxRobo
   };
   let mood = 'curious';
 
-  // Performance Cache: Offscreen canvas for static face elements (shell gradient, rim gradient,
-  // 18px shadowBlur pass, visor fill and inner sheen). Only re-rendered when colors or visor scale change!
+  // Fast Base Face Cache: Only re-renders heavy 18px shadowBlur and gradients when colors or visor scale change!
   const baseCanvas = document.createElement('canvas');
   baseCanvas.width = W;
   baseCanvas.height = H;
@@ -308,11 +318,12 @@ export function mountVoxRobot(el: HTMLElement, opts: MountOptions = {}): VoxRobo
 
   function renderBaseFace() {
     bg.clearRect(0, 0, W, H);
-    bg.fillStyle = '#f7f8fa';
+    // Pristine bright white shell with gentle soft shading at bottom
+    bg.fillStyle = '#ffffff';
     bg.fillRect(0, 0, W, H);
     const sh = bg.createLinearGradient(0, 0, 0, H);
     sh.addColorStop(0, 'rgba(255,255,255,0)');
-    sh.addColorStop(1, 'rgba(140,146,158,.28)');
+    sh.addColorStop(1, 'rgba(165,172,186,0.18)');
     bg.fillStyle = sh;
     bg.fillRect(0, 0, W, H);
 
@@ -323,7 +334,7 @@ export function mountVoxRobot(el: HTMLElement, opts: MountOptions = {}): VoxRobo
     const x = CX - vw / 2;
     const y = CY - vh / 2;
 
-    // rim: diagonal three-stop gradient
+    // rim: vibrant three-stop diagonal gradient
     const gr = bg.createLinearGradient(x - RIM, y, x + vw + RIM, y + vh);
     gr.addColorStop(0, rgb(cur.c[0]));
     gr.addColorStop(0.5, rgb(cur.c[1]));
@@ -332,9 +343,9 @@ export function mountVoxRobot(el: HTMLElement, opts: MountOptions = {}): VoxRobo
     bg.fillStyle = gr;
     bg.fill();
 
-    // soft outer shadow where the rim meets the shell
+    // soft outer shadow where rim meets the shell
     bg.save();
-    bg.shadowColor = 'rgba(60,70,90,.25)';
+    bg.shadowColor = 'rgba(60,70,90,0.25)';
     bg.shadowBlur = 18;
     bg.shadowOffsetY = 6;
     bg.fillStyle = gr;
@@ -343,7 +354,7 @@ export function mountVoxRobot(el: HTMLElement, opts: MountOptions = {}): VoxRobo
 
     // rim top highlight
     const hl = bg.createLinearGradient(0, y - RIM, 0, y + vh * 0.4);
-    hl.addColorStop(0, 'rgba(255,255,255,.35)');
+    hl.addColorStop(0, 'rgba(255,255,255,0.4)');
     hl.addColorStop(1, 'rgba(255,255,255,0)');
     bg.fillStyle = hl;
     bg.fill();
@@ -356,11 +367,11 @@ export function mountVoxRobot(el: HTMLElement, opts: MountOptions = {}): VoxRobo
     bg.clip();
     const inner = bg.createRadialGradient(CX, CY, vh * 0.2, CX, CY, vw * 0.62);
     inner.addColorStop(0, 'rgba(0,0,0,0)');
-    inner.addColorStop(1, 'rgba(0,0,0,.35)');
+    inner.addColorStop(1, 'rgba(0,0,0,0.35)');
     bg.fillStyle = inner;
     bg.fillRect(x, y, vw, vh);
     const sheen = bg.createLinearGradient(0, y, 0, y + vh * 0.55);
-    sheen.addColorStop(0, 'rgba(170,190,230,.16)');
+    sheen.addColorStop(0, 'rgba(170,190,230,0.18)');
     sheen.addColorStop(1, 'rgba(170,190,230,0)');
     bg.fillStyle = sheen;
     bg.fillRect(x, y, vw, vh);
@@ -381,14 +392,14 @@ export function mountVoxRobot(el: HTMLElement, opts: MountOptions = {}): VoxRobo
       renderBaseFace();
     }
 
-    // Fast blit from pre-rendered base face canvas (0.05ms)
+    // Fast blit from pre-rendered base face canvas
     g.drawImage(baseCanvas, 0, 0);
 
     const vs = cur.visor;
     const vw = VW * vs;
     const vh = VH * vs;
 
-    // eyes
+    // Crisp pure-white glowing eyes
     const ew = vw * cur.eyeW * f.scale;
     const ehBase = vh * cur.eyeH * f.scale;
     const cy = CY + vh * cur.eyeY + f.ey * vh * 0.16;
@@ -405,10 +416,9 @@ export function mountVoxRobot(el: HTMLElement, opts: MountOptions = {}): VoxRobo
       g.rotate(s * 0.06);
       g.beginPath();
       g.ellipse(0, 0, ew / 2, eh / 2, 0, 0, Math.PI * 2);
-      g.fillStyle = '#fff';
+      g.fillStyle = '#ffffff';
       g.fill();
       if (a > 0.002) {
-        // slanted upper lid slides down, lower on the inner side, so the eye becomes an angry wedge
         g.clip();
         const top = -eh / 2;
         const outerY = top + eh * 0.1 * a;
@@ -434,17 +444,17 @@ export function mountVoxRobot(el: HTMLElement, opts: MountOptions = {}): VoxRobo
   scene.add(head);
   const body = new THREE.Group();
   head.add(body);
-  const sphereGeo = new THREE.SphereGeometry(1.2, 96, 72);
+  const sphereGeo = new THREE.SphereGeometry(1.2, 128, 96);
   sphereGeo.computeBoundingSphere();
   const shell = new THREE.Mesh(
     sphereGeo,
     new THREE.MeshPhysicalMaterial({
       map: faceTex,
       roughnessMap: roughTex,
-      roughness: 1,
-      metalness: 0,
-      clearcoat: 0.3,
-      clearcoatRoughness: 0.45,
+      roughness: 0.85,
+      metalness: 0.0,
+      clearcoat: 0.35,
+      clearcoatRoughness: 0.35,
     })
   );
   shell.rotation.y = -Math.PI / 2;
@@ -554,11 +564,9 @@ export function mountVoxRobot(el: HTMLElement, opts: MountOptions = {}): VoxRobo
     clickGrump = 1.2;
   }
 
-  // Fast check if pointer is on the spot between the eyes without layout thrashing
   function betweenEyes(e: PointerEvent | MouseEvent) {
     const cx = cachedRect.left + cachedRect.width / 2;
     const cy = cachedRect.top + cachedRect.height / 2;
-    // Fast 2D bounding prune: if pointer is far from center face area, skip expensive 3D raycast
     if (
       Math.abs(e.clientX - cx) > cachedRect.width * 0.22 ||
       Math.abs(e.clientY - cy) > cachedRect.height * 0.2
@@ -673,7 +681,6 @@ export function mountVoxRobot(el: HTMLElement, opts: MountOptions = {}): VoxRobo
     const idle = reduce ? 0 : 1;
     const k = 1 - Math.pow(0.0015, dt);
 
-    // grumpy only while the pointer sits between the eyes (or briefly after a click there)
     clickGrump = Math.max(0, clickGrump - dt);
     mood = eyesHover || clickGrump > 0 ? 'annoyed' : baseMood;
     const m = moods[mood] || moods.curious;
@@ -709,7 +716,6 @@ export function mountVoxRobot(el: HTMLElement, opts: MountOptions = {}): VoxRobo
     if (m.anger === 1) blinkedOut = false;
     cur.visor = lerp(cur.visor, m.visor, k * 0.8);
 
-    // autonomous behaviour loop
     if (!reduce && opts.autoplay !== false) {
       nextAuto -= dt;
       if (nextAuto <= 0 && !gesture) {
@@ -723,7 +729,6 @@ export function mountVoxRobot(el: HTMLElement, opts: MountOptions = {}): VoxRobo
       }
     }
 
-    // look target: pointer, else wander
     if (hasPointer) {
       tYaw = pointer.x * 0.55;
       tPitch = -pointer.y * 0.3;
@@ -935,7 +940,7 @@ export const VoxRobot: React.FC<{
   brand?: string;
   brand2?: string;
   className?: string;
-}> = ({ brand = '#5b3df5', brand2 = '#1a9e86', className = '' }) => {
+}> = ({ brand = '#c84dff', brand2 = '#4bb86f', className = '' }) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {

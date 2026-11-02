@@ -114,11 +114,11 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                   backgroundSize: '120px 104px',
                 }}
               />
-              {/* Radial Lighting Glow Ring */}
+              {/* Radial Lighting Glow (removed Tailwind .ring class which created the black outline circle) */}
               <div
-                className="ring absolute inset-[8%] rounded-full pointer-events-none"
+                className="absolute inset-[8%] rounded-full pointer-events-none"
                 style={{
-                  background: 'radial-gradient(circle at 50% 40%, rgba(255,255,255,0.95) 0, rgba(255,255,255,0) 70%)',
+                  background: 'radial-gradient(circle at 50% 40%, rgba(255,255,255,0.98) 0, rgba(255,255,255,0) 70%)',
                 }}
               />
               {/* Three.js Interactive Mascot */}

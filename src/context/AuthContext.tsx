@@ -131,13 +131,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       user_metadata: { full_name: name || 'Rahul Kanaujia' },
       aud: 'authenticated',
       created_at: new Date().toISOString(),
-      email: email || 'rahul@voxsphere.ai',
+      email: email || 'rahul@penguin-international.com',
     } as unknown as User;
 
     setUser(demoUser);
     setProfile({
       id: 'demo-user-id',
-      email: email || 'rahul@voxsphere.ai',
+      email: email || 'rahul@penguin-international.com',
       full_name: name || 'Rahul Kanaujia',
       avatar_url: null,
       company: 'Penguin International',

@@ -179,7 +179,7 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({
                 </span>
               </div>
               <p className="text-xs text-slate-500 font-mono mt-0.5">
-                {user?.email || 'rahul@voxsphere.ai'}
+                {user?.email || profile?.email || 'rahul@penguin-international.com'}
               </p>
               <div className="flex items-center gap-3 text-xs text-slate-400 mt-1.5">
                 <span className="flex items-center gap-1">
@@ -284,7 +284,7 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({
               <span>Email Address</span>
             </div>
             <p className="font-bold text-slate-800 font-mono text-xs truncate">
-              {user?.email || 'rahul@voxsphere.ai'}
+              {user?.email || profile?.email || 'rahul@penguin-international.com'}
             </p>
             <span className="inline-block text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.2 rounded-md">
               Verified

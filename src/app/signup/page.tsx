@@ -67,7 +67,7 @@ export default function SignUpPage() {
       </div>
 
       {/* Retain the exact original website header (Image 3) */}
-      <div className="relative z-10 w-full">
+      <div className="relative z-50 w-full">
         <Navbar
           isAppView={false}
           onBackToHome={handleBackToHome}

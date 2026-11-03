@@ -85,7 +85,7 @@ export default function Home() {
       </div>
 
       {/* Navigation Bar - Preserved exact website header (Image 1 & 2) */}
-      <div className="relative z-10 w-full">
+      <div className="relative z-50 w-full">
         <Navbar
           isAppView={currentView === 'app'}
           onBackToHome={handleBackToHome}

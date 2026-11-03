@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState, useRef, useEffect } from 'react';
 import {
   Sparkles,
@@ -8,7 +10,8 @@ import {
   LogOut,
   Cloud,
   ChevronDown,
-  ShieldCheck,
+  Search,
+  Bell,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { AuthModal } from './AuthModal';
@@ -22,6 +25,8 @@ interface NavbarProps {
   onBackToHome?: () => void;
   activeTab?: SidebarTab;
   onNavigate?: (tab: SidebarTab) => void;
+  searchQuery?: string;
+  onSearchChange?: (query: string) => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -32,8 +37,10 @@ export const Navbar: React.FC<NavbarProps> = ({
   onBackToHome,
   activeTab = 'dashboard',
   onNavigate,
+  searchQuery = '',
+  onSearchChange,
 }) => {
-  const { user, profile, signOut, isConfigured } = useAuth();
+  const { user, profile, signOut } = useAuth();
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authModalMode, setAuthModalMode] = useState<'signin' | 'signup'>('signin');
   const [showUserDropdown, setShowUserDropdown] = useState(false);
@@ -78,11 +85,195 @@ export const Navbar: React.FC<NavbarProps> = ({
     }
   };
 
+  // ========================================================
+  // 1. APP VIEW / DASHBOARD HEADER (MedSync Style matching Image 2)
+  // ========================================================
+  if (isAppView) {
+    return (
+      <>
+        <header className="w-full flex items-center justify-between gap-3 sm:gap-4">
+          {/* Brand Logo + Name: Penguin International & VoxSphere */}
+          <div className="flex items-center gap-3 shrink-0">
+            <button
+              type="button"
+              onClick={onBackToHome}
+              className="inline-flex items-center gap-2 p-1.5 px-3 rounded-2xl bg-white/90 shadow-clay-pill border border-white hover:bg-white transition-all cursor-pointer"
+              title="Return to Home"
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/images/penguin-international-logo.png"
+                alt="Penguin International"
+                className="h-7 sm:h-8 w-auto max-w-[130px] sm:max-w-[155px] object-contain shrink-0"
+              />
+              <div className="h-4 w-px bg-stone-200 hidden sm:block" />
+              <div className="flex flex-col text-left">
+                <span className="text-xs sm:text-sm font-extrabold text-teal-700 tracking-tight leading-none">
+                  VoxSphere
+                </span>
+                <span className="text-[8px] font-semibold tracking-wider uppercase text-stone-400 mt-0.5 hidden sm:inline">
+                  AI Speech Suite
+                </span>
+              </div>
+            </button>
+          </div>
+
+          {/* Center Search Input Pill */}
+          <div className="hidden md:flex items-center flex-1 max-w-md mx-4 lg:mx-6">
+            <div className="w-full relative">
+              <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-stone-400">
+                <Search className="w-4 h-4" />
+              </span>
+              <input
+                type="search"
+                value={searchQuery}
+                onChange={(e) => onSearchChange?.(e.target.value)}
+                placeholder="Search audio files, transcripts, or summaries..."
+                className="w-full pl-10 pr-4 py-2.5 rounded-full bg-white border border-stone-200/80 text-xs text-stone-800 placeholder-stone-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500/30 transition-all"
+              />
+            </div>
+          </div>
+
+          {/* Right Header Actions: Status Pill + Notification + User Avatar with Role */}
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+            {/* Status Indicator Pill */}
+            <div className="hidden lg:flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white shadow-clay-pill border border-white text-xs font-semibold text-stone-700">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span>Cloud Sync Active</span>
+            </div>
+
+            {/* Notification circle button */}
+            <button
+              type="button"
+              aria-label="Notifications"
+              className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white shadow-clay-pill border border-white flex items-center justify-center text-stone-600 hover:text-black transition-all relative cursor-pointer"
+            >
+              <Bell className="w-4 h-4 text-stone-600" />
+              <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-amber-500 ring-2 ring-white" />
+            </button>
+
+            {/* User Profile Pill */}
+            <div className="relative shrink-0" ref={userDropdownRef}>
+              <button
+                type="button"
+                onClick={() => setShowUserDropdown(!showUserDropdown)}
+                className="flex items-center gap-2.5 pl-1.5 pr-3 py-1.5 rounded-full bg-white shadow-clay-pill border border-white hover:bg-stone-50 transition-all cursor-pointer"
+              >
+                <div
+                  className="w-8 h-8 rounded-full text-white flex items-center justify-center font-bold text-xs shadow-inner shrink-0"
+                  style={{ background: 'linear-gradient(135deg, #23ac98 0%, #457bd0 100%)' }}
+                >
+                  {userInitial}
+                </div>
+                <div className="hidden sm:block text-left">
+                  <span className="font-bold text-xs text-stone-900 block leading-tight whitespace-nowrap">
+                    {userDisplayName}
+                  </span>
+                  <span className="text-[10px] text-stone-400 block leading-tight truncate max-w-[150px]">
+                    {userEmail}
+                  </span>
+                </div>
+                <ChevronDown
+                  className={`w-3.5 h-3.5 text-stone-400 transition-transform duration-200 ${
+                    showUserDropdown ? 'rotate-180' : ''
+                  }`}
+                />
+              </button>
+
+              {/* Profile Dropdown */}
+              {showUserDropdown && (
+                <div
+                  className="absolute right-0 top-full mt-2.5 w-72 sm:w-80 bg-white rounded-2xl p-2.5 shadow-2xl border border-stone-200/90 z-[100] animate-in fade-in zoom-in-95 duration-150"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {/* Header info */}
+                  <div className="px-3.5 py-2.5 border-b border-stone-100">
+                    <p className="text-xs sm:text-sm font-bold text-stone-900">{userDisplayName}</p>
+                    <p className="text-[11px] sm:text-xs text-stone-500 font-mono truncate">{userEmail}</p>
+                    <div className="mt-2 flex items-center gap-1.5 text-[10px] sm:text-xs font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-md border border-emerald-200 w-fit">
+                      <Cloud className="w-3.5 h-3.5 text-emerald-600" />
+                      <span>Cloud Sync Active</span>
+                    </div>
+                  </div>
+
+                  {/* Links */}
+                  <div className="p-1 space-y-1">
+                    <button
+                      type="button"
+                      onClick={() => handleSelectTab('profile')}
+                      className={`w-full flex items-center gap-3 p-2.5 rounded-xl transition-all cursor-pointer group text-left ${
+                        activeTab === 'profile'
+                          ? 'bg-teal-50/80 text-teal-900'
+                          : 'hover:bg-stone-50 text-stone-700'
+                      }`}
+                    >
+                      <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 bg-stone-100 text-stone-600 group-hover:bg-teal-50 group-hover:text-teal-600">
+                        <User className="w-4 h-4" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <span className="block text-xs font-bold leading-snug">My Profile</span>
+                        <span className="block text-[11px] text-stone-500">View & edit profile</span>
+                      </div>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleSelectTab('settings')}
+                      className={`w-full flex items-center gap-3 p-2.5 rounded-xl transition-all cursor-pointer group text-left ${
+                        activeTab === 'settings'
+                          ? 'bg-teal-50/80 text-teal-900'
+                          : 'hover:bg-stone-50 text-stone-700'
+                      }`}
+                    >
+                      <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 bg-stone-100 text-stone-600 group-hover:bg-teal-50 group-hover:text-teal-600">
+                        <Settings className="w-4 h-4" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <span className="block text-xs font-bold leading-snug">My Settings</span>
+                        <span className="block text-[11px] text-stone-500">Preferences & security</span>
+                      </div>
+                    </button>
+                  </div>
+
+                  {/* Sign out */}
+                  <div className="pt-1 mt-1 border-t border-stone-100 px-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        signOut();
+                        setShowUserDropdown(false);
+                        onBackToHome?.();
+                      }}
+                      className="w-full flex items-center gap-2.5 px-3 py-2 text-left text-xs font-semibold text-rose-600 hover:bg-rose-50 rounded-xl transition-colors cursor-pointer"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      <span>Sign Out</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </header>
+
+        <AuthModal
+          isOpen={showAuthModal}
+          onClose={() => setShowAuthModal(false)}
+          defaultMode={authModalMode}
+          onSuccess={() => onOpenStudio()}
+        />
+      </>
+    );
+  }
+
+  // ========================================================
+  // 2. LANDING PAGE NAVBAR (Exact Website Header)
+  // ========================================================
   return (
     <>
-      <header className={`sticky top-0 z-50 w-full ${isAppView ? 'bg-white/95 border-slate-200/80 shadow-2xs' : 'bg-white/30 border-slate-200/30'} backdrop-blur-md border-b transition-all`}>
+      <header className="sticky top-0 z-50 w-full bg-white/30 border-slate-200/30 backdrop-blur-md border-b transition-all">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 md:h-[4.25rem] flex items-center justify-between">
-          {/* Brand Logo - Using Official Penguin International Logo & VoxSphere */}
+          {/* Brand Logo */}
           <div
             className="flex items-center gap-2 sm:gap-3 cursor-pointer transition-opacity hover:opacity-90 py-1"
             onClick={() => {
@@ -111,60 +302,40 @@ export const Navbar: React.FC<NavbarProps> = ({
             </div>
           </div>
 
-          {/* Center Section: Differ depending on whether in App Mode or Landing Page */}
-          {isAppView ? (
-            <div className="hidden md:flex items-center gap-3">
-              <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-50 border border-indigo-200/80 text-indigo-900 text-xs font-bold shadow-2xs">
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                </span>
-                <span>VoxSphere Studio</span>
-              </div>
+          {/* Navigation Links */}
+          <nav className="hidden sm:flex items-center bg-white/80 backdrop-blur-md border border-slate-200/70 rounded-full px-5 py-2 shadow-xs space-x-5 text-[13px] font-semibold text-slate-700">
+            <button
+              id="nav-about"
+              onClick={() => onOpenPenguinInfo('about')}
+              onMouseEnter={() => {
+                if (typeof window !== 'undefined' && (window as any).__voxRobot) {
+                  (window as any).__voxRobot.trick();
+                }
+              }}
+              className="hover:text-indigo-600 transition-colors cursor-pointer"
+            >
+              About us
+            </button>
+            <button
+              onClick={() => onOpenPenguinInfo('contact')}
+              className="hover:text-indigo-600 transition-colors cursor-pointer"
+            >
+              Contact us
+            </button>
+            <div className="h-4 w-px bg-slate-200" />
+            <a
+              href="https://www.penguin-international.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-teal-700 hover:text-teal-900 font-bold flex items-center gap-1 transition-colors"
+            >
+              <span>Penguin International</span>
+              <ExternalLink className="w-3 h-3 text-teal-600" />
+            </a>
+          </nav>
 
-              {user && (
-                <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 text-xs font-semibold border border-emerald-200">
-                  <Cloud className="w-3.5 h-3.5 text-emerald-600" />
-                  <span>Cloud Sync Active</span>
-                </div>
-              )}
-            </div>
-          ) : (
-            <nav className="hidden sm:flex items-center bg-white/80 backdrop-blur-md border border-slate-200/70 rounded-full px-5 py-2 shadow-xs space-x-5 text-[13px] font-semibold text-slate-700">
-              <button
-                id="nav-about"
-                onClick={() => onOpenPenguinInfo('about')}
-                onMouseEnter={() => {
-                  if (typeof window !== 'undefined' && (window as any).__voxRobot) {
-                    (window as any).__voxRobot.trick();
-                  }
-                }}
-                className="hover:text-indigo-600 transition-colors cursor-pointer"
-              >
-                About us
-              </button>
-              <button
-                onClick={() => onOpenPenguinInfo('contact')}
-                className="hover:text-indigo-600 transition-colors cursor-pointer"
-              >
-                Contact us
-              </button>
-              <div className="h-4 w-px bg-slate-200" />
-              <a
-                href="https://www.penguin-international.com/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-teal-700 hover:text-teal-900 font-bold flex items-center gap-1 transition-colors"
-              >
-                <span>Penguin International</span>
-                <ExternalLink className="w-3 h-3 text-teal-600" />
-              </a>
-            </nav>
-          )}
-
-          {/* Right CTA Area & Supabase Auth User State */}
+          {/* Right CTA Area & User State */}
           <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
-            {/* Supabase User Authentication Section */}
             {user ? (
               <div className="relative shrink-0" ref={userDropdownRef}>
                 <button
@@ -184,16 +355,18 @@ export const Navbar: React.FC<NavbarProps> = ({
                       ({userEmail})
                     </span>
                   </div>
-                  <ChevronDown className={`w-4 h-4 text-slate-500 shrink-0 transition-transform duration-200 ${showUserDropdown ? 'rotate-180' : ''}`} />
+                  <ChevronDown
+                    className={`w-4 h-4 text-slate-500 shrink-0 transition-transform duration-200 ${
+                      showUserDropdown ? 'rotate-180' : ''
+                    }`}
+                  />
                 </button>
 
-                {/* User Profile Popover Dropdown matching Reference Image 1 & 2 */}
                 {showUserDropdown && (
                   <div
                     className="absolute right-0 top-full mt-2.5 w-72 sm:w-80 bg-white rounded-2xl p-2.5 shadow-2xl border border-slate-200/90 z-[100] animate-in fade-in zoom-in-95 duration-150"
                     onClick={(e) => e.stopPropagation()}
                   >
-                    {/* Header info: Name & Email */}
                     <div className="px-3.5 py-2.5 border-b border-slate-100">
                       <p className="text-xs sm:text-sm font-bold text-slate-900">{userDisplayName}</p>
                       <p className="text-[11px] sm:text-xs text-slate-500 font-mono truncate">{userEmail}</p>
@@ -204,12 +377,13 @@ export const Navbar: React.FC<NavbarProps> = ({
                     </div>
 
                     <div className="p-1 space-y-1">
-                      {/* Option 1: My Profile */}
                       <button
                         type="button"
                         onClick={() => handleSelectTab('profile')}
                         className={`w-full flex items-center gap-3 p-2.5 rounded-xl transition-all cursor-pointer group text-left ${
-                          activeTab === 'profile' ? 'bg-indigo-50/80 text-indigo-900' : 'hover:bg-slate-50 text-slate-700'
+                          activeTab === 'profile'
+                            ? 'bg-indigo-50/80 text-indigo-900'
+                            : 'hover:bg-slate-50 text-slate-700'
                         }`}
                       >
                         <div
@@ -222,21 +396,18 @@ export const Navbar: React.FC<NavbarProps> = ({
                           <User className="w-4.5 h-4.5" />
                         </div>
                         <div className="min-w-0 flex-1">
-                          <span className="block text-sm font-bold leading-snug">
-                            My Profile
-                          </span>
-                          <span className="block text-xs text-slate-500">
-                            View & edit profile
-                          </span>
+                          <span className="block text-sm font-bold leading-snug">My Profile</span>
+                          <span className="block text-xs text-slate-500">View & edit profile</span>
                         </div>
                       </button>
 
-                      {/* Option 2: My Settings */}
                       <button
                         type="button"
                         onClick={() => handleSelectTab('settings')}
                         className={`w-full flex items-center gap-3 p-2.5 rounded-xl transition-all cursor-pointer group text-left ${
-                          activeTab === 'settings' ? 'bg-indigo-50/80 text-indigo-900' : 'hover:bg-slate-50 text-slate-700'
+                          activeTab === 'settings'
+                            ? 'bg-indigo-50/80 text-indigo-900'
+                            : 'hover:bg-slate-50 text-slate-700'
                         }`}
                       >
                         <div
@@ -249,26 +420,19 @@ export const Navbar: React.FC<NavbarProps> = ({
                           <Settings className="w-4.5 h-4.5" />
                         </div>
                         <div className="min-w-0 flex-1">
-                          <span className="block text-sm font-bold leading-snug">
-                            My Settings
-                          </span>
-                          <span className="block text-xs text-slate-500">
-                            Preferences & security
-                          </span>
+                          <span className="block text-sm font-bold leading-snug">My Settings</span>
+                          <span className="block text-xs text-slate-500">Preferences & security</span>
                         </div>
                       </button>
                     </div>
 
-                    {/* Sign out */}
                     <div className="pt-1 mt-1 border-t border-slate-100 px-1">
                       <button
                         type="button"
                         onClick={() => {
                           signOut();
                           setShowUserDropdown(false);
-                          if (onBackToHome) {
-                            onBackToHome();
-                          }
+                          if (onBackToHome) onBackToHome();
                         }}
                         className="w-full flex items-center gap-2.5 px-3 py-2 text-left text-xs sm:text-sm font-semibold text-rose-600 hover:bg-rose-50 rounded-xl transition-colors cursor-pointer"
                       >
@@ -295,42 +459,29 @@ export const Navbar: React.FC<NavbarProps> = ({
               </button>
             )}
 
-            {isAppView ? (
-              /* App View Mode: Back to Home Button */
-              <button
-                onClick={onBackToHome}
-                className="flex items-center gap-2 px-3 sm:px-4 py-2 text-xs sm:text-sm font-semibold text-slate-700 bg-white hover:bg-slate-100 hover:text-indigo-600 active:scale-95 rounded-xl border border-slate-300 shadow-xs transition-all cursor-pointer"
-              >
-                <ArrowLeft className="w-4 h-4 text-indigo-600" />
-                <span className="hidden sm:inline">Back to Home</span>
-              </button>
-            ) : (
-              /* Landing Page Mode: Start Transcribing */
-              <button
-                id="cta-header"
-                onClick={() => onOpenStudio('sample-pe-due-diligence')}
-                onMouseEnter={() => {
-                  if (typeof window !== 'undefined' && (window as any).__voxRobot) {
-                    (window as any).__voxRobot.setMood('happy');
-                    (window as any).__voxRobot.gesture('yes');
-                  }
-                }}
-                onMouseLeave={() => {
-                  if (typeof window !== 'undefined' && (window as any).__voxRobot) {
-                    (window as any).__voxRobot.setMood('curious');
-                  }
-                }}
-                className="flex items-center gap-2 px-4 sm:px-5 py-2 sm:py-2.5 text-xs sm:text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 active:scale-95 rounded-xl shadow-md shadow-indigo-200 transition-all cursor-pointer"
-              >
-                <Sparkles className="w-4 h-4 text-indigo-200" />
-                <span>Start Transcribing</span>
-              </button>
-            )}
+            <button
+              id="cta-header"
+              onClick={() => onOpenStudio('sample-pe-due-diligence')}
+              onMouseEnter={() => {
+                if (typeof window !== 'undefined' && (window as any).__voxRobot) {
+                  (window as any).__voxRobot.setMood('happy');
+                  (window as any).__voxRobot.gesture('yes');
+                }
+              }}
+              onMouseLeave={() => {
+                if (typeof window !== 'undefined' && (window as any).__voxRobot) {
+                  (window as any).__voxRobot.setMood('curious');
+                }
+              }}
+              className="flex items-center gap-2 px-4 sm:px-5 py-2 sm:py-2.5 text-xs sm:text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 active:scale-95 rounded-xl shadow-md shadow-indigo-200 transition-all cursor-pointer"
+            >
+              <Sparkles className="w-4 h-4 text-indigo-200" />
+              <span>Start Transcribing</span>
+            </button>
           </div>
         </div>
       </header>
 
-      {/* Supabase Authentication Modal */}
       <AuthModal
         isOpen={showAuthModal}
         onClose={() => setShowAuthModal(false)}
@@ -340,4 +491,3 @@ export const Navbar: React.FC<NavbarProps> = ({
     </>
   );
 };
-

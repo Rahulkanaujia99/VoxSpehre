@@ -20,6 +20,7 @@ export default function Home() {
   const [dashboardTab, setDashboardTab] = useState<SidebarTab>('dashboard');
   const [isPenguinInfoOpen, setIsPenguinInfoOpen] = useState(false);
   const [penguinSection, setPenguinSection] = useState('about');
+  const [appSearchQuery, setAppSearchQuery] = useState('');
 
   // Sync with browser URL hash & history
   useEffect(() => {
@@ -72,9 +73,53 @@ export default function Home() {
     setIsPenguinInfoOpen(true);
   };
 
+  // ========================================================
+  // 1. APP / DASHBOARD VIEW (MedSync Claymorphism Layout)
+  // ========================================================
+  if (currentView === 'app') {
+    return (
+      <div className="min-h-screen medsync-canvas text-stone-800 p-3 sm:p-5 lg:p-6 flex flex-col justify-between selection:bg-teal-100">
+        <div className="w-full max-w-[1560px] mx-auto space-y-5 flex-1 flex flex-col">
+          {/* MedSync Header */}
+          <Navbar
+            isAppView={true}
+            onBackToHome={handleBackToHome}
+            onOpenStudio={handleStartTranscribing}
+            onOpenSignIn={() => transitionNavigate('/login')}
+            onOpenPenguinInfo={handleOpenPenguinInfo}
+            activeTab={dashboardTab}
+            onNavigate={(tab) => setDashboardTab(tab)}
+            searchQuery={appSearchQuery}
+            onSearchChange={setAppSearchQuery}
+          />
+
+          {/* MedSync Body (Sidebar + Main Studio Content) */}
+          <div className="flex-1 w-full">
+            <TranscriptionStudio
+              onBackToHome={handleBackToHome}
+              activeTab={dashboardTab}
+              onTabChange={setDashboardTab}
+              searchQuery={appSearchQuery}
+            />
+          </div>
+        </div>
+
+        {/* Penguin International Information Modal */}
+        <PenguinInfoModal
+          isOpen={isPenguinInfoOpen}
+          onClose={() => setIsPenguinInfoOpen(false)}
+          activeSection={penguinSection}
+        />
+      </div>
+    );
+  }
+
+  // ========================================================
+  // 2. LANDING PAGE (Home Page)
+  // ========================================================
   return (
     <main className="min-h-screen home-premium-bg text-slate-900 selection:bg-indigo-500 selection:text-white flex flex-col justify-between relative overflow-x-hidden">
-      {/* Full Viewport Ambient Gradient Glow Layer (matching Image 2) */}
+      {/* Full Viewport Ambient Gradient Glow Layer (matching Image 2 on home view) */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-0 transform-gpu" style={{ contain: 'strict' }}>
         {/* Upper-Left Light Blue & Soft Teal Glow */}
         <div className="absolute -top-32 -left-28 w-[700px] h-[700px] rounded-full bg-gradient-to-br from-[#EAF4FF] via-[#E8FAF7]/80 to-transparent blur-[90px] opacity-85 transform-gpu" />
@@ -84,10 +129,10 @@ export default function Home() {
         <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[800px] h-[600px] rounded-full bg-gradient-to-b from-[#E8FAF7]/30 via-[#EAF4FF]/40 to-transparent blur-[100px] opacity-75 transform-gpu" />
       </div>
 
-      {/* Navigation Bar - Preserved exact website header (Image 1 & 2) */}
+      {/* Navigation Bar */}
       <div className="relative z-50 w-full shrink-0">
         <Navbar
-          isAppView={currentView === 'app'}
+          isAppView={false}
           onBackToHome={handleBackToHome}
           onOpenStudio={handleStartTranscribing}
           onOpenSignIn={() => transitionNavigate('/login')}
@@ -95,50 +140,29 @@ export default function Home() {
           activeTab={dashboardTab}
           onNavigate={(tab) => {
             setDashboardTab(tab);
-            if (currentView !== 'app') setCurrentView('app');
+            setCurrentView('app');
           }}
         />
       </div>
 
-      {currentView === 'home' && (
-        /* ======================================================== */
-        /* LANDING PAGE (Home Page) - Image 1 & 2 Home Page UI      */
-        /* ======================================================== */
-        <div className="flex-1 flex flex-col justify-between relative z-10">
-          {/* Hero Section with Start Transcribing & Try Sample Audio CTAs */}
-          <HeroSection
-            onOpenStudio={handleStartTranscribing}
-            onLoadSample={(sampleId) => {
-              setCurrentView('app');
-              window.history.pushState(null, '', '#studio');
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            }}
-          />
+      {/* Hero Section & Features */}
+      <div className="flex-1 flex flex-col justify-between relative z-10">
+        <HeroSection
+          onOpenStudio={handleStartTranscribing}
+          onLoadSample={(sampleId) => {
+            setCurrentView('app');
+            window.history.pushState(null, '', '#studio');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }}
+        />
 
-          {/* Pipeline & Intelligence Features Section */}
-          <FeaturesSection />
+        <FeaturesSection />
 
-          {/* Landing Page Footer */}
-          <Footer
-            onOpenStudio={handleStartTranscribing}
-            onOpenPenguinInfo={handleOpenPenguinInfo}
-          />
-        </div>
-      )}
-
-      {currentView === 'app' && (
-        /* ======================================================== */
-        /* AUDIO TRANSCRIPTION DASHBOARD (AUTHENTICATED / ACTIVE)   */
-        /* Footer is hidden on authenticated dashboard pages        */
-        /* ======================================================== */
-        <div className="flex-1 flex flex-col relative z-10 overflow-hidden">
-          <TranscriptionStudio
-            onBackToHome={handleBackToHome}
-            activeTab={dashboardTab}
-            onTabChange={setDashboardTab}
-          />
-        </div>
-      )}
+        <Footer
+          onOpenStudio={handleStartTranscribing}
+          onOpenPenguinInfo={handleOpenPenguinInfo}
+        />
+      </div>
 
       {/* Penguin International Information Modal */}
       <PenguinInfoModal

@@ -44,6 +44,8 @@ import {
   Scissors,
   MessageSquareText,
   BarChart3,
+  ArrowDown,
+  ArrowUp,
 } from 'lucide-react';
 import {
   TranscriptionResult,
@@ -77,12 +79,14 @@ interface TranscriptionStudioProps {
   onBackToHome?: () => void;
   activeTab?: SidebarTab;
   onTabChange?: (tab: SidebarTab) => void;
+  searchQuery?: string;
 }
 
 export const TranscriptionStudio: React.FC<TranscriptionStudioProps> = ({
   onBackToHome,
   activeTab: controlledTab,
   onTabChange: onControlledTabChange,
+  searchQuery,
 }) => {
   // Navigation & Layout
   const [internalSidebarTab, setInternalSidebarTab] = useState<SidebarTab>('dashboard');
@@ -127,6 +131,16 @@ export const TranscriptionStudio: React.FC<TranscriptionStudioProps> = ({
   // Document History State & Supabase Cloud Sync
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [searchRecordingsQuery, setSearchRecordingsQuery] = useState('');
+
+  // Sync external search query from top Navbar search pill
+  useEffect(() => {
+    if (searchQuery !== undefined) {
+      setSearchRecordingsQuery(searchQuery);
+      if (searchQuery.trim().length > 0 && sidebarTab !== 'recordings') {
+        setSidebarTab('recordings');
+      }
+    }
+  }, [searchQuery]);
   const [isSyncingCloud, setIsSyncingCloud] = useState<boolean>(false);
   const [showStudioAuthModal, setShowStudioAuthModal] = useState<boolean>(false);
   const { user, profile, signOut, isConfigured } = useAuth();
@@ -475,8 +489,8 @@ export const TranscriptionStudio: React.FC<TranscriptionStudioProps> = ({
     'Rahul';
 
   return (
-    <div className="min-h-[calc(100vh-4.25rem)] bg-slate-50 flex flex-col lg:flex-row">
-      {/* Primary Sidebar (Accessible throughout authenticated application) */}
+    <div className="w-full flex flex-col lg:flex-row gap-5 items-start">
+      {/* Primary Sidebar (MedSync minimal vertical nav) */}
       <Sidebar
         activeTab={sidebarTab}
         onTabChange={(tab) => {
@@ -487,94 +501,148 @@ export const TranscriptionStudio: React.FC<TranscriptionStudioProps> = ({
         recordingsCount={history.length}
         isOpenMobile={isMobileSidebarOpen}
         onCloseMobile={() => setIsMobileSidebarOpen(false)}
+        onBackToHome={onBackToHome}
       />
 
       {/* Main Content Area */}
-      <div className="flex-1 min-w-0 flex flex-col lg:h-[calc(100vh-4.25rem)] lg:overflow-y-auto">
-        {/* Top Header Bar */}
-        <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200/80 px-4 sm:px-6 lg:px-8 py-2 sm:py-2.5 flex items-center justify-between shrink-0">
-          <div className="flex items-center gap-3">
-            {/* Mobile Hamburger Menu Toggle */}
+      <main className="flex-1 space-y-5 w-full min-w-0">
+        {/* Mobile Sidebar Trigger (only visible on mobile/tablet) */}
+        <div className="lg:hidden flex items-center justify-between pb-2">
+          <button
+            onClick={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
+            className="p-2 rounded-xl bg-white shadow-clay-pill border border-white text-stone-700 hover:text-stone-900 transition-colors flex items-center gap-2 text-xs font-bold cursor-pointer"
+          >
+            {isMobileSidebarOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+            <span>Menu</span>
+          </button>
+          {onBackToHome && (
             <button
-              onClick={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
-              className="lg:hidden p-2 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors"
-              title="Open Navigation Menu"
+              onClick={onBackToHome}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white shadow-clay-pill border border-white text-xs font-semibold text-stone-700"
             >
-              {isMobileSidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              <ArrowLeft className="w-3.5 h-3.5 text-stone-600" />
+              <span>Back to Landing Page</span>
             </button>
+          )}
+        </div>
 
-            {onBackToHome && (
-              <button
-                onClick={onBackToHome}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-xs font-bold text-slate-700 hover:text-indigo-600 transition-all cursor-pointer"
-              >
-                <ArrowLeft className="w-4 h-4 text-indigo-600" />
-                <span className="hidden sm:inline">← Back to Landing Page</span>
-              </button>
-            )}
-          </div>
-
-          <div className="flex items-center gap-2.5">
-            {/* Active Document Indicator if Transcribed */}
-            {transcriptionData && sidebarTab === 'dashboard' && (
-              <button
-                onClick={handleNewTranscription}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-50 border border-indigo-200 text-xs font-bold text-indigo-700 hover:bg-indigo-100 transition-colors cursor-pointer"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                <span>+ New Audio File</span>
-              </button>
-            )}
-
-            {/* Supabase Cloud Sync Badge */}
-            {user ? (
-              <div className="hidden sm:inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
-                <Cloud className="w-3.5 h-3.5 text-emerald-600" />
-                <span>Cloud Connected</span>
-              </div>
-            ) : (
-              <button
-                onClick={() => setShowStudioAuthModal(true)}
-                className="inline-flex items-center gap-1.5 text-xs font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 px-3 py-1 rounded-full border border-indigo-200 cursor-pointer"
-              >
-                <User className="w-3.5 h-3.5" />
-                <span>Sign In / Sync</span>
-              </button>
-            )}
-          </div>
-        </header>
-
-        {/* Main Viewport depending on sidebarTab */}
-        <main className="flex-1 p-3.5 sm:p-5 lg:p-6 2xl:px-8 max-w-7xl 2xl:max-w-[1600px] mx-auto w-full space-y-4 sm:space-y-5">
-          {/* ======================================================== */}
-          {/* TAB 1: DASHBOARD (AUDIO UPLOAD -> TRANSCRIPTION -> SUMMARY) */}
-          {/* ======================================================== */}
-          {sidebarTab === 'dashboard' && (
-            <div className="space-y-4 sm:space-y-5 animate-fade-in">
-              {/* If transcriptionData is NULL: Show Section Header + Audio Upload Section ONLY */}
-              {!transcriptionData ? (
-                <>
-                  {/* Dashboard Header (Matching Screenshot 1) */}
-                  <div className="space-y-1.5 pb-1">
-                    <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-700 text-[11px] font-bold">
-                      <Sparkles className="w-3.5 h-3.5" />
+        {/* ======================================================== */}
+        {/* TAB 1: DASHBOARD (AUDIO UPLOAD -> TRANSCRIPTION -> SUMMARY) */}
+        {/* ======================================================== */}
+        {sidebarTab === 'dashboard' && (
+          <div className="space-y-5 animate-fade-in">
+            {/* If transcriptionData is NULL: Show Section Header + 4 Metric Cards + Audio Upload Section */}
+            {!transcriptionData ? (
+              <>
+                {/* SECTION HERO TITLE BAR (Image 2) */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="space-y-1">
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-stone-500/10 backdrop-blur-md border border-stone-400/20 text-stone-700 font-bold text-[11px] shadow-xs">
+                      <Sparkles className="w-3.5 h-3.5 text-stone-600" />
                       <span>VOXSPHERE AI AUDIO STUDIO</span>
                     </div>
-                    <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight leading-tight">
-                      AI Audio Transcription & Intelligence
-                    </h2>
-                    <p className="text-xs sm:text-sm text-slate-500 max-w-2xl leading-normal sm:leading-relaxed">
-                      Upload MP3, WAV, M4A or record live. Powered by OpenAI <code className="text-indigo-700 font-mono font-bold bg-indigo-50 px-1.5 py-0.5 rounded text-xs">gpt-transcribe</code> with intelligent audio splitting and executive summaries.
+                    <h1
+                      className="text-2xl sm:text-3xl font-extrabold tracking-tight bg-clip-text text-transparent"
+                      style={{
+                        backgroundImage: 'linear-gradient(90deg, #23ac98 0%, #3a8cbe 35%, #457bd0 68%, #595df2 100%)',
+                      }}
+                    >
+                      AI Audio Transcription &amp; Intelligence
+                    </h1>
+                    <p className="text-xs sm:text-sm text-stone-500 max-w-2xl leading-relaxed">
+                      Upload MP3, WAV, M4A or record live. Powered with intelligent audio splitting and executive summaries.
                     </p>
                   </div>
 
-                  {/* Clean Initial Audio Upload Section (No Demo samples, No AI Summary, No Segments) */}
-                  <AudioUploader
-                    onStartTranscription={handleStartTranscription}
-                    isTranscribing={isProcessing}
-                    transcriptionProgress={transcriptionProgress}
-                    transcriptionStage={processingStage}
-                  />
+                  {/* Top-right Quick Back Pill */}
+                  {onBackToHome && (
+                    <button
+                      type="button"
+                      onClick={onBackToHome}
+                      className="hidden sm:inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-white shadow-clay-pill border border-white text-xs font-semibold text-stone-700 hover:bg-stone-50 transition-all self-start sm:self-center cursor-pointer"
+                    >
+                      <ArrowLeft className="w-4 h-4 text-stone-600" />
+                      <span>Back to Landing Page</span>
+                    </button>
+                  )}
+                </div>
+
+                {/* 4 TOP METRIC CARDS (Replicating MedSync Statistics: Gradient Accent Card + Neutral Cards) */}
+                <section className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                  {/* Metric 1: Gradient Accent Card */}
+                  <article
+                    className="p-5 rounded-2xl text-white shadow-lg flex flex-col justify-between relative overflow-hidden group"
+                    style={{
+                      background: 'linear-gradient(90deg, #23ac98 0%, #3a8cbe 35%, #457bd0 68%, #595df2 100%)',
+                      boxShadow: '0 14px 28px -8px rgba(69, 123, 208, 0.42), inset 0 1px 1px 0 rgba(255, 255, 255, 0.35)',
+                    }}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <span className="text-3xl font-extrabold tabular-nums">8</span>
+                        <span className="block text-xs font-bold text-white/95 mt-1">Pending Transcripts</span>
+                      </div>
+                      <span className="px-2 py-0.5 rounded-full bg-white/20 backdrop-blur-xs text-[10px] font-bold text-white flex items-center gap-0.5">
+                        <ArrowDown className="w-3 h-3" /> 2
+                      </span>
+                    </div>
+                    <div className="text-[11px] text-white/80 pt-3">Live engine queued</div>
+                  </article>
+
+                  {/* Metric 2: Processed Files */}
+                  <article className="clay-surface-card p-5 rounded-2xl flex flex-col justify-between">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <span className="text-3xl font-extrabold text-stone-900 tabular-nums">
+                          {history.length > 0 ? history.length : 42}
+                        </span>
+                        <span className="block text-xs font-bold text-stone-600 mt-1">Processed Files</span>
+                      </div>
+                      <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 text-[10px] font-bold flex items-center gap-0.5">
+                        <ArrowUp className="w-3 h-3" /> 5
+                      </span>
+                    </div>
+                    <div className="text-[11px] text-stone-400 pt-3">100% cloud backed up</div>
+                  </article>
+
+                  {/* Metric 3: Avg Split Time */}
+                  <article className="clay-surface-card p-5 rounded-2xl flex flex-col justify-between">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <span className="text-3xl font-extrabold text-stone-900 tabular-nums">
+                          25<span className="text-base font-medium text-stone-400 ml-1">sec</span>
+                        </span>
+                        <span className="block text-xs font-bold text-stone-600 mt-1">Avg. Split Time</span>
+                      </div>
+                      <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 text-[10px] font-bold flex items-center gap-0.5">
+                        <ArrowDown className="w-3 h-3" /> 2%
+                      </span>
+                    </div>
+                    <div className="text-[11px] text-stone-400 pt-3">Automated chunking</div>
+                  </article>
+
+                  {/* Metric 4: AI Accuracy */}
+                  <article className="clay-surface-card p-5 rounded-2xl flex flex-col justify-between">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <span className="text-3xl font-extrabold text-stone-900 tabular-nums">99.4%</span>
+                        <span className="block text-xs font-bold text-stone-600 mt-1">AI Accuracy</span>
+                      </div>
+                      <span className="px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 text-[10px] font-bold flex items-center gap-0.5">
+                        <ArrowUp className="w-3 h-3" /> 1.4%
+                      </span>
+                    </div>
+                    <div className="text-[11px] text-stone-400 pt-3">Whisper Large v3</div>
+                  </article>
+                </section>
+
+                {/* Clean Initial Audio Upload Section (No Demo samples, No AI Summary, No Segments) */}
+                <AudioUploader
+                  onStartTranscription={handleStartTranscription}
+                  isTranscribing={isProcessing}
+                  transcriptionProgress={transcriptionProgress}
+                  transcriptionStage={processingStage}
+                />
 
                   {/* Error Notification */}
                   {errorMessage && (
@@ -1251,9 +1319,8 @@ export const TranscriptionStudio: React.FC<TranscriptionStudioProps> = ({
           {/* ======================================================== */}
           {sidebarTab === 'settings' && <SettingsView />}
         </main>
-      </div>
 
-      {/* Supabase Authentication Modal */}
+        {/* Supabase Authentication Modal */}
       <AuthModal
         isOpen={showStudioAuthModal}
         onClose={() => {

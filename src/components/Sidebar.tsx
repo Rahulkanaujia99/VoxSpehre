@@ -3,8 +3,7 @@
 import React from 'react';
 import {
   Plus,
-  LayoutDashboard,
-  FileText,
+  FileAudio,
   Scissors,
   MessageSquareText,
   BarChart3,
@@ -30,6 +29,7 @@ interface SidebarProps {
   recordingsCount?: number;
   isOpenMobile?: boolean;
   onCloseMobile?: () => void;
+  onBackToHome?: () => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -39,6 +39,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   recordingsCount = 0,
   isOpenMobile = false,
   onCloseMobile,
+  onBackToHome,
 }) => {
   const { signOut } = useAuth();
 
@@ -49,15 +50,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   const navItems = [
     {
-      id: 'dashboard' as SidebarTab,
-      label: 'Dashboard',
-      icon: LayoutDashboard,
-      badge: null,
-    },
-    {
       id: 'recordings' as SidebarTab,
       label: 'Recordings',
-      icon: FileText,
+      icon: FileAudio,
       badge: recordingsCount > 0 ? recordingsCount : null,
     },
     {
@@ -84,12 +79,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
       icon: User,
       badge: null,
     },
-    {
-      id: 'settings' as SidebarTab,
-      label: 'Settings',
-      icon: Settings,
-      badge: null,
-    },
   ];
 
   return (
@@ -102,76 +91,166 @@ export const Sidebar: React.FC<SidebarProps> = ({
         />
       )}
 
-      {/* Sidebar Container */}
+      {/* Left Sidebar (MedSync Minimalist Vertical Nav matching Image 2) */}
       <aside
-        className={`fixed lg:sticky top-0 lg:top-16 md:lg:top-[4.25rem] h-screen lg:h-[calc(100vh-4.25rem)] w-56 lg:w-60 xl:w-64 bg-white border-r border-slate-200/90 flex flex-col justify-between p-3.5 sm:p-4 z-40 transition-transform duration-300 ease-in-out shrink-0 ${
-          isOpenMobile ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+        className={`w-full lg:w-56 shrink-0 space-y-4 transition-transform duration-300 ${
+          isOpenMobile ? 'block' : 'hidden lg:block'
         }`}
       >
-        <div className="space-y-4 sm:space-y-5">
-          {/* Top: + New Transcription Button */}
-          <button
-            onClick={() => {
-              onNewTranscription();
-              if (onCloseMobile) onCloseMobile();
-            }}
-            className="w-full flex items-center justify-center gap-2 py-2.5 px-3.5 bg-gradient-to-r from-indigo-600 via-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 active:scale-[0.98] text-white font-bold text-xs sm:text-sm rounded-xl shadow-md shadow-indigo-200/80 transition-all cursor-pointer"
-          >
-            <Plus className="w-4 h-4 stroke-[2.5]" />
-            <span>New Transcription</span>
-          </button>
+        {/* Primary Action Pill: "+ New Transcription" (Teal to Iris Gradient CTA) */}
+        <button
+          type="button"
+          onClick={() => {
+            onNewTranscription();
+            if (onCloseMobile) onCloseMobile();
+          }}
+          className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-full text-white font-extrabold text-xs shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all hover:opacity-95 cursor-pointer"
+          style={{
+            background: 'linear-gradient(90deg, #23ac98 0%, #3a8cbe 35%, #457bd0 68%, #595df2 100%)',
+            boxShadow: '0 8px 20px -4px rgba(69, 123, 208, 0.4), inset 0 1px 1px 0 rgba(255, 255, 255, 0.35)',
+          }}
+        >
+          <Plus className="w-4 h-4 stroke-[2.5]" />
+          <span>New Transcription</span>
+        </button>
 
-          {/* Primary Navigation Menu */}
-          <div className="space-y-0.5 sm:space-y-1 relative">
-            <div className="px-3 pb-1.5 text-[10px] sm:text-[11px] font-bold tracking-wider text-slate-400 uppercase">
-              STUDIO & TOOLS
-            </div>
+        {/* Navigation Clay Card */}
+        <div className="clay-surface-card rounded-3xl p-3.5 space-y-3.5">
+          <div className="px-2 pt-1 text-[10px] font-bold tracking-wider text-stone-400 uppercase">
+            Studio & Tools
+          </div>
 
+          <nav className="space-y-1">
+            {/* Active or Inactive Dashboard */}
+            {activeTab === 'dashboard' ? (
+              <button
+                type="button"
+                onClick={() => handleSelectTab('dashboard')}
+                className="w-full flex items-center gap-3.5 px-4 py-3 rounded-full text-[14px] font-extrabold text-white transition-all shadow-md group hover:opacity-95 cursor-pointer"
+                style={{
+                  background: 'linear-gradient(90deg, #026488 0%, #088b93 35%, #1cb97e 75%, #30ca6f 100%)',
+                  boxShadow: '0 8px 20px -4px rgba(8, 139, 147, 0.45), inset 0 1px 1px 0 rgba(255, 255, 255, 0.35)',
+                }}
+              >
+                {/* Rounded 4-square Grid Icon exactly matching Image 2 */}
+                <svg
+                  className="w-5 h-5 text-white shrink-0 stroke-[2.4]"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <rect x="3" y="3" width="7.2" height="7.2" rx="2" />
+                  <rect x="13.8" y="3" width="7.2" height="7.2" rx="2" />
+                  <rect x="13.8" y="13.8" width="7.2" height="7.2" rx="2" />
+                  <rect x="3" y="13.8" width="7.2" height="7.2" rx="2" />
+                </svg>
+                <span className="flex-1 font-extrabold tracking-tight text-white leading-none text-left">
+                  Dashboard
+                </span>
+                <span className="w-2.5 h-2.5 rounded-full bg-white shadow-sm shrink-0" />
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => handleSelectTab('dashboard')}
+                className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-full text-stone-600 hover:text-stone-900 hover:bg-stone-50 text-xs font-semibold transition-all cursor-pointer"
+              >
+                <svg
+                  className="w-4 h-4 text-stone-400 shrink-0 stroke-[2]"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <rect x="3" y="3" width="7.2" height="7.2" rx="2" />
+                  <rect x="13.8" y="3" width="7.2" height="7.2" rx="2" />
+                  <rect x="13.8" y="13.8" width="7.2" height="7.2" rx="2" />
+                  <rect x="3" y="13.8" width="7.2" height="7.2" rx="2" />
+                </svg>
+                <span className="flex-1 text-left">Dashboard</span>
+              </button>
+            )}
+
+            {/* Other Navigation Tabs */}
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = activeTab === item.id;
+
+              if (isActive) {
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => handleSelectTab(item.id)}
+                    className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-full font-bold text-xs text-white transition-all shadow-sm cursor-pointer"
+                    style={{
+                      background: 'linear-gradient(90deg, #026488 0%, #088b93 45%, #1cb97e 100%)',
+                    }}
+                  >
+                    <Icon className="w-4 h-4 text-white shrink-0" />
+                    <span className="flex-1 text-left truncate">{item.label}</span>
+                    {item.badge !== null && (
+                      <span className="text-[10px] font-bold px-1.5 py-0.2 rounded-full bg-white/20 text-white shrink-0">
+                        {item.badge}
+                      </span>
+                    )}
+                    <span className="w-2 h-2 rounded-full bg-white shadow-sm shrink-0" />
+                  </button>
+                );
+              }
+
               return (
                 <button
                   key={item.id}
+                  type="button"
                   onClick={() => handleSelectTab(item.id)}
-                  className={`w-full flex items-center gap-2.5 sm:gap-3 px-3 py-2 rounded-xl text-xs sm:text-[13px] font-semibold transition-all cursor-pointer ${
-                    isActive
-                      ? 'bg-indigo-50 text-indigo-700 font-bold shadow-2xs'
-                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-                  }`}
+                  className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-full text-stone-600 hover:text-stone-900 hover:bg-stone-50 text-xs font-semibold transition-all cursor-pointer"
                 >
-                  <Icon
-                    className={`w-4 h-4 shrink-0 ${
-                      isActive ? 'text-indigo-600' : 'text-slate-400'
-                    }`}
-                  />
+                  <Icon className="w-4 h-4 text-stone-400 shrink-0" />
                   <span className="flex-1 text-left truncate">{item.label}</span>
                   {item.badge !== null && (
-                    <span className="text-[10px] font-bold px-1.5 py-0.2 rounded-full bg-indigo-100 text-indigo-800 shrink-0">
+                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-stone-100 text-stone-700 shrink-0">
                       {item.badge}
                     </span>
-                  )}
-                  {isActive && (
-                    <div className="w-1.5 h-1.5 rounded-full bg-indigo-600 shrink-0" />
                   )}
                 </button>
               );
             })}
-          </div>
-        </div>
+          </nav>
 
-        {/* Bottom Section: Minimal Status */}
-        <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400 px-1">
-          <span className="font-semibold text-[10px] sm:text-[11px] text-slate-400 tracking-wide">
-            VoxSphere v2.0
-          </span>
-          <button
-            onClick={() => signOut()}
-            title="Sign Out"
-            className="p-1 text-slate-400 hover:text-rose-600 hover:bg-slate-50 rounded-lg transition-colors cursor-pointer"
-          >
-            <LogOut className="w-3.5 h-3.5" />
-          </button>
+          {/* System Settings & Back to Home */}
+          <div className="pt-3 border-t border-stone-100 space-y-1">
+            <button
+              type="button"
+              onClick={() => handleSelectTab('settings')}
+              className={`w-full flex items-center gap-3 px-3.5 py-2 rounded-full text-xs font-medium transition-all cursor-pointer ${
+                activeTab === 'settings'
+                  ? 'bg-stone-100 text-stone-900 font-bold'
+                  : 'text-stone-500 hover:text-stone-900 hover:bg-stone-50'
+              }`}
+            >
+              <Settings className="w-4 h-4 text-stone-400 shrink-0" />
+              <span>Settings</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                if (onBackToHome) {
+                  onBackToHome();
+                } else {
+                  window.location.href = '/';
+                }
+                if (onCloseMobile) onCloseMobile();
+              }}
+              className="w-full flex items-center gap-3 px-3.5 py-2 rounded-full text-stone-500 hover:text-stone-900 hover:bg-stone-50 text-xs font-medium transition-all cursor-pointer"
+            >
+              <LogOut className="w-4 h-4 text-stone-400 shrink-0" />
+              <span>Back to Home</span>
+            </button>
+          </div>
         </div>
       </aside>
     </>

@@ -259,51 +259,79 @@ export const AudioUploader: React.FC<AudioUploaderProps> = ({
 
       {!selectedFile ? (
         /* ======================================================== */
-        /* 1. INITIAL CLEAN AUDIO UPLOAD DROPZONE                   */
+        /* 1. INITIAL CLEAN AUDIO UPLOAD DROPZONE (MedSync Frosted) */
         /* ======================================================== */
-        <div
+        <section
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
           onClick={() => fileInputRef.current?.click()}
-          className={`relative border-2 border-dashed rounded-2xl sm:rounded-3xl p-6 sm:p-8 lg:p-8 text-center transition-all cursor-pointer ${
-            isDragOver
-              ? 'border-indigo-500 bg-indigo-50/70 scale-[1.01] shadow-lg shadow-indigo-100'
-              : 'border-slate-300 hover:border-indigo-400 bg-slate-50/60 hover:bg-slate-50 shadow-2xs'
-          }`}
+          className="rounded-3xl p-6 sm:p-8 lg:p-10 relative overflow-hidden text-center backdrop-blur-xl border border-white/80 shadow-clay-card cursor-pointer transition-all hover:shadow-lg"
+          style={{
+            background: 'rgba(255, 255, 255, 0.65)',
+            boxShadow: '0 20px 45px -15px rgba(148, 163, 184, 0.25), inset 0 2px 4px 0 rgba(255, 255, 255, 0.95)',
+          }}
         >
-          <div className="flex flex-col items-center justify-center space-y-3">
-            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center shadow-sm shadow-indigo-100">
-              <Upload className="w-6 h-6 sm:w-7 sm:h-7" />
+          {/* Dashed Inner Drop Field with Frosted Glass Fill */}
+          <div
+            className={`border-2 border-dashed rounded-2xl p-6 sm:p-10 backdrop-blur-md transition-all flex flex-col items-center justify-center space-y-4 ${
+              isDragOver
+                ? 'border-teal-500 bg-white/70 scale-[1.01]'
+                : 'border-sky-300/40 hover:bg-white/50'
+            }`}
+            style={{ background: 'rgba(240, 249, 255, 0.45)' }}
+          >
+            {/* Central Upload Pill Icon from Image 2 / MedSync Style */}
+            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-white/90 shadow-clay-pill border border-white/80 backdrop-blur-sm flex items-center justify-center text-teal-600 hover:scale-110 transition-transform">
+              <Upload className="w-7 h-7 sm:w-8 sm:h-8 stroke-[2.2]" />
             </div>
 
-            <div>
-              <h4 className="text-sm sm:text-base font-bold text-slate-900">
-                Drag & Drop single or multiple audio files here, or{' '}
-                <span className="text-indigo-600 underline decoration-indigo-300">browse files</span>
-              </h4>
-              <p className="text-xs text-slate-500 mt-0.5 max-w-md mx-auto">
+            {/* Upload Main Heading & Action Link */}
+            <div className="space-y-1.5">
+              <h2 className="text-base sm:text-lg lg:text-xl font-extrabold text-stone-900">
+                Drag &amp; Drop single or multiple audio files here, or{' '}
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    fileInputRef.current?.click();
+                  }}
+                  className="text-teal-600 hover:text-teal-700 underline font-extrabold cursor-pointer"
+                >
+                  browse files
+                </button>
+              </h2>
+              <p className="text-xs text-stone-500 max-w-lg mx-auto">
                 Supports MP3, WAV, M4A, AAC, OGG, WebM, and FLAC (up to 100MB with automated audio splitting)
               </p>
             </div>
 
-            <div className="flex flex-wrap items-center justify-center gap-2 pt-0.5 text-[10px] sm:text-[11px] font-semibold text-slate-500">
-              <span className="inline-flex items-center gap-1 text-indigo-700 bg-indigo-50 px-2.5 py-0.5 rounded-full border border-indigo-100">
-                <FileAudio className="w-3 h-3 text-indigo-600" />
-                Upload Audio File
-              </span>
-              <span className="inline-flex items-center gap-1 text-teal-800 bg-teal-50 px-2.5 py-0.5 rounded-full border border-teal-100">
-                <ShieldCheck className="w-3 h-3 text-teal-600" />
-                Preconfigured Backend Security
-              </span>
+            {/* Bottom Badges: Upload Audio File + Preconfigured Backend Security */}
+            <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  fileInputRef.current?.click();
+                }}
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white/85 backdrop-blur-md shadow-clay-pill border border-white/90 text-stone-800 text-xs font-bold hover:bg-white transition-all cursor-pointer"
+              >
+                <FileAudio className="w-4 h-4 text-teal-600" />
+                <span>Upload Audio File</span>
+              </button>
+
+              <div className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-full bg-emerald-500/10 backdrop-blur-md border border-emerald-400/25 text-emerald-800 text-xs font-semibold shadow-sm">
+                <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                <span>Preconfigured Backend Security</span>
+              </div>
             </div>
           </div>
-        </div>
+        </section>
       ) : (
         /* ======================================================== */
         /* 2. FILE LOADED STATE WITH METADATA, PLAYER & CONTROLS    */
         /* ======================================================== */
-        <div className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-slate-200/90 shadow-md space-y-4 sm:space-y-5 animate-fade-in">
+        <div className="clay-surface-card rounded-3xl p-5 sm:p-7 border border-white/80 shadow-clay-card space-y-5 animate-fade-in">
           {/* Normal File Preparation Loading State (Standard Spinner & Progress Bar) */}
           {isUploadingFile && (
             <div className="p-3.5 rounded-2xl bg-indigo-50/80 border border-indigo-200 text-indigo-900 text-xs flex items-center gap-3 animate-pulse">
@@ -513,4 +541,8 @@ export const AudioUploader: React.FC<AudioUploaderProps> = ({
               />
             </div>
           )}
-        <
+        </div>
+      )}
+    </div>
+  );
+};

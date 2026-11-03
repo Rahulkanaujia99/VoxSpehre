@@ -104,26 +104,26 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
       {/* Sidebar Container */}
       <aside
-        className={`fixed lg:sticky top-0 lg:top-20 h-screen lg:h-[calc(100vh-5rem)] w-64 bg-white border-r border-slate-200/90 flex flex-col justify-between p-4 z-50 transition-transform duration-300 ease-in-out ${
+        className={`fixed lg:sticky top-0 lg:top-16 md:lg:top-[4.25rem] h-screen lg:h-[calc(100vh-4.25rem)] w-56 lg:w-60 xl:w-64 bg-white border-r border-slate-200/90 flex flex-col justify-between p-3.5 sm:p-4 z-40 transition-transform duration-300 ease-in-out shrink-0 ${
           isOpenMobile ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         }`}
       >
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-5">
           {/* Top: + New Transcription Button */}
           <button
             onClick={() => {
               onNewTranscription();
               if (onCloseMobile) onCloseMobile();
             }}
-            className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-gradient-to-r from-indigo-600 via-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 active:scale-[0.98] text-white font-bold text-sm rounded-2xl shadow-md shadow-indigo-200/80 transition-all cursor-pointer"
+            className="w-full flex items-center justify-center gap-2 py-2.5 px-3.5 bg-gradient-to-r from-indigo-600 via-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 active:scale-[0.98] text-white font-bold text-xs sm:text-sm rounded-xl shadow-md shadow-indigo-200/80 transition-all cursor-pointer"
           >
             <Plus className="w-4 h-4 stroke-[2.5]" />
             <span>New Transcription</span>
           </button>
 
           {/* Primary Navigation Menu */}
-          <div className="space-y-1 relative">
-            <div className="px-3 pb-2 text-[11px] font-bold tracking-wider text-slate-400 uppercase">
+          <div className="space-y-0.5 sm:space-y-1 relative">
+            <div className="px-3 pb-1.5 text-[10px] sm:text-[11px] font-bold tracking-wider text-slate-400 uppercase">
               STUDIO & TOOLS
             </div>
 
@@ -134,25 +134,25 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 <button
                   key={item.id}
                   onClick={() => handleSelectTab(item.id)}
-                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all cursor-pointer ${
+                  className={`w-full flex items-center gap-2.5 sm:gap-3 px-3 py-2 rounded-xl text-xs sm:text-[13px] font-semibold transition-all cursor-pointer ${
                     isActive
                       ? 'bg-indigo-50 text-indigo-700 font-bold shadow-2xs'
                       : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
                   }`}
                 >
                   <Icon
-                    className={`w-4 h-4 ${
+                    className={`w-4 h-4 shrink-0 ${
                       isActive ? 'text-indigo-600' : 'text-slate-400'
                     }`}
                   />
-                  <span className="flex-1 text-left">{item.label}</span>
+                  <span className="flex-1 text-left truncate">{item.label}</span>
                   {item.badge !== null && (
-                    <span className="text-[11px] font-bold px-1.5 py-0.5 rounded-full bg-indigo-100 text-indigo-800">
+                    <span className="text-[10px] font-bold px-1.5 py-0.2 rounded-full bg-indigo-100 text-indigo-800 shrink-0">
                       {item.badge}
                     </span>
                   )}
                   {isActive && (
-                    <div className="w-1.5 h-1.5 rounded-full bg-indigo-600" />
+                    <div className="w-1.5 h-1.5 rounded-full bg-indigo-600 shrink-0" />
                   )}
                 </button>
               );
@@ -161,16 +161,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
 
         {/* Bottom Section: Minimal Status */}
-        <div className="pt-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400 px-2">
-          <span className="font-semibold text-[11px] text-slate-400 tracking-wide">
+        <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400 px-1">
+          <span className="font-semibold text-[10px] sm:text-[11px] text-slate-400 tracking-wide">
             VoxSphere v2.0
           </span>
           <button
             onClick={() => signOut()}
             title="Sign Out"
-            className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-slate-50 rounded-lg transition-colors cursor-pointer"
+            className="p-1 text-slate-400 hover:text-rose-600 hover:bg-slate-50 rounded-lg transition-colors cursor-pointer"
           >
-            <LogOut className="w-4 h-4" />
+            <LogOut className="w-3.5 h-3.5" />
           </button>
         </div>
       </aside>

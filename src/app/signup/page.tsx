@@ -27,7 +27,7 @@ export default function SignUpPage() {
   };
 
   return (
-    <main className="min-h-screen lg:h-screen lg:max-h-screen scout-premium-bg text-slate-900 selection:bg-indigo-500 selection:text-white flex flex-col overflow-y-auto lg:overflow-hidden relative">
+    <main className="min-h-screen scout-premium-bg text-slate-900 selection:bg-indigo-500 selection:text-white flex flex-col overflow-y-auto relative">
       {/* Full Viewport Edge-to-Edge Ambient Gradient Layer (Upper, Middle, Lower) */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-0 transform-gpu" style={{ contain: 'strict' }}>
         {/* Upper-Left Light Blue & Soft Teal Ambient Radial Glow */}

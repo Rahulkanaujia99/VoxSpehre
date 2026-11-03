@@ -138,13 +138,13 @@ export const AuthView: React.FC<AuthViewProps> = ({
         {/* DESIRED LOGIN UI (IMAGE 2) - FROSTED MASTER CARD         */}
         {/* Adjusted proportions to fit 1920x1080 without scrolling */}
         {/* ======================================================== */}
-        <div className="relative w-full rounded-2xl sm:rounded-3xl p-4 sm:p-5 lg:p-5 xl:p-6 bg-white/95 backdrop-blur-2xl border border-white/90 shadow-2xl shadow-indigo-100/60 overflow-visible">
+        <div className="relative w-full rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 lg:p-5 xl:p-6 bg-white/95 backdrop-blur-2xl border border-white/90 shadow-2xl shadow-indigo-100/60 overflow-visible">
           {/* Interior Subtle Ambient Lights */}
           <div className="absolute -top-24 -left-24 w-80 h-80 bg-[#EAF4FF]/50 rounded-full blur-3xl pointer-events-none"></div>
           <div className="absolute top-1/2 right-1/4 w-96 h-96 bg-[#E8FAF7]/50 rounded-full blur-3xl pointer-events-none"></div>
 
           {/* Main Split Grid: Left Auth Form + Right Live Acoustic Engine Dashboard */}
-          <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-stretch">
+          <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-7 items-stretch">
             
             {/* ================= LEFT COLUMN: LIGHT THEMED LOGIN FORM ================= */}
             <div className="lg:col-span-5 flex flex-col justify-between py-0.5 sm:py-1 pr-0 lg:pr-2">
@@ -158,18 +158,18 @@ export const AuthView: React.FC<AuthViewProps> = ({
                       window.location.href = '/';
                     }
                   }}
-                  className="inline-flex items-center gap-2.5 sm:gap-3 mb-3.5 xl:mb-4 cursor-pointer transition-all hover:opacity-90 group"
+                  className="inline-flex items-center gap-2 sm:gap-2.5 mb-2.5 sm:mb-3 cursor-pointer transition-all hover:opacity-90 group"
                   title="Return to Home Page"
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src="/images/penguin-international-logo.png"
                     alt="Penguin International — Strategic Intelligence | AI × Human"
-                    className="h-8 sm:h-9 w-auto max-w-[170px] sm:max-w-[190px] object-contain shrink-0 group-hover:scale-[1.02] transition-transform"
+                    className="h-7 sm:h-8 w-auto max-w-[150px] sm:max-w-[170px] object-contain shrink-0 group-hover:scale-[1.02] transition-transform"
                   />
-                  <div className="h-6 w-px bg-slate-200 hidden sm:block" />
+                  <div className="h-5 w-px bg-slate-200 hidden sm:block" />
                   <div className="flex flex-col">
-                    <span className="text-base sm:text-lg font-black tracking-tight bg-gradient-to-r from-indigo-700 via-indigo-600 to-teal-600 bg-clip-text text-transparent leading-none">
+                    <span className="text-sm sm:text-base font-black tracking-tight bg-gradient-to-r from-indigo-700 via-indigo-600 to-teal-600 bg-clip-text text-transparent leading-none">
                       VoxSphere
                     </span>
                     <span className="text-[9px] font-semibold tracking-wider uppercase text-slate-400 mt-0.5 hidden sm:inline">
@@ -179,11 +179,11 @@ export const AuthView: React.FC<AuthViewProps> = ({
                 </div>
 
                 {/* Header Titles */}
-                <div className="mb-3 xl:mb-4">
-                  <h1 className="font-display text-2xl sm:text-3xl text-slate-900 font-extrabold tracking-tight mb-1">
+                <div className="mb-2 sm:mb-2.5">
+                  <h1 className="font-display text-xl sm:text-2xl lg:text-[1.65rem] text-slate-900 font-extrabold tracking-tight mb-1">
                     {mode === 'signin' ? 'Welcome back' : mode === 'signup' ? 'Create Account' : 'Reset Password'}
                   </h1>
-                  <p className="text-xs sm:text-sm text-slate-500 leading-relaxed font-normal">
+                  <p className="text-xs text-slate-500 leading-normal font-normal">
                     {mode === 'signin'
                       ? 'Please enter your enterprise credentials to access live acoustic transcripts.'
                       : mode === 'signup'
@@ -194,29 +194,29 @@ export const AuthView: React.FC<AuthViewProps> = ({
 
                 {/* Feedback Messages */}
                 {errorMessage && (
-                  <div className="mb-3 p-3 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-start gap-2.5">
+                  <div className="mb-2.5 p-2.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-start gap-2">
                     <span className="material-symbols-outlined text-rose-600 text-base shrink-0 mt-0.5">error</span>
                     <span>{errorMessage}</span>
                   </div>
                 )}
 
                 {successMessage && (
-                  <div className="mb-3 p-3 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-start gap-2.5">
+                  <div className="mb-2.5 p-2.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-start gap-2">
                     <span className="material-symbols-outlined text-emerald-600 text-base shrink-0 mt-0.5">check_circle</span>
                     <span>{successMessage}</span>
                   </div>
                 )}
 
                 {/* Form Fields Container */}
-                <form className="space-y-3 xl:space-y-3.5" onSubmit={handleSubmit}>
+                <form className="space-y-2.5 sm:space-y-3" onSubmit={handleSubmit}>
                   {mode === 'signup' && (
                     <div className="space-y-1">
-                      <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-600" htmlFor="name">
+                      <label className="block text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-slate-600" htmlFor="name">
                         Full Name
                       </label>
                       <div className="relative">
                         <input
-                          className="w-full bg-slate-50 hover:bg-slate-100/60 border border-slate-200/90 rounded-full px-4 sm:px-5 py-2.5 sm:py-3 text-slate-900 placeholder:text-slate-400 text-sm font-medium shadow-inner transition-all duration-200 outline-none focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
+                          className="w-full bg-slate-50 hover:bg-slate-100/60 border border-slate-200/90 rounded-full px-4 sm:px-4.5 py-2 sm:py-2.5 text-slate-900 placeholder:text-slate-400 text-xs sm:text-sm font-medium shadow-inner transition-all duration-200 outline-none focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
                           id="name"
                           placeholder="Rahul Kanaujia"
                           type="text"
@@ -232,12 +232,12 @@ export const AuthView: React.FC<AuthViewProps> = ({
 
                   {/* Work Email Field */}
                   <div className="space-y-1">
-                    <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-600" htmlFor="email">
+                    <label className="block text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-slate-600" htmlFor="email">
                       Work Email
                     </label>
                     <div className="relative">
                       <input
-                        className="w-full bg-slate-50 hover:bg-slate-100/60 border border-slate-200/90 rounded-full px-4 sm:px-5 py-2.5 sm:py-3 text-slate-900 placeholder:text-slate-400 text-sm font-medium shadow-inner transition-all duration-200 outline-none focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
+                        className="w-full bg-slate-50 hover:bg-slate-100/60 border border-slate-200/90 rounded-full px-4 sm:px-4.5 py-2 sm:py-2.5 text-slate-900 placeholder:text-slate-400 text-xs sm:text-sm font-medium shadow-inner transition-all duration-200 outline-none focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
                         id="email"
                         placeholder="rahul@penguin-international.com"
                         type="email"
@@ -253,12 +253,12 @@ export const AuthView: React.FC<AuthViewProps> = ({
                   {/* Security Key / Password Field */}
                   {mode !== 'forgot' && (
                     <div className="space-y-1">
-                      <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-600" htmlFor="login-password">
+                      <label className="block text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-slate-600" htmlFor="login-password">
                         Security Key / Password
                       </label>
                       <div className="relative">
                         <input
-                          className="w-full bg-slate-50 hover:bg-slate-100/60 border border-slate-200/90 rounded-full px-4 sm:px-5 py-2.5 sm:py-3 text-slate-900 placeholder:text-slate-400 text-sm font-medium shadow-inner transition-all duration-200 outline-none focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 tracking-wider"
+                          className="w-full bg-slate-50 hover:bg-slate-100/60 border border-slate-200/90 rounded-full px-4 sm:px-4.5 py-2 sm:py-2.5 text-slate-900 placeholder:text-slate-400 text-xs sm:text-sm font-medium shadow-inner transition-all duration-200 outline-none focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 tracking-wider"
                           id="login-password"
                           placeholder="••••••••••••"
                           type={showPassword ? 'text' : 'password'}
@@ -280,15 +280,15 @@ export const AuthView: React.FC<AuthViewProps> = ({
                   )}
 
                   {/* Utilities: Keep logged in & Forgot password */}
-                  <div className="flex items-center justify-between pt-0.5 pb-0.5 text-xs">
+                  <div className="flex items-center justify-between pt-0 pb-0 text-xs">
                     <label className="flex items-center gap-2 cursor-pointer select-none text-slate-600 hover:text-slate-900 font-medium transition-colors">
                       <input
                         checked={keepLoggedIn}
                         onChange={(e) => setKeepLoggedIn(e.target.checked)}
-                        className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 border-slate-300 cursor-pointer"
+                        className="w-3.5 h-3.5 rounded text-indigo-600 focus:ring-indigo-500 border-slate-300 cursor-pointer"
                         type="checkbox"
                       />
-                      <span>Keep me logged in</span>
+                      <span className="text-[11px] sm:text-xs">Keep me logged in</span>
                     </label>
                     {mode === 'signin' ? (
                       <button
@@ -298,7 +298,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
                           setErrorMessage(null);
                           setSuccessMessage(null);
                         }}
-                        className="text-indigo-600 hover:text-indigo-700 font-semibold transition-colors underline decoration-indigo-200 underline-offset-4 cursor-pointer"
+                        className="text-indigo-600 hover:text-indigo-700 text-[11px] sm:text-xs font-semibold transition-colors underline decoration-indigo-200 underline-offset-4 cursor-pointer"
                       >
                         Forgot Password?
                       </button>
@@ -310,7 +310,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
                           setErrorMessage(null);
                           setSuccessMessage(null);
                         }}
-                        className="text-indigo-600 hover:text-indigo-700 font-semibold transition-colors underline decoration-indigo-200 underline-offset-4 cursor-pointer"
+                        className="text-indigo-600 hover:text-indigo-700 text-[11px] sm:text-xs font-semibold transition-colors underline decoration-indigo-200 underline-offset-4 cursor-pointer"
                       >
                         Sign In Instead
                       </button>
@@ -320,7 +320,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
                   {/* Main CTA Button - Purple/Indigo Gradient Pill */}
                   <button
                     disabled={isLoading}
-                    className="w-full relative overflow-hidden group rounded-full py-2.5 sm:py-3 px-5 sm:px-6 font-display text-sm font-semibold text-white bg-gradient-to-r from-indigo-600 via-indigo-700 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-md shadow-indigo-500/25 hover:shadow-indigo-500/40 transition-all duration-200 active:scale-[0.99] flex items-center justify-center gap-2 cursor-pointer shimmer-pill disabled:opacity-75"
+                    className="w-full relative overflow-hidden group rounded-full py-2.5 px-5 font-display text-xs sm:text-sm font-semibold text-white bg-gradient-to-r from-indigo-600 via-indigo-700 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-md shadow-indigo-500/25 hover:shadow-indigo-500/40 transition-all duration-200 active:scale-[0.99] flex items-center justify-center gap-2 cursor-pointer shimmer-pill disabled:opacity-75"
                     type="submit"
                   >
                     {isLoading ? (
@@ -328,7 +328,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
                     ) : (
                       <>
                         <span>{mode === 'signin' ? 'Sign In to Studio' : mode === 'signup' ? 'Create Account & Continue' : 'Send Reset Link'}</span>
-                        <span className="material-symbols-outlined text-lg group-hover:translate-x-1 transition-transform">
+                        <span className="material-symbols-outlined text-base group-hover:translate-x-1 transition-transform">
                           arrow_forward
                         </span>
                       </>
@@ -337,24 +337,24 @@ export const AuthView: React.FC<AuthViewProps> = ({
                 </form>
 
                 {/* Single Sign-On Divider */}
-                <div className="relative my-3 xl:my-4 text-center">
+                <div className="relative my-2.5 sm:my-3 text-center">
                   <div className="absolute inset-0 flex items-center">
                     <div className="w-full bg-slate-200 h-px"></div>
                   </div>
-                  <span className="relative px-3 bg-white font-mono text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                  <span className="relative px-3 bg-white font-mono text-[9px] sm:text-[10px] font-semibold uppercase tracking-wider text-slate-500">
                     Single Sign-On
                   </span>
                 </div>
 
                 {/* Social SSO Buttons (Google, Microsoft, SAML/Okta) */}
-                <div className="flex items-center justify-center gap-3.5">
+                <div className="flex items-center justify-center gap-3">
                   <button
                     type="button"
                     onClick={() => handleSSO('Google')}
                     aria-label="Sign in with Google"
-                    className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-all transform hover:scale-105 shadow-xs hover:shadow-md flex items-center justify-center cursor-pointer"
+                    className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-all transform hover:scale-105 shadow-xs hover:shadow-md flex items-center justify-center cursor-pointer"
                   >
-                    <svg className="w-4 h-4 sm:w-5 sm:h-5" viewBox="0 0 24 24">
+                    <svg className="w-4 h-4" viewBox="0 0 24 24">
                       <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"></path>
                       <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"></path>
                       <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" fill="#FBBC05"></path>
@@ -365,9 +365,9 @@ export const AuthView: React.FC<AuthViewProps> = ({
                     type="button"
                     onClick={() => handleSSO('Microsoft')}
                     aria-label="Sign in with Microsoft"
-                    className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-all transform hover:scale-105 shadow-xs hover:shadow-md flex items-center justify-center cursor-pointer"
+                    className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-all transform hover:scale-105 shadow-xs hover:shadow-md flex items-center justify-center cursor-pointer"
                   >
-                    <svg className="w-4 h-4 sm:w-5 sm:h-5" viewBox="0 0 23 23">
+                    <svg className="w-4 h-4" viewBox="0 0 23 23">
                       <path d="M1 1h10v10H1z" fill="#f35325"></path>
                       <path d="M12 1h10v10H12z" fill="#81bc06"></path>
                       <path d="M1 12h10v10H1z" fill="#05a6f0"></path>
@@ -378,17 +378,17 @@ export const AuthView: React.FC<AuthViewProps> = ({
                     type="button"
                     onClick={() => handleSSO('Enterprise SAML')}
                     aria-label="Sign in with Enterprise SAML"
-                    className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-all transform hover:scale-105 shadow-xs hover:shadow-md flex items-center justify-center cursor-pointer"
+                    className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-all transform hover:scale-105 shadow-xs hover:shadow-md flex items-center justify-center cursor-pointer"
                   >
-                    <span className="material-symbols-outlined text-indigo-600 text-lg">vpn_key</span>
+                    <span className="material-symbols-outlined text-indigo-600 text-base">vpn_key</span>
                   </button>
                 </div>
               </div>
 
               {/* Compliance & Security Microcopy */}
-              <div className="mt-4 xl:mt-5 pt-3 border-t border-slate-100 flex items-center justify-between text-slate-500 font-mono text-[10px] xl:text-[11px]">
+              <div className="mt-2.5 sm:mt-3 pt-2 border-t border-slate-100 flex items-center justify-between text-slate-500 font-mono text-[9px] sm:text-[10px]">
                 <span className="flex items-center gap-1.5 font-medium">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
                   SOC2 Type II &amp; HIPAA Encrypted
                 </span>
                 <span className="text-slate-400">v4.8.2 Live</span>
@@ -396,10 +396,10 @@ export const AuthView: React.FC<AuthViewProps> = ({
             </div>
 
             {/* ================= RIGHT COLUMN: SCULPTED GEOMETRIC CARD (IMAGE 2) ================= */}
-            <div className="lg:col-span-7 flex flex-col justify-between relative pb-10 sm:pb-12 lg:pb-8">
+            <div className="lg:col-span-7 flex flex-col justify-between relative pb-6 sm:pb-8 lg:pb-6">
               {/* 1. SCULPTED MAIN CONTAINER: Matching Reference Distinctive Scooped Top-Right Notch Silhouette */}
               <div className="relative w-full filter drop-shadow-[0_20px_45px_rgba(11,19,41,0.22)]">
-                <div className="sculpted-main-notch relative bg-gradient-to-b from-[#0c1427] via-[#091024] to-[#060b18] p-4 sm:p-5 lg:p-5 xl:p-6 pt-5 sm:pt-6 border border-slate-800/90 flex flex-col gap-3.5 xl:gap-4 overflow-hidden">
+                <div className="sculpted-main-notch relative bg-gradient-to-b from-[#0c1427] via-[#091024] to-[#060b18] p-3.5 sm:p-4 lg:p-4.5 xl:p-5 pt-4 sm:pt-4.5 border border-slate-800/90 flex flex-col gap-2.5 sm:gap-3 overflow-hidden">
                   {/* Ambient Shimmer Glows */}
                   <div className="absolute -top-16 -right-16 w-56 h-56 bg-indigo-600/25 rounded-full blur-3xl pointer-events-none"></div>
                   <div className="absolute top-1/2 -left-20 w-64 h-64 bg-emerald-500/15 rounded-full blur-3xl pointer-events-none"></div>
@@ -584,16 +584,12 @@ export const AuthView: React.FC<AuthViewProps> = ({
                       </p>
                     </div>
                   </div>
-
-                  <div className="relative z-10 flex items-center justify-between pt-1 pb-3 border-t border-slate-800/80 font-mono text-[11px]">
-                    <div className="flex items-center gap-2"></div>
-                  </div>
                 </div>
               </div>
 
               {/* 2. SCULPTED OVERLAPPING FLOATING CARD: Matching Reference Silhouette */}
-              <div className="relative -mt-7 sm:-mt-9 lg:-mt-8 xl:-mt-10 -ml-2 sm:-ml-3 z-30 w-full sm:w-[96%] filter drop-shadow-[0_24px_50px_rgba(244,114,182,0.18)] drop-shadow-[0_12px_24px_rgba(15,23,42,0.14)]">
-                <div className="sculpted-floating-step relative bg-gradient-to-r from-pink-50/90 via-white to-white p-3.5 sm:p-4 xl:p-5 pt-4 sm:pt-5 border border-white/80 transition-all duration-300 group hover:shadow-pink-200/50">
+              <div className="relative -mt-6 sm:-mt-8 lg:-mt-7 xl:-mt-8 -ml-2 sm:-ml-3 z-30 w-full sm:w-[96%] filter drop-shadow-[0_24px_50px_rgba(244,114,182,0.18)] drop-shadow-[0_12px_24px_rgba(15,23,42,0.14)]">
+                <div className="sculpted-floating-step relative bg-gradient-to-r from-pink-50/90 via-white to-white p-3 sm:p-3.5 xl:p-4 pt-3.5 sm:pt-4 border border-white/80 transition-all duration-300 group hover:shadow-pink-200/50">
                   {/* Subtle organic ambient gradient glow inside card */}
                   <div className="absolute bottom-0 left-0 w-48 h-32 bg-gradient-to-tr from-pink-200/35 via-rose-100/20 to-transparent rounded-full blur-2xl pointer-events-none"></div>
                   <div className="relative z-10 flex flex-col md:flex-row items-start md:items-end justify-between gap-3">

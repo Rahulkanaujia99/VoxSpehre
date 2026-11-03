@@ -85,7 +85,7 @@ export default function Home() {
       </div>
 
       {/* Navigation Bar - Preserved exact website header (Image 1 & 2) */}
-      <div className="relative z-50 w-full">
+      <div className="relative z-50 w-full shrink-0">
         <Navbar
           isAppView={currentView === 'app'}
           onBackToHome={handleBackToHome}
@@ -131,7 +131,7 @@ export default function Home() {
         /* AUDIO TRANSCRIPTION DASHBOARD (AUTHENTICATED / ACTIVE)   */
         /* Footer is hidden on authenticated dashboard pages        */
         /* ======================================================== */
-        <div className="flex-1 flex flex-col relative z-10">
+        <div className="flex-1 flex flex-col relative z-10 overflow-hidden">
           <TranscriptionStudio
             onBackToHome={handleBackToHome}
             activeTab={dashboardTab}

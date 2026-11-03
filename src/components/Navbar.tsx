@@ -81,10 +81,10 @@ export const Navbar: React.FC<NavbarProps> = ({
   return (
     <>
       <header className={`sticky top-0 z-50 w-full ${isAppView ? 'bg-white/95 border-slate-200/80 shadow-2xs' : 'bg-white/30 border-slate-200/30'} backdrop-blur-md border-b transition-all`}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 md:h-[4.25rem] flex items-center justify-between">
           {/* Brand Logo - Using Official Penguin International Logo & VoxSphere */}
           <div
-            className="flex items-center gap-2.5 sm:gap-3 cursor-pointer transition-opacity hover:opacity-90 py-1"
+            className="flex items-center gap-2 sm:gap-3 cursor-pointer transition-opacity hover:opacity-90 py-1"
             onClick={() => {
               if (onBackToHome) {
                 onBackToHome();
@@ -98,11 +98,11 @@ export const Navbar: React.FC<NavbarProps> = ({
             <img
               src="/images/penguin-international-logo.png"
               alt="Penguin International — Strategic Intelligence | AI × Human"
-              className="h-9 sm:h-11 w-auto max-w-[190px] sm:max-w-[220px] object-contain shrink-0"
+              className="h-8 sm:h-9 md:h-10 w-auto max-w-[170px] sm:max-w-[200px] object-contain shrink-0"
             />
-            <div className="h-6 w-px bg-slate-200 hidden sm:block" />
+            <div className="h-5 w-px bg-slate-200 hidden sm:block" />
             <div className="flex flex-col">
-              <span className="text-base sm:text-lg font-black tracking-tight bg-gradient-to-r from-indigo-700 via-indigo-600 to-teal-600 bg-clip-text text-transparent leading-none">
+              <span className="text-sm sm:text-base md:text-lg font-black tracking-tight bg-gradient-to-r from-indigo-700 via-indigo-600 to-teal-600 bg-clip-text text-transparent leading-none">
                 VoxSphere
               </span>
               <span className="text-[9px] font-semibold tracking-wider uppercase text-slate-400 mt-0.5 hidden sm:inline">

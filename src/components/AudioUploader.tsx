@@ -266,34 +266,34 @@ export const AudioUploader: React.FC<AudioUploaderProps> = ({
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
           onClick={() => fileInputRef.current?.click()}
-          className={`relative border-2 border-dashed rounded-3xl p-10 sm:p-14 text-center transition-all cursor-pointer ${
+          className={`relative border-2 border-dashed rounded-2xl sm:rounded-3xl p-6 sm:p-8 lg:p-8 text-center transition-all cursor-pointer ${
             isDragOver
               ? 'border-indigo-500 bg-indigo-50/70 scale-[1.01] shadow-lg shadow-indigo-100'
               : 'border-slate-300 hover:border-indigo-400 bg-slate-50/60 hover:bg-slate-50 shadow-2xs'
           }`}
         >
-          <div className="flex flex-col items-center justify-center space-y-4">
-            <div className="w-16 h-16 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center shadow-sm shadow-indigo-100">
-              <Upload className="w-8 h-8" />
+          <div className="flex flex-col items-center justify-center space-y-3">
+            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center shadow-sm shadow-indigo-100">
+              <Upload className="w-6 h-6 sm:w-7 sm:h-7" />
             </div>
 
             <div>
-              <h4 className="text-base sm:text-lg font-bold text-slate-900">
+              <h4 className="text-sm sm:text-base font-bold text-slate-900">
                 Drag & Drop single or multiple audio files here, or{' '}
                 <span className="text-indigo-600 underline decoration-indigo-300">browse files</span>
               </h4>
-              <p className="text-xs text-slate-500 mt-1 max-w-lg mx-auto">
+              <p className="text-xs text-slate-500 mt-0.5 max-w-md mx-auto">
                 Supports MP3, WAV, M4A, AAC, OGG, WebM, and FLAC (up to 100MB with automated audio splitting)
               </p>
             </div>
 
-            <div className="flex flex-wrap items-center justify-center gap-3 pt-1 text-[11px] font-semibold text-slate-500">
-              <span className="inline-flex items-center gap-1 text-indigo-700 bg-indigo-50 px-3 py-1 rounded-full border border-indigo-100">
-                <FileAudio className="w-3.5 h-3.5 text-indigo-600" />
+            <div className="flex flex-wrap items-center justify-center gap-2 pt-0.5 text-[10px] sm:text-[11px] font-semibold text-slate-500">
+              <span className="inline-flex items-center gap-1 text-indigo-700 bg-indigo-50 px-2.5 py-0.5 rounded-full border border-indigo-100">
+                <FileAudio className="w-3 h-3 text-indigo-600" />
                 Upload Audio File
               </span>
-              <span className="inline-flex items-center gap-1 text-teal-800 bg-teal-50 px-3 py-1 rounded-full border border-teal-100">
-                <ShieldCheck className="w-3.5 h-3.5 text-teal-600" />
+              <span className="inline-flex items-center gap-1 text-teal-800 bg-teal-50 px-2.5 py-0.5 rounded-full border border-teal-100">
+                <ShieldCheck className="w-3 h-3 text-teal-600" />
                 Preconfigured Backend Security
               </span>
             </div>
@@ -303,7 +303,7 @@ export const AudioUploader: React.FC<AudioUploaderProps> = ({
         /* ======================================================== */
         /* 2. FILE LOADED STATE WITH METADATA, PLAYER & CONTROLS    */
         /* ======================================================== */
-        <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/90 shadow-md space-y-6 animate-fade-in">
+        <div className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-slate-200/90 shadow-md space-y-4 sm:space-y-5 animate-fade-in">
           {/* Normal File Preparation Loading State (Standard Spinner & Progress Bar) */}
           {isUploadingFile && (
             <div className="p-3.5 rounded-2xl bg-indigo-50/80 border border-indigo-200 text-indigo-900 text-xs flex items-center gap-3 animate-pulse">
@@ -513,8 +513,4 @@ export const AudioUploader: React.FC<AudioUploaderProps> = ({
               />
             </div>
           )}
-        </div>
-      )}
-    </div>
-  );
-};
+        <

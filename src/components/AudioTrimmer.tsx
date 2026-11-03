@@ -17,7 +17,7 @@ import {
   ChevronDown,
 } from 'lucide-react';
 import { HistoryItem } from '@/types/transcription';
-import { formatTime } from '@/lib/audioToneGenerator';
+import { formatTime, createSyntheticAudioBlob } from '@/lib/audioToneGenerator';
 import {
   decodeAudioSource,
   encodeAudioBufferToWav,
@@ -69,14 +69,17 @@ export const AudioTrimmer: React.FC<AudioTrimmerProps> = ({
     const rec = savedRecordings.find((r) => r.id === selectedRecordingId);
     if (!rec) return;
 
-    const audioSource = (rec.result.metadata as any).audioUrl || '/Demo.mp3';
+    const audioSource = (rec.result.metadata as any).audioUrl || createSyntheticAudioBlob(rec.duration || 45);
     loadAudio(audioSource, rec.fileName);
   }, [selectedRecordingId, savedRecordings]);
 
   // Load initial sample if no recordings exist
   useEffect(() => {
     if (savedRecordings.length === 0 && !audioBuffer && !isLoadingAudio) {
-      loadAudio('/Demo.mp3', 'Demo.mp3');
+      if (typeof window !== 'undefined') {
+        const synthetic = createSyntheticAudioBlob(45);
+        loadAudio(synthetic, 'Executive_Consultation_Sample.wav');
+      }
     }
   }, [savedRecordings.length]);
 

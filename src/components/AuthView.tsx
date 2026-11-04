@@ -20,26 +20,71 @@ export const AuthView: React.FC<AuthViewProps> = ({
   const [mode, setMode] = useState<'signin' | 'signup' | 'forgot'>(initialMode);
   const [email, setEmail] = useState('rahul@penguin-international.com');
   const [password, setPassword] = useState('AcousticShield2025');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [fullName, setFullName] = useState('Rahul Kanaujia');
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [keepLoggedIn, setKeepLoggedIn] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  const handleSwitchToSignup = () => {
+    setMode('signup');
+    setErrorMessage(null);
+    setSuccessMessage(null);
+    if (email === 'rahul@penguin-international.com') setEmail('');
+    if (password === 'AcousticShield2025') setPassword('');
+    if (fullName === 'Rahul Kanaujia') setFullName('');
+    setConfirmPassword('');
+  };
+
+  const handleSwitchToSignin = () => {
+    setMode('signin');
+    setErrorMessage(null);
+    setSuccessMessage(null);
+    if (!email) setEmail('rahul@penguin-international.com');
+    if (!password) setPassword('AcousticShield2025');
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
     setSuccessMessage(null);
 
-    if (!email) {
+    if (!email.trim()) {
       setErrorMessage('Please enter your work email.');
       return;
     }
 
-    if (mode !== 'forgot' && !password) {
-      setErrorMessage('Please enter your security key / password.');
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email.trim())) {
+      setErrorMessage('Please enter a valid work email address.');
       return;
+    }
+
+    if (mode === 'signup') {
+      if (!fullName.trim()) {
+        setErrorMessage('Please enter your full name.');
+        return;
+      }
+      if (!password) {
+        setErrorMessage('Please enter a password.');
+        return;
+      }
+      if (password.length < 6) {
+        setErrorMessage('Password must be at least 6 characters long.');
+        return;
+      }
+      if (password !== confirmPassword) {
+        setErrorMessage('Passwords do not match. Please ensure both passwords match.');
+        return;
+      }
+    } else if (mode === 'signin') {
+      if (!password) {
+        setErrorMessage('Please enter your security key / password.');
+        return;
+      }
     }
 
     setIsLoading(true);
@@ -47,16 +92,16 @@ export const AuthView: React.FC<AuthViewProps> = ({
     try {
       if (mode === 'signin') {
         if (!isConfigured) {
-          signInAsGuest(email, fullName || 'Rahul Kanaujia');
+          signInAsGuest(email.trim(), fullName || 'Rahul Kanaujia');
           setSuccessMessage('Demo session initialized! Launching studio...');
           setTimeout(() => onSuccess(), 500);
           return;
         }
 
-        const { error } = await signInWithEmail(email, password);
+        const { error } = await signInWithEmail(email.trim(), password);
         if (error) {
           if (email.includes('penguin-international.com') || email.includes('voxsphere.ai')) {
-            signInAsGuest(email, fullName || 'Rahul Kanaujia');
+            signInAsGuest(email.trim(), fullName || 'Rahul Kanaujia');
             setSuccessMessage('Demo enterprise session authenticated! Launching studio...');
             setTimeout(() => onSuccess(), 500);
             return;
@@ -67,18 +112,13 @@ export const AuthView: React.FC<AuthViewProps> = ({
           setTimeout(() => onSuccess(), 500);
         }
       } else if (mode === 'signup') {
-        if (password.length < 6) {
-          setErrorMessage('Password must be at least 6 characters long.');
-          setIsLoading(false);
-          return;
-        }
         if (!isConfigured) {
-          signInAsGuest(email, fullName);
-          setSuccessMessage('Account created! Redirecting to studio...');
+          signInAsGuest(email.trim(), fullName.trim());
+          setSuccessMessage('Account created successfully! Launching studio...');
           setTimeout(() => onSuccess(), 500);
           return;
         }
-        const { error, needsEmailConfirmation } = await signUpWithEmail(email, password, fullName);
+        const { error, needsEmailConfirmation } = await signUpWithEmail(email.trim(), password, fullName.trim());
         if (error) {
           setErrorMessage(error.message);
         } else if (needsEmailConfirmation) {
@@ -92,7 +132,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
           setSuccessMessage('Password reset instructions simulated for demo account.');
           return;
         }
-        const { error } = await resetPassword(email);
+        const { error } = await resetPassword(email.trim());
         if (error) {
           setErrorMessage(error.message);
         } else {
@@ -211,13 +251,13 @@ export const AuthView: React.FC<AuthViewProps> = ({
                 <form className="space-y-2.5 sm:space-y-3" onSubmit={handleSubmit}>
                   {mode === 'signup' && (
                     <div className="space-y-1">
-                      <label className="block text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-slate-600" htmlFor="name">
+                      <label className="block text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-slate-600" htmlFor="signup-name">
                         Full Name
                       </label>
                       <div className="relative">
                         <input
                           className="w-full bg-slate-50 hover:bg-slate-100/60 border border-slate-200/90 rounded-full px-4 sm:px-4.5 py-2 sm:py-2.5 text-slate-900 placeholder:text-slate-400 text-xs sm:text-sm font-medium shadow-inner transition-all duration-200 outline-none focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
-                          id="name"
+                          id="signup-name"
                           placeholder="Rahul Kanaujia"
                           type="text"
                           value={fullName}
@@ -254,7 +294,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
                   {mode !== 'forgot' && (
                     <div className="space-y-1">
                       <label className="block text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-slate-600" htmlFor="login-password">
-                        Security Key / Password
+                        {mode === 'signup' ? 'Password' : 'Security Key / Password'}
                       </label>
                       <div className="relative">
                         <input
@@ -279,6 +319,35 @@ export const AuthView: React.FC<AuthViewProps> = ({
                     </div>
                   )}
 
+                  {/* Confirm Password Field (Registration only) */}
+                  {mode === 'signup' && (
+                    <div className="space-y-1">
+                      <label className="block text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-slate-600" htmlFor="confirm-password">
+                        Confirm Password
+                      </label>
+                      <div className="relative">
+                        <input
+                          className="w-full bg-slate-50 hover:bg-slate-100/60 border border-slate-200/90 rounded-full px-4 sm:px-4.5 py-2 sm:py-2.5 text-slate-900 placeholder:text-slate-400 text-xs sm:text-sm font-medium shadow-inner transition-all duration-200 outline-none focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 tracking-wider"
+                          id="confirm-password"
+                          placeholder="••••••••••••"
+                          type={showConfirmPassword ? 'text' : 'password'}
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
+                        />
+                        <button
+                          aria-label="Toggle confirm password visibility"
+                          className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 transition-colors p-1 cursor-pointer"
+                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                          type="button"
+                        >
+                          <span className="material-symbols-outlined text-base">
+                            {showConfirmPassword ? 'visibility_off' : 'visibility'}
+                          </span>
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
                   {/* Utilities: Keep logged in & Forgot password */}
                   <div className="flex items-center justify-between pt-0 pb-0 text-xs">
                     <label className="flex items-center gap-2 cursor-pointer select-none text-slate-600 hover:text-slate-900 font-medium transition-colors">
@@ -290,7 +359,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
                       />
                       <span className="text-[11px] sm:text-xs">Keep me logged in</span>
                     </label>
-                    {mode === 'signin' ? (
+                    {mode === 'signin' && (
                       <button
                         type="button"
                         onClick={() => {
@@ -302,17 +371,14 @@ export const AuthView: React.FC<AuthViewProps> = ({
                       >
                         Forgot Password?
                       </button>
-                    ) : (
+                    )}
+                    {mode === 'forgot' && (
                       <button
                         type="button"
-                        onClick={() => {
-                          setMode('signin');
-                          setErrorMessage(null);
-                          setSuccessMessage(null);
-                        }}
+                        onClick={handleSwitchToSignin}
                         className="text-indigo-600 hover:text-indigo-700 text-[11px] sm:text-xs font-semibold transition-colors underline decoration-indigo-200 underline-offset-4 cursor-pointer"
                       >
-                        Sign In Instead
+                        Back to Sign In
                       </button>
                     )}
                   </div>
@@ -324,20 +390,58 @@ export const AuthView: React.FC<AuthViewProps> = ({
                     type="submit"
                   >
                     {isLoading ? (
-                      <span>Authenticating...</span>
+                      <span>{mode === 'signup' ? 'Creating Account...' : 'Authenticating...'}</span>
                     ) : (
                       <>
-                        <span>{mode === 'signin' ? 'Sign In to Studio' : mode === 'signup' ? 'Create Account & Continue' : 'Send Reset Link'}</span>
+                        <span>{mode === 'signin' ? 'Sign In to Studio' : mode === 'signup' ? 'Create Account' : 'Send Reset Link'}</span>
                         <span className="material-symbols-outlined text-base group-hover:translate-x-1 transition-transform">
                           arrow_forward
                         </span>
                       </>
                     )}
                   </button>
+
+                  {/* Create Account / Sign In Option Below Submit */}
+                  <div className="text-center pt-1.5 pb-0.5">
+                    {mode === 'signin' ? (
+                      <p className="text-xs text-slate-600 font-medium">
+                        Don&apos;t have an account?{' '}
+                        <button
+                          type="button"
+                          onClick={handleSwitchToSignup}
+                          className="font-bold text-indigo-600 hover:text-indigo-800 transition-colors underline decoration-indigo-300 underline-offset-4 cursor-pointer"
+                        >
+                          Create Account
+                        </button>
+                      </p>
+                    ) : mode === 'signup' ? (
+                      <p className="text-xs text-slate-600 font-medium">
+                        Already have an account?{' '}
+                        <button
+                          type="button"
+                          onClick={handleSwitchToSignin}
+                          className="font-bold text-indigo-600 hover:text-indigo-800 transition-colors underline decoration-indigo-300 underline-offset-4 cursor-pointer"
+                        >
+                          Sign In
+                        </button>
+                      </p>
+                    ) : (
+                      <p className="text-xs text-slate-600 font-medium">
+                        Remember your password?{' '}
+                        <button
+                          type="button"
+                          onClick={handleSwitchToSignin}
+                          className="font-bold text-indigo-600 hover:text-indigo-800 transition-colors underline decoration-indigo-300 underline-offset-4 cursor-pointer"
+                        >
+                          Sign In
+                        </button>
+                      </p>
+                    )}
+                  </div>
                 </form>
 
                 {/* Single Sign-On Divider */}
-                <div className="relative my-2.5 sm:my-3 text-center">
+                <div className="relative my-2 sm:my-2.5 text-center">
                   <div className="absolute inset-0 flex items-center">
                     <div className="w-full bg-slate-200 h-px"></div>
                   </div>
@@ -346,7 +450,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
                   </span>
                 </div>
 
-                {/* Social SSO Buttons (Google, Microsoft, SAML/Okta) */}
+                {/* Social SSO Buttons (Google, Microsoft) - Key icon option removed */}
                 <div className="flex items-center justify-center gap-3">
                   <button
                     type="button"
@@ -373,14 +477,6 @@ export const AuthView: React.FC<AuthViewProps> = ({
                       <path d="M1 12h10v10H1z" fill="#05a6f0"></path>
                       <path d="M12 12h10v10H12z" fill="#ffba08"></path>
                     </svg>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleSSO('Enterprise SAML')}
-                    aria-label="Sign in with Enterprise SAML"
-                    className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-all transform hover:scale-105 shadow-xs hover:shadow-md flex items-center justify-center cursor-pointer"
-                  >
-                    <span className="material-symbols-outlined text-indigo-600 text-base">vpn_key</span>
                   </button>
                 </div>
               </div>

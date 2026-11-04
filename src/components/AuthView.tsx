@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/context/AuthContext';
+import { createClient } from '@/lib/supabase/client';
 
 interface AuthViewProps {
   onSuccess: () => void;
@@ -9,6 +10,19 @@ interface AuthViewProps {
   initialMode?: 'signin' | 'signup';
   onOpenPenguinInfo?: (section?: string) => void;
 }
+
+const getTimeBasedGreeting = (): string => {
+  const hour = new Date().getHours();
+  if (hour >= 5 && hour < 12) {
+    return 'Good Morning!';
+  } else if (hour >= 12 && hour < 17) {
+    return 'Good Afternoon!';
+  } else if (hour >= 17 && hour < 21) {
+    return 'Good Evening!';
+  } else {
+    return 'Good Night!';
+  }
+};
 
 export const AuthView: React.FC<AuthViewProps> = ({
   onSuccess,
@@ -18,6 +32,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
 }) => {
   const { signInWithEmail, signUpWithEmail, resetPassword, signInAsGuest, isConfigured } = useAuth();
   const [mode, setMode] = useState<'signin' | 'signup' | 'forgot'>(initialMode);
+  const [greeting, setGreeting] = useState<string>('Good Morning!');
   const [email, setEmail] = useState('rahul@penguin-international.com');
   const [password, setPassword] = useState('AcousticShield2025');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -28,6 +43,137 @@ export const AuthView: React.FC<AuthViewProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  // Set dynamic greeting based on current local time
+  useEffect(() => {
+    setGreeting(getTimeBasedGreeting());
+    const interval = setInterval(() => {
+      setGreeting(getTimeBasedGreeting());
+    }, 60000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Check email confirmation and verification URLs
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const handleEmailVerificationUrl = async () => {
+      const url = new URL(window.location.href);
+      const searchParams = url.searchParams;
+      const hash = window.location.hash;
+
+      // 1. Check for error parameters
+      const errorParam = searchParams.get('error_description') || searchParams.get('error');
+      if (errorParam) {
+        setErrorMessage(decodeURIComponent(errorParam));
+        setMode('signin');
+        return;
+      }
+      if (hash.includes('error=')) {
+        const hashParams = new URLSearchParams(hash.substring(1));
+        const hashError = hashParams.get('error_description') || hashParams.get('error');
+        setErrorMessage(decodeURIComponent(hashError || 'The verification link is invalid or has expired.'));
+        setMode('signin');
+        return;
+      }
+
+      // 2. PKCE code exchange
+      const authCode = searchParams.get('code');
+      if (authCode && isConfigured) {
+        try {
+          const supabase = createClient();
+          const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(authCode);
+          if (exchangeError) {
+            setErrorMessage('The verification link is invalid or has expired. Please try signing in or request a new confirmation email.');
+            setMode('signin');
+            return;
+          }
+          await supabase.auth.signOut();
+          setMode('signin');
+          setSuccessMessage('Email verified successfully! You can now sign in with your registered email and password.');
+          window.history.replaceState({}, document.title, window.location.pathname);
+          return;
+        } catch {
+          setErrorMessage('The verification link is invalid or has expired.');
+          setMode('signin');
+          return;
+        }
+      }
+
+      // 3. Verified parameter or implicit flow hash
+      const isVerified = searchParams.get('verified') === 'true';
+      const isHashSignup = hash.includes('type=signup') || (hash.includes('access_token=') && hash.includes('type=signup'));
+
+      if (isVerified || isHashSignup) {
+        if (isConfigured) {
+          try {
+            const supabase = createClient();
+            await supabase.auth.signOut();
+          } catch {}
+        }
+
+        // Update local pending user simulation store if applicable
+        const emailParam = searchParams.get('email');
+        try {
+          const raw = localStorage.getItem('voxsphere_pending_users');
+          if (raw) {
+            const users = JSON.parse(raw);
+            if (emailParam && users[emailParam.toLowerCase()]) {
+              users[emailParam.toLowerCase()].verified = true;
+            } else {
+              Object.keys(users).forEach((k) => { users[k].verified = true; });
+            }
+            localStorage.setItem('voxsphere_pending_users', JSON.stringify(users));
+          }
+        } catch {}
+
+        setMode('signin');
+        setSuccessMessage('Email verified successfully! You can now sign in with your registered email and password.');
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+    };
+
+    handleEmailVerificationUrl();
+  }, [isConfigured]);
+
+  // Strong Password Requirements
+  const passwordRules = useMemo(() => {
+    return [
+      {
+        id: 'length',
+        label: 'Minimum 8 characters',
+        valid: password.length >= 8,
+      },
+      {
+        id: 'uppercase',
+        label: 'At least one uppercase letter (A–Z)',
+        valid: /[A-Z]/.test(password),
+      },
+      {
+        id: 'lowercase',
+        label: 'At least one lowercase letter (a–z)',
+        valid: /[a-z]/.test(password),
+      },
+      {
+        id: 'number',
+        label: 'At least one number (0–9)',
+        valid: /[0-9]/.test(password),
+      },
+      {
+        id: 'special',
+        label: 'At least one special character (@, #, $, !)',
+        valid: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?`~]/.test(password),
+      },
+    ];
+  }, [password]);
+
+  const isPasswordStrong = useMemo(() => {
+    return passwordRules.every((r) => r.valid);
+  }, [passwordRules]);
+
+  const passwordsMatch = useMemo(() => {
+    return password.length > 0 && confirmPassword.length > 0 && password === confirmPassword;
+  }, [password, confirmPassword]);
 
   const handleSwitchToSignup = () => {
     setMode('signup');
@@ -72,8 +218,12 @@ export const AuthView: React.FC<AuthViewProps> = ({
         setErrorMessage('Please enter a password.');
         return;
       }
-      if (password.length < 6) {
-        setErrorMessage('Password must be at least 6 characters long.');
+      if (!isPasswordStrong) {
+        setErrorMessage('Password must satisfy all security requirements (8+ chars, uppercase, lowercase, number, special char).');
+        return;
+      }
+      if (!confirmPassword) {
+        setErrorMessage('Please confirm your password.');
         return;
       }
       if (password !== confirmPassword) {
@@ -92,6 +242,32 @@ export const AuthView: React.FC<AuthViewProps> = ({
     try {
       if (mode === 'signin') {
         if (!isConfigured) {
+          // Check local simulated users
+          try {
+            const raw = localStorage.getItem('voxsphere_pending_users');
+            if (raw) {
+              const users = JSON.parse(raw);
+              const userRecord = users[email.trim().toLowerCase()];
+              if (userRecord) {
+                if (!userRecord.verified) {
+                  setErrorMessage('Email not verified. Please check your inbox and verify your email before logging in.');
+                  setIsLoading(false);
+                  return;
+                }
+                if (userRecord.password !== password) {
+                  setErrorMessage('Invalid credentials. Please check your email and password.');
+                  setIsLoading(false);
+                  return;
+                }
+                signInAsGuest(email.trim(), userRecord.name);
+                setSuccessMessage('Authenticated successfully! Redirecting to studio...');
+                setTimeout(() => onSuccess(), 500);
+                return;
+              }
+            }
+          } catch {}
+
+          // Default demo session
           signInAsGuest(email.trim(), fullName || 'Rahul Kanaujia');
           setSuccessMessage('Demo session initialized! Launching studio...');
           setTimeout(() => onSuccess(), 500);
@@ -100,32 +276,39 @@ export const AuthView: React.FC<AuthViewProps> = ({
 
         const { error } = await signInWithEmail(email.trim(), password);
         if (error) {
-          if (email.includes('penguin-international.com') || email.includes('voxsphere.ai')) {
-            signInAsGuest(email.trim(), fullName || 'Rahul Kanaujia');
-            setSuccessMessage('Demo enterprise session authenticated! Launching studio...');
-            setTimeout(() => onSuccess(), 500);
-            return;
+          if (error.message.toLowerCase().includes('email not confirmed') || error.message.toLowerCase().includes('not verified')) {
+            setErrorMessage('Email not verified. Please check your inbox and verify your email before logging in.');
+          } else {
+            setErrorMessage(error.message);
           }
-          setErrorMessage(error.message);
         } else {
           setSuccessMessage('Authenticated successfully! Redirecting to studio...');
           setTimeout(() => onSuccess(), 500);
         }
       } else if (mode === 'signup') {
         if (!isConfigured) {
-          signInAsGuest(email.trim(), fullName.trim());
-          setSuccessMessage('Account created successfully! Launching studio...');
-          setTimeout(() => onSuccess(), 500);
+          // Local storage pending user simulation
+          try {
+            const raw = localStorage.getItem('voxsphere_pending_users') || '{}';
+            const users = JSON.parse(raw);
+            users[email.trim().toLowerCase()] = {
+              name: fullName.trim(),
+              password,
+              verified: false,
+              createdAt: new Date().toISOString(),
+            };
+            localStorage.setItem('voxsphere_pending_users', JSON.stringify(users));
+          } catch {}
+
+          setSuccessMessage('Account created! Please check your email and click the confirmation link to verify your account.');
           return;
         }
+
         const { error, needsEmailConfirmation } = await signUpWithEmail(email.trim(), password, fullName.trim());
         if (error) {
           setErrorMessage(error.message);
-        } else if (needsEmailConfirmation) {
-          setSuccessMessage('Account created! Please check your email to confirm your account.');
         } else {
-          setSuccessMessage('Account created and signed in! Redirecting to studio...');
-          setTimeout(() => onSuccess(), 500);
+          setSuccessMessage('Account created! Please check your email and click the confirmation link to verify your account.');
         }
       } else if (mode === 'forgot') {
         if (!isConfigured) {
@@ -220,8 +403,16 @@ export const AuthView: React.FC<AuthViewProps> = ({
 
                 {/* Header Titles */}
                 <div className="mb-2 sm:mb-2.5">
-                  <h1 className="font-display text-xl sm:text-2xl lg:text-[1.65rem] text-slate-900 font-extrabold tracking-tight mb-1">
-                    {mode === 'signin' ? 'Welcome back' : mode === 'signup' ? 'Create Account' : 'Reset Password'}
+                  <h1 className="font-display text-xl sm:text-2xl lg:text-[1.65rem] font-extrabold tracking-tight mb-1">
+                    {mode === 'signin' ? (
+                      <span className="bg-gradient-to-r from-indigo-700 via-purple-700 to-teal-600 bg-clip-text text-transparent">
+                        {greeting}
+                      </span>
+                    ) : mode === 'signup' ? (
+                      <span className="text-slate-900">Create Account</span>
+                    ) : (
+                      <span className="text-slate-900">Reset Password</span>
+                    )}
                   </h1>
                   <p className="text-xs text-slate-500 leading-normal font-normal">
                     {mode === 'signin'
@@ -248,7 +439,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
                 )}
 
                 {/* Form Fields Container */}
-                <form className="space-y-2.5 sm:space-y-3" onSubmit={handleSubmit}>
+                <form className="space-y-2 sm:space-y-2.5" onSubmit={handleSubmit}>
                   {mode === 'signup' && (
                     <div className="space-y-1">
                       <label className="block text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-slate-600" htmlFor="signup-name">
@@ -300,7 +491,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
                         <input
                           className="w-full bg-slate-50 hover:bg-slate-100/60 border border-slate-200/90 rounded-full px-4 sm:px-4.5 py-2 sm:py-2.5 text-slate-900 placeholder:text-slate-400 text-xs sm:text-sm font-medium shadow-inner transition-all duration-200 outline-none focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 tracking-wider"
                           id="login-password"
-                          placeholder="••••••••••••"
+                          placeholder={mode === 'signup' ? 'Create strong password' : '••••••••••••'}
                           type={showPassword ? 'text' : 'password'}
                           value={password}
                           onChange={(e) => setPassword(e.target.value)}
@@ -319,17 +510,56 @@ export const AuthView: React.FC<AuthViewProps> = ({
                     </div>
                   )}
 
+                  {/* Password Requirements Live Indicator (Sign Up only) */}
+                  {mode === 'signup' && (
+                    <div className="p-2 sm:p-2.5 rounded-2xl bg-slate-50/90 border border-slate-200/90 space-y-1.5 transition-all text-[10px] sm:text-[11px]">
+                      <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                        <span>Password Requirements</span>
+                        <span className={isPasswordStrong ? 'text-emerald-600 font-bold' : 'text-slate-400 font-medium'}>
+                          {passwordRules.filter((r) => r.valid).length}/5 satisfied
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 text-[10px] sm:text-[11px]">
+                        {passwordRules.map((rule) => (
+                          <div
+                            key={rule.id}
+                            className={`flex items-center gap-1.5 transition-colors ${
+                              rule.valid ? 'text-emerald-700 font-semibold' : 'text-slate-400 font-normal'
+                            }`}
+                          >
+                            <span className="material-symbols-outlined text-[13px] sm:text-sm shrink-0">
+                              {rule.valid ? 'check_circle' : 'radio_button_unchecked'}
+                            </span>
+                            <span>{rule.label}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                   {/* Confirm Password Field (Registration only) */}
                   {mode === 'signup' && (
                     <div className="space-y-1">
-                      <label className="block text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-slate-600" htmlFor="confirm-password">
-                        Confirm Password
-                      </label>
+                      <div className="flex items-center justify-between">
+                        <label className="block text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-slate-600" htmlFor="confirm-password">
+                          Confirm Password
+                        </label>
+                        {confirmPassword.length > 0 && (
+                          <span className={`text-[10px] font-semibold flex items-center gap-0.5 ${
+                            passwordsMatch ? 'text-emerald-600' : 'text-rose-600'
+                          }`}>
+                            <span className="material-symbols-outlined text-xs">
+                              {passwordsMatch ? 'check_circle' : 'cancel'}
+                            </span>
+                            {passwordsMatch ? 'Passwords match' : 'Passwords do not match'}
+                          </span>
+                        )}
+                      </div>
                       <div className="relative">
                         <input
                           className="w-full bg-slate-50 hover:bg-slate-100/60 border border-slate-200/90 rounded-full px-4 sm:px-4.5 py-2 sm:py-2.5 text-slate-900 placeholder:text-slate-400 text-xs sm:text-sm font-medium shadow-inner transition-all duration-200 outline-none focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 tracking-wider"
                           id="confirm-password"
-                          placeholder="••••••••••••"
+                          placeholder="Re-enter your password"
                           type={showConfirmPassword ? 'text' : 'password'}
                           value={confirmPassword}
                           onChange={(e) => setConfirmPassword(e.target.value)}
@@ -385,8 +615,8 @@ export const AuthView: React.FC<AuthViewProps> = ({
 
                   {/* Main CTA Button - Purple/Indigo Gradient Pill */}
                   <button
-                    disabled={isLoading}
-                    className="w-full relative overflow-hidden group rounded-full py-2.5 px-5 font-display text-xs sm:text-sm font-semibold text-white bg-gradient-to-r from-indigo-600 via-indigo-700 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-md shadow-indigo-500/25 hover:shadow-indigo-500/40 transition-all duration-200 active:scale-[0.99] flex items-center justify-center gap-2 cursor-pointer shimmer-pill disabled:opacity-75"
+                    disabled={isLoading || (mode === 'signup' && (!isPasswordStrong || !passwordsMatch))}
+                    className="w-full relative overflow-hidden group rounded-full py-2.5 px-5 font-display text-xs sm:text-sm font-semibold text-white bg-gradient-to-r from-indigo-600 via-indigo-700 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-md shadow-indigo-500/25 hover:shadow-indigo-500/40 transition-all duration-200 active:scale-[0.99] flex items-center justify-center gap-2 cursor-pointer shimmer-pill disabled:opacity-75 disabled:cursor-not-allowed"
                     type="submit"
                   >
                     {isLoading ? (

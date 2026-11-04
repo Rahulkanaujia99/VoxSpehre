@@ -98,11 +98,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return { error: new Error('Supabase is not configured yet. Add your NEXT_PUBLIC_SUPABASE_URL and KEY in .env.local') };
     }
     const supabase = createClient();
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
-    return { error };
+    if (error) {
+      if (error.message.toLowerCase().includes('email not confirmed') || error.message.toLowerCase().includes('not verified')) {
+        return {
+          error: new Error(
+            'Email not verified. Please check your inbox and verify your email before logging in.'
+          ),
+        };
+      }
+      return { error };
+    }
+
+    // Verify email confirmation status
+    if (data.user && !data.user.email_confirmed_at) {
+      await supabase.auth.signOut();
+      return {
+        error: new Error(
+          'Email not verified. Please check your inbox and verify your email before logging in.'
+        ),
+      };
+    }
+
+    return { error: null };
   };
 
   const signUpWithEmail = async (email: string, password: string, fullName?: string) => {
@@ -110,18 +131,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return { error: new Error('Supabase is not configured yet. Add your NEXT_PUBLIC_SUPABASE_URL and KEY in .env.local') };
     }
     const supabase = createClient();
+    const redirectUrl = typeof window !== 'undefined'
+      ? `${window.location.origin}/login?verified=true&email=${encodeURIComponent(email)}`
+      : undefined;
+
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
+        emailRedirectTo: redirectUrl,
         data: {
           full_name: fullName || email.split('@')[0],
         },
       },
     });
 
-    const needsEmailConfirmation = Boolean(data.user && !data.session);
-    return { error, needsEmailConfirmation };
+    if (error) {
+      return { error };
+    }
+
+    // Enforce email verification: ensure unverified users are signed out immediately
+    if (data.session && !data.user?.email_confirmed_at) {
+      await supabase.auth.signOut();
+    }
+
+    const needsEmailConfirmation = Boolean(data.user && !data.user.email_confirmed_at);
+    return { error: null, needsEmailConfirmation: needsEmailConfirmation || !data.session };
   };
 
   const signInAsGuest = (email?: string, name?: string) => {

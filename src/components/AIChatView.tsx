@@ -34,15 +34,6 @@ interface AIChatViewProps {
   activeRecordingTitle?: string;
 }
 
-const DEFAULT_SUGGESTIONS = [
-  'What is this conversation about?',
-  'What are the main objectives discussed?',
-  'What decisions were made?',
-  'What are the key takeaways?',
-  'What action items were assigned?',
-  'What were the key numerical figures or milestones mentioned?',
-];
-
 export const AIChatView: React.FC<AIChatViewProps> = ({
   savedRecordings = [],
   initialRecordingId,
@@ -245,36 +236,18 @@ export const AIChatView: React.FC<AIChatViewProps> = ({
         {/* Message Thread Area */}
         <div className="flex-1 p-5 overflow-y-auto space-y-4">
           {messages.length === 0 ? (
-            /* Empty State with Suggested Questions */
-            <div className="h-full flex flex-col items-center justify-center text-center p-6 space-y-4 max-w-2xl mx-auto">
+            /* Empty State */
+            <div className="h-full flex flex-col items-center justify-center text-center p-6 space-y-3.5 max-w-lg mx-auto animate-fade-in my-auto">
               <div className="w-14 h-14 rounded-3xl bg-purple-100 text-purple-700 flex items-center justify-center shadow-inner">
                 <Sparkles className="w-7 h-7" />
               </div>
-              <div className="space-y-1">
-                <h4 className="text-base font-extrabold text-slate-900">
+              <div className="space-y-1.5">
+                <h4 className="text-base sm:text-lg font-extrabold text-slate-900">
                   Ask anything about this recording
                 </h4>
-                <p className="text-xs text-slate-500 leading-relaxed">
+                <p className="text-xs sm:text-sm text-slate-500 leading-relaxed max-w-md">
                   The AI only references words spoken in this audio file. If a question isn&apos;t covered in the conversation, it will explicitly let you know.
                 </p>
-              </div>
-
-              {/* Suggested Pills in compact responsive grid */}
-              <div className="w-full space-y-2 pt-2">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
-                  Suggested Prompts
-                </span>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-                  {DEFAULT_SUGGESTIONS.map((sug, i) => (
-                    <button
-                      key={i}
-                      onClick={() => handleSendMessage(sug)}
-                      className="text-xs font-semibold px-3 py-2 rounded-xl bg-slate-50 hover:bg-purple-50 hover:text-purple-700 text-slate-700 border border-slate-200 hover:border-purple-200 transition-all cursor-pointer text-left shadow-2xs"
-                    >
-                      {sug}
-                    </button>
-                  ))}
-                </div>
               </div>
             </div>
           ) : (

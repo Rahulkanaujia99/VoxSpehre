@@ -17,6 +17,7 @@ import {
 import { useAuth } from '@/context/AuthContext';
 import { AuthModal } from './AuthModal';
 import { SidebarTab } from './Sidebar';
+import { ThemeToggle } from './ThemeToggle';
 
 interface NavbarProps {
   onOpenStudio: (sampleId?: string) => void;
@@ -102,10 +103,10 @@ export const Navbar: React.FC<NavbarProps> = ({
               onClick={() => {
                 window.dispatchEvent(new CustomEvent('toggle-mobile-sidebar'));
               }}
-              className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-slate-50 hover:bg-white text-slate-700 flex items-center justify-center shadow-clay-pill border border-white transition-all cursor-pointer shrink-0"
+              className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-slate-50 hover:bg-white dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 flex items-center justify-center shadow-clay-pill border border-white dark:border-slate-700 transition-all cursor-pointer shrink-0"
               title="Toggle Menu"
             >
-              <Menu className="w-4 h-4 sm:w-5 sm:h-5 text-slate-700" />
+              <Menu className="w-4 h-4 sm:w-5 sm:h-5 text-slate-700 dark:text-slate-200" />
             </button>
 
             {/* Official Penguin International + VoxSphere logo branding */}
@@ -121,12 +122,12 @@ export const Navbar: React.FC<NavbarProps> = ({
                 alt="Penguin International"
                 className="h-7 sm:h-8 w-auto max-w-[125px] sm:max-w-[155px] object-contain shrink-0"
               />
-              <div className="h-5 w-px bg-slate-200 hidden sm:block" />
+              <div className="h-5 w-px bg-slate-200 dark:bg-slate-700 hidden sm:block" />
               <div className="flex flex-col text-left">
-                <span className="text-xs sm:text-sm font-extrabold text-slate-900 tracking-tight leading-none group-hover:text-teal-700 transition-colors">
+                <span className="text-xs sm:text-sm font-extrabold text-slate-900 dark:text-white tracking-tight leading-none group-hover:text-teal-700 dark:group-hover:text-teal-400 transition-colors">
                   VoxSphere
                 </span>
-                <span className="text-[8px] sm:text-[9px] font-semibold tracking-wider uppercase text-slate-400 mt-0.5 hidden sm:inline">
+                <span className="text-[8px] sm:text-[9px] font-semibold tracking-wider uppercase text-slate-400 dark:text-slate-400 mt-0.5 hidden sm:inline">
                   AI SPEECH SUITE
                 </span>
               </div>
@@ -136,15 +137,15 @@ export const Navbar: React.FC<NavbarProps> = ({
           {/* Center Search Input Pill */}
           <div className="hidden md:flex items-center flex-1 max-w-md mx-2 lg:mx-4">
             <div className="w-full relative">
-              <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                <Search className="w-4 h-4 text-slate-400" />
+              <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 dark:text-slate-500">
+                <Search className="w-4 h-4 text-slate-400 dark:text-slate-500" />
               </span>
               <input
                 type="search"
                 value={searchQuery}
                 onChange={(e) => onSearchChange?.(e.target.value)}
                 placeholder="Search audio files, transcripts, or summaries..."
-                className="w-full pl-10 pr-4 py-2 rounded-full bg-slate-50/90 hover:bg-white focus:bg-white border border-slate-200/80 text-xs text-slate-800 placeholder-slate-400 shadow-inner focus:outline-none focus:ring-2 focus:ring-teal-500/25 focus:border-teal-400 transition-all"
+                className="w-full pl-10 pr-4 py-2 rounded-full bg-slate-50/90 hover:bg-white focus:bg-white dark:bg-slate-800 dark:hover:bg-slate-800/90 dark:focus:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80 text-xs text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 shadow-inner focus:outline-none focus:ring-2 focus:ring-teal-500/25 focus:border-teal-400 transition-all"
               />
             </div>
           </div>
@@ -152,20 +153,23 @@ export const Navbar: React.FC<NavbarProps> = ({
           {/* Right Header Actions: Status Pill + Notification + User Avatar with Role */}
           <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
             {/* Status Indicator Pill (matching Image 2 Encrypted Portal badge) */}
-            <div className="hidden lg:inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-50/80 border border-emerald-200/70 text-slate-800 text-xs shadow-clay-pill shrink-0">
+            <div className="hidden lg:inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-50/80 dark:bg-emerald-950/60 border border-emerald-200/70 dark:border-emerald-800/60 text-slate-800 dark:text-emerald-300 text-xs shadow-clay-pill shrink-0 status-pill-active">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="font-semibold tracking-tight text-slate-700">Cloud Sync Active</span>
+              <span className="font-semibold tracking-tight text-slate-700 dark:text-emerald-300">Cloud Sync Active</span>
             </div>
+
+            {/* Dark Mode / Light Mode Theme Toggle */}
+            <ThemeToggle />
 
             {/* Notification Bell Circle Button with Pip */}
             <button
               type="button"
               aria-label="Notifications"
-              className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-slate-50 hover:bg-white border border-white text-slate-700 flex items-center justify-center shadow-clay-pill relative transition-all cursor-pointer shrink-0"
+              className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-slate-50 hover:bg-white dark:bg-slate-800 dark:hover:bg-slate-700 border border-white dark:border-slate-700 text-slate-700 dark:text-slate-200 flex items-center justify-center shadow-clay-pill relative transition-all cursor-pointer shrink-0"
               title="Notifications"
             >
-              <Bell className="w-4 h-4 text-slate-700" />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-rose-500 ring-2 ring-white" />
+              <Bell className="w-4 h-4 text-slate-700 dark:text-slate-200" />
+              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-rose-500 ring-2 ring-white dark:ring-slate-800" />
             </button>
 
             {/* User Profile Pill */}
@@ -173,7 +177,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               <button
                 type="button"
                 onClick={() => setShowUserDropdown(!showUserDropdown)}
-                className="flex items-center gap-2.5 pl-1.5 pr-3 py-1 rounded-full bg-white shadow-clay-pill border border-white hover:bg-slate-50 transition-all cursor-pointer"
+                className="flex items-center gap-2.5 pl-1.5 pr-3 py-1 rounded-full bg-white dark:bg-slate-800 shadow-clay-pill border border-white dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all cursor-pointer"
                 aria-expanded={showUserDropdown}
                 aria-haspopup="true"
                 title="Account & Profile Settings"
@@ -185,10 +189,10 @@ export const Navbar: React.FC<NavbarProps> = ({
                   {userInitial}
                 </div>
                 <div className="hidden sm:block text-left">
-                  <span className="font-bold text-xs text-slate-900 block leading-tight whitespace-nowrap">
+                  <span className="font-bold text-xs text-slate-900 dark:text-white block leading-tight whitespace-nowrap">
                     {userDisplayName}
                   </span>
-                  <span className="text-[10px] text-slate-500 block leading-tight truncate max-w-[155px]">
+                  <span className="text-[10px] text-slate-500 dark:text-slate-400 block leading-tight truncate max-w-[155px]">
                     {userEmail}
                   </span>
                 </div>
@@ -202,15 +206,15 @@ export const Navbar: React.FC<NavbarProps> = ({
               {/* Profile Dropdown */}
               {showUserDropdown && (
                 <div
-                  className="absolute right-0 top-full mt-2.5 w-72 sm:w-80 bg-white rounded-2xl p-2.5 shadow-2xl border border-slate-200/90 z-[100] animate-in fade-in zoom-in-95 duration-150"
+                  className="user-dropdown-surface absolute right-0 top-full mt-2.5 w-72 sm:w-80 bg-white dark:bg-slate-900 rounded-2xl p-2.5 shadow-2xl border border-slate-200/90 dark:border-slate-800 z-[100] animate-in fade-in zoom-in-95 duration-150"
                   onClick={(e) => e.stopPropagation()}
                 >
                   {/* Header info */}
-                  <div className="px-3.5 py-2.5 border-b border-slate-100">
-                    <p className="text-xs sm:text-sm font-bold text-slate-900">{userDisplayName}</p>
-                    <p className="text-[11px] sm:text-xs text-slate-500 font-mono truncate">{userEmail}</p>
-                    <div className="mt-2 flex items-center gap-1.5 text-[10px] sm:text-xs font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-md border border-emerald-200 w-fit">
-                      <Cloud className="w-3.5 h-3.5 text-emerald-600" />
+                  <div className="px-3.5 py-2.5 border-b border-slate-100 dark:border-slate-800">
+                    <p className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">{userDisplayName}</p>
+                    <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 font-mono truncate">{userEmail}</p>
+                    <div className="mt-2 flex items-center gap-1.5 text-[10px] sm:text-xs font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2.5 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-800/60 w-fit">
+                      <Cloud className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                       <span>Cloud Sync Active</span>
                     </div>
                   </div>
@@ -222,16 +226,16 @@ export const Navbar: React.FC<NavbarProps> = ({
                       onClick={() => handleSelectTab('profile')}
                       className={`w-full flex items-center gap-3 p-2.5 rounded-xl transition-all cursor-pointer group text-left ${
                         activeTab === 'profile'
-                          ? 'bg-teal-50/80 text-teal-900'
-                          : 'hover:bg-slate-50 text-slate-700'
+                          ? 'bg-teal-50/80 dark:bg-teal-950/60 text-teal-900 dark:text-teal-300'
+                          : 'hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200'
                       }`}
                     >
-                      <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 bg-slate-100 text-slate-600 group-hover:bg-teal-50 group-hover:text-teal-600">
+                      <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 group-hover:bg-teal-50 dark:group-hover:bg-teal-950 group-hover:text-teal-600 dark:group-hover:text-teal-400">
                         <User className="w-4 h-4" />
                       </div>
                       <div className="min-w-0 flex-1">
                         <span className="block text-xs font-bold leading-snug">My Profile</span>
-                        <span className="block text-[11px] text-slate-500">View & edit profile</span>
+                        <span className="block text-[11px] text-slate-500 dark:text-slate-400">View & edit profile</span>
                       </div>
                     </button>
 
@@ -240,22 +244,22 @@ export const Navbar: React.FC<NavbarProps> = ({
                       onClick={() => handleSelectTab('settings')}
                       className={`w-full flex items-center gap-3 p-2.5 rounded-xl transition-all cursor-pointer group text-left ${
                         activeTab === 'settings'
-                          ? 'bg-teal-50/80 text-teal-900'
-                          : 'hover:bg-slate-50 text-slate-700'
+                          ? 'bg-teal-50/80 dark:bg-teal-950/60 text-teal-900 dark:text-teal-300'
+                          : 'hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200'
                       }`}
                     >
-                      <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 bg-slate-100 text-slate-600 group-hover:bg-teal-50 group-hover:text-teal-600">
+                      <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 group-hover:bg-teal-50 dark:group-hover:bg-teal-950 group-hover:text-teal-600 dark:group-hover:text-teal-400">
                         <Settings className="w-4 h-4" />
                       </div>
                       <div className="min-w-0 flex-1">
                         <span className="block text-xs font-bold leading-snug">My Settings</span>
-                        <span className="block text-[11px] text-slate-500">Preferences & security</span>
+                        <span className="block text-[11px] text-slate-500 dark:text-slate-400">Preferences & security</span>
                       </div>
                     </button>
                   </div>
 
                   {/* Sign out */}
-                  <div className="pt-1 mt-1 border-t border-slate-100 px-1">
+                  <div className="pt-1 mt-1 border-t border-slate-100 dark:border-slate-800 px-1">
                     <button
                       type="button"
                       onClick={() => {
@@ -263,7 +267,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                         setShowUserDropdown(false);
                         onBackToHome?.();
                       }}
-                      className="w-full flex items-center gap-2.5 px-3 py-2 text-left text-xs font-semibold text-rose-600 hover:bg-rose-50 rounded-xl transition-colors cursor-pointer"
+                      className="w-full flex items-center gap-2.5 px-3 py-2 text-left text-xs font-semibold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-xl transition-colors cursor-pointer"
                     >
                       <LogOut className="w-4 h-4" />
                       <span>Sign Out</span>

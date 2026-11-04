@@ -270,7 +270,7 @@ export const AudioUploader: React.FC<AudioUploaderProps> = ({
         >
           {/* Dashed Inner Drop Field with Frosted Glass Fill */}
           <div
-            className={`border-2 border-dashed rounded-2xl p-6 sm:p-10 backdrop-blur-md transition-all flex flex-col items-center justify-center space-y-4 ${
+            className={`audio-dropzone-inner border-2 border-dashed rounded-2xl p-6 sm:p-10 backdrop-blur-md transition-all flex flex-col items-center justify-center space-y-4 ${
               isDragOver
                 ? 'border-teal-500 bg-white/70 scale-[1.01]'
                 : 'border-sky-300/40 hover:bg-white/50'
@@ -278,7 +278,7 @@ export const AudioUploader: React.FC<AudioUploaderProps> = ({
             style={{ background: 'rgba(240, 249, 255, 0.45)' }}
           >
             {/* Central Upload Pill Icon from Image 2 / MedSync Style */}
-            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-white/90 shadow-clay-pill border border-white/80 backdrop-blur-sm flex items-center justify-center text-teal-600 hover:scale-110 transition-transform">
+            <div className="audio-dropzone-icon w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-white/90 shadow-clay-pill border border-white/80 backdrop-blur-sm flex items-center justify-center text-teal-600 hover:scale-110 transition-transform">
               <Upload className="w-7 h-7 sm:w-8 sm:h-8 stroke-[2.2]" />
             </div>
 

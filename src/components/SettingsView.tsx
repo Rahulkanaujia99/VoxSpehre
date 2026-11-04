@@ -19,7 +19,6 @@ import {
   Users,
   Clock,
   Sparkles,
-  Sun,
   LogOut,
   ChevronRight,
   SlidersHorizontal,
@@ -170,7 +169,7 @@ export const SettingsView: React.FC = () => {
           </span>
         </div>
         <p className="text-xs sm:text-sm text-slate-500 mt-1">
-          Customize your audio player interface, transcription parameters, account security, and themes.
+          Customize your audio player interface, transcription parameters, and account security.
         </p>
       </div>
 
@@ -533,36 +532,6 @@ export const SettingsView: React.FC = () => {
                 <LogOut className="w-3.5 h-3.5" />
                 <span>Sign Out</span>
               </button>
-            </div>
-          </div>
-
-          {/* SECTION D: APPEARANCE */}
-          <div className="clay-card-surface rounded-clay-3xl p-5 sm:p-6 space-y-3">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center shadow-2xs">
-                <Sun className="w-4 h-4" />
-              </div>
-              <h3 className="text-base sm:text-lg font-extrabold text-slate-900">
-                Section D: Appearance & Branding
-              </h3>
-            </div>
-            <p className="text-xs text-slate-500 leading-relaxed">
-              VoxSphere utilizes a clean, high-contrast light theme with subtle backdrop blurs, pastel status accents, and clean card containers for maximum readability in executive and studio environments.
-            </p>
-
-            <div className="p-3.5 rounded-2xl bg-white/70 border border-slate-200/80 shadow-2xs flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-amber-500 shadow-2xs">
-                  <Sun className="w-4 h-4" />
-                </div>
-                <div>
-                  <p className="text-xs font-bold text-slate-800">Active Theme: Light Studio</p>
-                  <p className="text-[10px] text-slate-400">Strictly adheres to VoxSphere branding guidelines</p>
-                </div>
-              </div>
-              <span className="text-[10px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-200/80 px-2.5 py-0.5 rounded-full shadow-2xs">
-                Default
-              </span>
             </div>
           </div>
         </div>

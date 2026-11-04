@@ -12,6 +12,7 @@ import {
   ChevronDown,
   Search,
   Bell,
+  Menu,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { AuthModal } from './AuthModal';
@@ -86,70 +87,85 @@ export const Navbar: React.FC<NavbarProps> = ({
   };
 
   // ========================================================
-  // 1. APP VIEW / DASHBOARD HEADER (MedSync Style matching Image 2)
+  // 1. APP VIEW / DASHBOARD HEADER (Ceramic Clay Style matching Image 2 & HTML reference)
   // ========================================================
   if (isAppView) {
     return (
       <>
-        <header className="w-full flex items-center justify-between gap-3 sm:gap-4">
-          {/* Brand Logo + Name: Penguin International & VoxSphere */}
-          <div className="flex items-center gap-3 shrink-0">
+        <header className="clay-card-surface rounded-[24px] sm:rounded-clay-3xl px-4 sm:px-5 py-3 sm:py-3.5 flex items-center justify-between gap-3 sm:gap-4 transition-all w-full">
+          {/* Brand Logo & Menu Drawer Toggle (Left) */}
+          <div className="flex items-center gap-3 sm:gap-4 shrink-0">
+            {/* Circular menu button */}
+            <button
+              type="button"
+              aria-label="Toggle navigation drawer"
+              onClick={() => {
+                window.dispatchEvent(new CustomEvent('toggle-mobile-sidebar'));
+              }}
+              className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-slate-50 hover:bg-white text-slate-700 flex items-center justify-center shadow-clay-pill border border-white transition-all cursor-pointer shrink-0"
+              title="Toggle Menu"
+            >
+              <Menu className="w-4 h-4 sm:w-5 sm:h-5 text-slate-700" />
+            </button>
+
+            {/* Official Penguin International + VoxSphere logo branding */}
             <button
               type="button"
               onClick={onBackToHome}
-              className="inline-flex items-center gap-2 p-1.5 px-3 rounded-2xl bg-white/90 shadow-clay-pill border border-white hover:bg-white transition-all cursor-pointer"
+              className="flex items-center gap-2 sm:gap-3 hover:opacity-90 transition-opacity text-left cursor-pointer group"
               title="Return to Home"
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src="/images/penguin-international-logo.png"
                 alt="Penguin International"
-                className="h-7 sm:h-8 w-auto max-w-[130px] sm:max-w-[155px] object-contain shrink-0"
+                className="h-7 sm:h-8 w-auto max-w-[125px] sm:max-w-[155px] object-contain shrink-0"
               />
-              <div className="h-4 w-px bg-stone-200 hidden sm:block" />
+              <div className="h-5 w-px bg-slate-200 hidden sm:block" />
               <div className="flex flex-col text-left">
-                <span className="text-xs sm:text-sm font-extrabold text-teal-700 tracking-tight leading-none">
+                <span className="text-xs sm:text-sm font-extrabold text-slate-900 tracking-tight leading-none group-hover:text-teal-700 transition-colors">
                   VoxSphere
                 </span>
-                <span className="text-[8px] font-semibold tracking-wider uppercase text-stone-400 mt-0.5 hidden sm:inline">
-                  AI Speech Suite
+                <span className="text-[8px] sm:text-[9px] font-semibold tracking-wider uppercase text-slate-400 mt-0.5 hidden sm:inline">
+                  AI SPEECH SUITE
                 </span>
               </div>
             </button>
           </div>
 
           {/* Center Search Input Pill */}
-          <div className="hidden md:flex items-center flex-1 max-w-md mx-4 lg:mx-6">
+          <div className="hidden md:flex items-center flex-1 max-w-md mx-2 lg:mx-4">
             <div className="w-full relative">
-              <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-stone-400">
-                <Search className="w-4 h-4" />
+              <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                <Search className="w-4 h-4 text-slate-400" />
               </span>
               <input
                 type="search"
                 value={searchQuery}
                 onChange={(e) => onSearchChange?.(e.target.value)}
                 placeholder="Search audio files, transcripts, or summaries..."
-                className="w-full pl-10 pr-4 py-2.5 rounded-full bg-white border border-stone-200/80 text-xs text-stone-800 placeholder-stone-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500/30 transition-all"
+                className="w-full pl-10 pr-4 py-2 rounded-full bg-slate-50/90 hover:bg-white focus:bg-white border border-slate-200/80 text-xs text-slate-800 placeholder-slate-400 shadow-inner focus:outline-none focus:ring-2 focus:ring-teal-500/25 focus:border-teal-400 transition-all"
               />
             </div>
           </div>
 
           {/* Right Header Actions: Status Pill + Notification + User Avatar with Role */}
-          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-            {/* Status Indicator Pill */}
-            <div className="hidden lg:flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white shadow-clay-pill border border-white text-xs font-semibold text-stone-700">
+          <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
+            {/* Status Indicator Pill (matching Image 2 Encrypted Portal badge) */}
+            <div className="hidden lg:inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-50/80 border border-emerald-200/70 text-slate-800 text-xs shadow-clay-pill shrink-0">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span>Cloud Sync Active</span>
+              <span className="font-semibold tracking-tight text-slate-700">Cloud Sync Active</span>
             </div>
 
-            {/* Notification circle button */}
+            {/* Notification Bell Circle Button with Pip */}
             <button
               type="button"
               aria-label="Notifications"
-              className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white shadow-clay-pill border border-white flex items-center justify-center text-stone-600 hover:text-black transition-all relative cursor-pointer"
+              className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-slate-50 hover:bg-white border border-white text-slate-700 flex items-center justify-center shadow-clay-pill relative transition-all cursor-pointer shrink-0"
+              title="Notifications"
             >
-              <Bell className="w-4 h-4 text-stone-600" />
-              <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-amber-500 ring-2 ring-white" />
+              <Bell className="w-4 h-4 text-slate-700" />
+              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-rose-500 ring-2 ring-white" />
             </button>
 
             {/* User Profile Pill */}
@@ -157,24 +173,27 @@ export const Navbar: React.FC<NavbarProps> = ({
               <button
                 type="button"
                 onClick={() => setShowUserDropdown(!showUserDropdown)}
-                className="flex items-center gap-2.5 pl-1.5 pr-3 py-1.5 rounded-full bg-white shadow-clay-pill border border-white hover:bg-stone-50 transition-all cursor-pointer"
+                className="flex items-center gap-2.5 pl-1.5 pr-3 py-1 rounded-full bg-white shadow-clay-pill border border-white hover:bg-slate-50 transition-all cursor-pointer"
+                aria-expanded={showUserDropdown}
+                aria-haspopup="true"
+                title="Account & Profile Settings"
               >
                 <div
-                  className="w-8 h-8 rounded-full text-white flex items-center justify-center font-bold text-xs shadow-inner shrink-0"
-                  style={{ background: 'linear-gradient(135deg, #23ac98 0%, #457bd0 100%)' }}
+                  className="w-8 h-8 rounded-full bg-slate-900 text-white flex items-center justify-center font-bold text-xs shadow-inner shrink-0"
+                  style={{ background: 'linear-gradient(135deg, #18181B 0%, #27272A 100%)' }}
                 >
                   {userInitial}
                 </div>
                 <div className="hidden sm:block text-left">
-                  <span className="font-bold text-xs text-stone-900 block leading-tight whitespace-nowrap">
+                  <span className="font-bold text-xs text-slate-900 block leading-tight whitespace-nowrap">
                     {userDisplayName}
                   </span>
-                  <span className="text-[10px] text-stone-400 block leading-tight truncate max-w-[150px]">
+                  <span className="text-[10px] text-slate-500 block leading-tight truncate max-w-[155px]">
                     {userEmail}
                   </span>
                 </div>
                 <ChevronDown
-                  className={`w-3.5 h-3.5 text-stone-400 transition-transform duration-200 ${
+                  className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 shrink-0 ${
                     showUserDropdown ? 'rotate-180' : ''
                   }`}
                 />
@@ -183,13 +202,13 @@ export const Navbar: React.FC<NavbarProps> = ({
               {/* Profile Dropdown */}
               {showUserDropdown && (
                 <div
-                  className="absolute right-0 top-full mt-2.5 w-72 sm:w-80 bg-white rounded-2xl p-2.5 shadow-2xl border border-stone-200/90 z-[100] animate-in fade-in zoom-in-95 duration-150"
+                  className="absolute right-0 top-full mt-2.5 w-72 sm:w-80 bg-white rounded-2xl p-2.5 shadow-2xl border border-slate-200/90 z-[100] animate-in fade-in zoom-in-95 duration-150"
                   onClick={(e) => e.stopPropagation()}
                 >
                   {/* Header info */}
-                  <div className="px-3.5 py-2.5 border-b border-stone-100">
-                    <p className="text-xs sm:text-sm font-bold text-stone-900">{userDisplayName}</p>
-                    <p className="text-[11px] sm:text-xs text-stone-500 font-mono truncate">{userEmail}</p>
+                  <div className="px-3.5 py-2.5 border-b border-slate-100">
+                    <p className="text-xs sm:text-sm font-bold text-slate-900">{userDisplayName}</p>
+                    <p className="text-[11px] sm:text-xs text-slate-500 font-mono truncate">{userEmail}</p>
                     <div className="mt-2 flex items-center gap-1.5 text-[10px] sm:text-xs font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-md border border-emerald-200 w-fit">
                       <Cloud className="w-3.5 h-3.5 text-emerald-600" />
                       <span>Cloud Sync Active</span>
@@ -204,15 +223,15 @@ export const Navbar: React.FC<NavbarProps> = ({
                       className={`w-full flex items-center gap-3 p-2.5 rounded-xl transition-all cursor-pointer group text-left ${
                         activeTab === 'profile'
                           ? 'bg-teal-50/80 text-teal-900'
-                          : 'hover:bg-stone-50 text-stone-700'
+                          : 'hover:bg-slate-50 text-slate-700'
                       }`}
                     >
-                      <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 bg-stone-100 text-stone-600 group-hover:bg-teal-50 group-hover:text-teal-600">
+                      <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 bg-slate-100 text-slate-600 group-hover:bg-teal-50 group-hover:text-teal-600">
                         <User className="w-4 h-4" />
                       </div>
                       <div className="min-w-0 flex-1">
                         <span className="block text-xs font-bold leading-snug">My Profile</span>
-                        <span className="block text-[11px] text-stone-500">View & edit profile</span>
+                        <span className="block text-[11px] text-slate-500">View & edit profile</span>
                       </div>
                     </button>
 
@@ -222,21 +241,21 @@ export const Navbar: React.FC<NavbarProps> = ({
                       className={`w-full flex items-center gap-3 p-2.5 rounded-xl transition-all cursor-pointer group text-left ${
                         activeTab === 'settings'
                           ? 'bg-teal-50/80 text-teal-900'
-                          : 'hover:bg-stone-50 text-stone-700'
+                          : 'hover:bg-slate-50 text-slate-700'
                       }`}
                     >
-                      <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 bg-stone-100 text-stone-600 group-hover:bg-teal-50 group-hover:text-teal-600">
+                      <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 bg-slate-100 text-slate-600 group-hover:bg-teal-50 group-hover:text-teal-600">
                         <Settings className="w-4 h-4" />
                       </div>
                       <div className="min-w-0 flex-1">
                         <span className="block text-xs font-bold leading-snug">My Settings</span>
-                        <span className="block text-[11px] text-stone-500">Preferences & security</span>
+                        <span className="block text-[11px] text-slate-500">Preferences & security</span>
                       </div>
                     </button>
                   </div>
 
                   {/* Sign out */}
-                  <div className="pt-1 mt-1 border-t border-stone-100 px-1">
+                  <div className="pt-1 mt-1 border-t border-slate-100 px-1">
                     <button
                       type="button"
                       onClick={() => {

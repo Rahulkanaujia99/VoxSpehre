@@ -37,7 +37,7 @@ export async function decodeAudioSource(
   try {
     const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer.slice(0));
 
-    // Extract normalized peaks (150 bars for crisp timeline display)
+    // Extract normalized peaks (160 bars for crisp timeline display)
     const channelData = audioBuffer.getChannelData(0);
     const numBars = 160;
     const blockSize = Math.floor(channelData.length / numBars);
@@ -134,13 +134,91 @@ export function encodeAudioBufferToWav(
   for (let i = 0; i < numSamples; i++) {
     for (let c = 0; c < numChannels; c++) {
       let sample = channels[c][i];
-      // Clamp between -1.0 and 1.0
       sample = Math.max(-1, Math.min(1, sample));
-      // Convert to 16-bit signed integer
       const intSample = sample < 0 ? sample * 0x8000 : sample * 0x7fff;
       view.setInt16(offset, intSample, true);
       offset += 2;
     }
+  }
+
+  return new Blob([buffer], { type: 'audio/wav' });
+}
+
+/**
+ * Encodes a slice of an AudioBuffer [startSec, endSec] into a 16-bit PCM Mono RIFF WAV Blob.
+ * Downmixing to mono halves payload size, making it ideal for chunked transcription under 4MB.
+ */
+export function encodeAudioBufferToMonoWav(
+  audioBuffer: AudioBuffer,
+  startSec: number,
+  endSec: number
+): Blob {
+  const sampleRate = audioBuffer.sampleRate;
+  const numChannels = audioBuffer.numberOfChannels;
+
+  const startSample = Math.max(0, Math.floor(startSec * sampleRate));
+  const endSample = Math.min(audioBuffer.length, Math.floor(endSec * sampleRate));
+  const numSamples = Math.max(0, endSample - startSample);
+
+  if (numSamples <= 0) {
+    throw new Error('Selected range has zero duration.');
+  }
+
+  const bytesPerSample = 2; // 16-bit
+  const blockAlign = 1 * bytesPerSample; // 1 channel (mono)
+  const byteRate = sampleRate * blockAlign;
+  const dataByteLength = numSamples * blockAlign;
+  const headerByteLength = 44;
+  const totalLength = headerByteLength + dataByteLength;
+
+  const buffer = new ArrayBuffer(totalLength);
+  const view = new DataView(buffer);
+
+  // Helper to write ASCII strings
+  const writeString = (offset: number, str: string) => {
+    for (let i = 0; i < str.length; i++) {
+      view.setUint8(offset + i, str.charCodeAt(i));
+    }
+  };
+
+  // 1. RIFF chunk descriptor
+  writeString(0, 'RIFF');
+  view.setUint32(4, 36 + dataByteLength, true);
+  writeString(8, 'WAVE');
+
+  // 2. "fmt " sub-chunk
+  writeString(12, 'fmt ');
+  view.setUint32(16, 16, true); // 16 for PCM
+  view.setUint16(20, 1, true); // PCM linear
+  view.setUint16(22, 1, true); // 1 channel (MONO)
+  view.setUint32(24, sampleRate, true);
+  view.setUint32(28, byteRate, true);
+  view.setUint16(32, blockAlign, true);
+  view.setUint16(34, bytesPerSample * 8, true);
+
+  // 3. "data" sub-chunk
+  writeString(36, 'data');
+  view.setUint32(40, dataByteLength, true);
+
+  // Extract channel pointers
+  const channels: Float32Array[] = [];
+  for (let c = 0; c < numChannels; c++) {
+    channels.push(audioBuffer.getChannelData(c));
+  }
+
+  // Downmix to mono and write 16-bit PCM
+  let offset = 44;
+  for (let i = 0; i < numSamples; i++) {
+    const sIdx = startSample + i;
+    let mixed = 0;
+    for (let c = 0; c < numChannels; c++) {
+      mixed += channels[c][sIdx] || 0;
+    }
+    mixed = mixed / numChannels;
+    mixed = Math.max(-1, Math.min(1, mixed));
+    const intSample = mixed < 0 ? mixed * 0x8000 : mixed * 0x7fff;
+    view.setInt16(offset, intSample, true);
+    offset += 2;
   }
 
   return new Blob([buffer], { type: 'audio/wav' });

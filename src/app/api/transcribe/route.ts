@@ -35,6 +35,8 @@ export async function POST(req: NextRequest) {
     let provider = ((formData.get('provider') as string) || '').toLowerCase().trim();
     const fileName = (formData.get('fileName') as string) || (audioFile ? audioFile.name : 'audio_recording.mp3');
     const style = ((formData.get('style') as string) || 'standard').toLowerCase().trim();
+    const timeOffset = parseFloat((formData.get('timeOffset') as string) || '0') || 0;
+    const isChunk = formData.get('isChunk') === 'true';
 
     // Securely read preconfigured API keys exclusively from server-side environment variables
     const serverSarvamKey = (
@@ -137,8 +139,18 @@ export async function POST(req: NextRequest) {
       }, { status: 400 });
     }
 
-    // Apply the user's selected transcription style
-    const finalResult = await applyTranscriptionStyle(rawResult, style, serverOpenaiKey);
+    // If chunking, offset segment timestamps by timeOffset
+    if (timeOffset > 0 && rawResult && rawResult.segments && rawResult.segments.length > 0) {
+      rawResult.segments = rawResult.segments.map((seg, idx) => ({
+        ...seg,
+        id: seg.id || `seg-${Date.now()}-${idx}`,
+        startTime: Math.round((seg.startTime + timeOffset) * 10) / 10,
+        endTime: Math.round((seg.endTime + timeOffset) * 10) / 10,
+      }));
+    }
+
+    // Apply the user's selected transcription style (skip for individual sub-chunks for speed)
+    const finalResult = isChunk ? rawResult : await applyTranscriptionStyle(rawResult, style, serverOpenaiKey);
     return NextResponse.json(finalResult);
 
   } catch (error: unknown) {

@@ -241,6 +241,10 @@ body {
   border-radius: 32px;
 }
 
+.rounded-clay-2xl {
+  border-radius: 24px;
+}
+
 .rounded-clay-pill {
   border-radius: 9999px;
 }

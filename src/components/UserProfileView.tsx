@@ -5,7 +5,6 @@ import {
   User,
   Mail,
   Calendar,
-  ShieldCheck,
   Key,
   CheckCircle,
   AlertCircle,
@@ -19,7 +18,6 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { HistoryItem } from '@/types/transcription';
-import { formatTime } from '@/lib/audioToneGenerator';
 
 interface UserProfileViewProps {
   historyCount?: number;
@@ -315,47 +313,6 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({
             <span className="inline-block text-[10px] font-semibold text-amber-700 bg-amber-50 border border-amber-200/70 px-2 py-0.5 rounded-full shadow-2xs">
               Unlimited Transcriptions
             </span>
-          </div>
-        </div>
-
-        {/* Usage & Data Statistics */}
-        <div className="p-5 rounded-2xl bg-gradient-to-br from-indigo-50/50 via-white to-purple-50/40 border border-indigo-100/90 shadow-xs grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
-          <div>
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-              Total Recordings
-            </span>
-            <p className="text-xl font-extrabold text-slate-900 mt-0.5">{historyCount}</p>
-          </div>
-          <div>
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-              Audio Processed
-            </span>
-            <p className="text-xl font-extrabold text-indigo-700 mt-0.5">
-              {formatTime(totalDurationSeconds)}
-            </p>
-          </div>
-          <div>
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-              Cloud Sync
-            </span>
-            <p className="text-xl font-extrabold text-emerald-700 mt-0.5">Enabled</p>
-          </div>
-          <div>
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-              Security
-            </span>
-            <p className="text-xl font-extrabold text-purple-700 mt-0.5">RLS Protected</p>
-          </div>
-        </div>
-
-        {/* Security & RLS Notice */}
-        <div className="p-4 rounded-2xl bg-emerald-50/90 border border-emerald-200/90 flex items-start gap-3 shadow-2xs">
-          <ShieldCheck className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
-          <div className="text-xs text-emerald-950 space-y-0.5">
-            <p className="font-bold">Row-Level Security & Private Encrypted Storage</p>
-            <p className="text-[11px] text-emerald-800 leading-relaxed">
-              Your profile information and all associated recordings are protected by Postgres Row Level Security (RLS). Only your authenticated session can read, update, or delete your records.
-            </p>
           </div>
         </div>
 

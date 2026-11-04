@@ -160,75 +160,71 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
       </div>
 
       {/* TOP 6 METRIC CARDS */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3.5">
+      <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3.5 items-stretch">
         {/* Metric 1: Total Uploads */}
-        <div className="clay-card-surface rounded-clay-2xl p-4 space-y-1.5 hover:scale-[1.01] transition-all">
+        <div className="clay-card-surface rounded-clay-2xl p-4 flex flex-col justify-between h-full min-h-[112px] space-y-2 hover:scale-[1.01] transition-all">
           <div className="flex items-center justify-between text-slate-400">
-            <span className="text-[10px] font-bold uppercase tracking-wider">Total Uploads</span>
-            <FileAudio className="w-3.5 h-3.5 text-indigo-600" />
+            <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-500">Total Uploads</span>
+            <FileAudio className="w-4 h-4 text-indigo-600 shrink-0" />
           </div>
-          <p className="text-2xl font-extrabold text-slate-900">{metrics.totalRecordings}</p>
-          <span className="text-[10px] text-slate-400 font-medium">Recordings stored</span>
+          <p className="text-2xl font-extrabold text-slate-900 leading-tight">{metrics.totalRecordings}</p>
+          <span className="text-[10px] sm:text-[11px] text-slate-400 font-medium truncate block">All audio submitted</span>
         </div>
 
         {/* Metric 2: Successfully Transcribed */}
-        <div className="clay-card-surface rounded-clay-2xl p-4 space-y-1.5 hover:scale-[1.01] transition-all">
+        <div className="clay-card-surface rounded-clay-2xl p-4 flex flex-col justify-between h-full min-h-[112px] space-y-2 hover:scale-[1.01] transition-all">
           <div className="flex items-center justify-between text-slate-400">
-            <span className="text-[10px] font-bold uppercase tracking-wider">Transcribed</span>
-            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+            <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-500">Transcribed</span>
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
           </div>
-          <p className="text-2xl font-extrabold text-emerald-700">{metrics.totalTranscribed}</p>
-          <span className="text-[10px] text-emerald-600 font-medium">
-            {metrics.transcribedPct}% success rate
-          </span>
+          <p className="text-2xl font-extrabold text-slate-900 leading-tight">{metrics.totalTranscribed}</p>
+          <span className="text-[10px] sm:text-[11px] text-slate-400 font-medium truncate block">Completed runs</span>
         </div>
 
         {/* Metric 3: Total Duration */}
-        <div className="clay-card-surface rounded-clay-2xl p-4 space-y-1.5 hover:scale-[1.01] transition-all">
+        <div className="clay-card-surface rounded-clay-2xl p-4 flex flex-col justify-between h-full min-h-[112px] space-y-2 hover:scale-[1.01] transition-all">
           <div className="flex items-center justify-between text-slate-400">
-            <span className="text-[10px] font-bold uppercase tracking-wider">Total Time</span>
-            <Clock className="w-3.5 h-3.5 text-purple-600" />
+            <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-500">Total Time</span>
+            <Clock className="w-4 h-4 text-purple-600 shrink-0" />
           </div>
-          <p className="text-2xl font-extrabold text-purple-700">{formatTime(metrics.totalDuration)}</p>
-          <span className="text-[10px] text-slate-400 font-medium">Transcribed audio</span>
+          <p className="text-2xl font-extrabold text-purple-700 leading-tight">{formatTime(metrics.totalDuration)}</p>
+          <span className="text-[10px] sm:text-[11px] text-slate-400 font-medium truncate block">Processed audio</span>
         </div>
 
         {/* Metric 4: Average Duration */}
-        <div className="clay-card-surface rounded-clay-2xl p-4 space-y-1.5 hover:scale-[1.01] transition-all">
+        <div className="clay-card-surface rounded-clay-2xl p-4 flex flex-col justify-between h-full min-h-[112px] space-y-2 hover:scale-[1.01] transition-all">
           <div className="flex items-center justify-between text-slate-400">
-            <span className="text-[10px] font-bold uppercase tracking-wider">Avg Duration</span>
-            <TrendingUp className="w-3.5 h-3.5 text-teal-600" />
+            <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-500">Avg Duration</span>
+            <TrendingUp className="w-4 h-4 text-teal-600 shrink-0" />
           </div>
-          <p className="text-2xl font-extrabold text-teal-700">
+          <p className="text-2xl font-extrabold text-teal-700 leading-tight">
             {formatTime(Math.round(metrics.avgDuration))}
           </p>
-          <span className="text-[10px] text-slate-400 font-medium">Per recording</span>
+          <span className="text-[10px] sm:text-[11px] text-slate-400 font-medium truncate block">Per audio file</span>
         </div>
 
         {/* Metric 5: Total Words */}
-        <div className="clay-card-surface rounded-clay-2xl p-4 space-y-1.5 hover:scale-[1.01] transition-all">
+        <div className="clay-card-surface rounded-clay-2xl p-4 flex flex-col justify-between h-full min-h-[112px] space-y-2 hover:scale-[1.01] transition-all">
           <div className="flex items-center justify-between text-slate-400">
-            <span className="text-[10px] font-bold uppercase tracking-wider">Total Words</span>
-            <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+            <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-500">Total Words</span>
+            <Sparkles className="w-4 h-4 text-amber-500 shrink-0" />
           </div>
-          <p className="text-2xl font-extrabold text-slate-900">
+          <p className="text-2xl font-extrabold text-slate-900 leading-tight">
             {metrics.totalWords > 999
               ? `${(metrics.totalWords / 1000).toFixed(1)}k`
               : metrics.totalWords}
           </p>
-          <span className="text-[10px] text-slate-400 font-medium">Transcribed vocabulary</span>
+          <span className="text-[10px] sm:text-[11px] text-slate-400 font-medium truncate block">Generated in transcripts</span>
         </div>
 
         {/* Metric 6: Failed Transcriptions */}
-        <div className="clay-card-surface rounded-clay-2xl p-4 space-y-1.5 hover:scale-[1.01] transition-all">
+        <div className="clay-card-surface rounded-clay-2xl p-4 flex flex-col justify-between h-full min-h-[112px] space-y-2 hover:scale-[1.01] transition-all">
           <div className="flex items-center justify-between text-slate-400">
-            <span className="text-[10px] font-bold uppercase tracking-wider">Failed</span>
-            <XCircle className="w-3.5 h-3.5 text-rose-500" />
+            <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-500">Failed</span>
+            <XCircle className="w-4 h-4 text-rose-500 shrink-0" />
           </div>
-          <p className="text-2xl font-extrabold text-rose-600">{metrics.failedCount}</p>
-          <span className="text-[10px] text-slate-400 font-medium">
-            {metrics.failedPct}% error rate
-          </span>
+          <p className="text-2xl font-extrabold text-rose-600 leading-tight">{metrics.failedCount}</p>
+          <span className="text-[10px] sm:text-[11px] text-slate-400 font-medium truncate block">Errors / aborted</span>
         </div>
       </div>
 

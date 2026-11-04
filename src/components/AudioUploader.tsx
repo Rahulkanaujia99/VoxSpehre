@@ -266,11 +266,7 @@ export const AudioUploader: React.FC<AudioUploaderProps> = ({
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
           onClick={() => fileInputRef.current?.click()}
-          className="rounded-3xl p-6 sm:p-8 lg:p-10 relative overflow-hidden text-center backdrop-blur-xl border border-white/80 shadow-clay-card cursor-pointer transition-all hover:shadow-lg"
-          style={{
-            background: 'rgba(255, 255, 255, 0.65)',
-            boxShadow: '0 20px 45px -15px rgba(148, 163, 184, 0.25), inset 0 2px 4px 0 rgba(255, 255, 255, 0.95)',
-          }}
+          className="clay-card-surface rounded-clay-3xl p-6 sm:p-8 relative overflow-hidden text-center cursor-pointer transition-all hover:scale-[1.002]"
         >
           {/* Dashed Inner Drop Field with Frosted Glass Fill */}
           <div
@@ -331,7 +327,7 @@ export const AudioUploader: React.FC<AudioUploaderProps> = ({
         /* ======================================================== */
         /* 2. FILE LOADED STATE WITH METADATA, PLAYER & CONTROLS    */
         /* ======================================================== */
-        <div className="clay-surface-card rounded-3xl p-5 sm:p-7 border border-white/80 shadow-clay-card space-y-5 animate-fade-in">
+        <div className="clay-card-surface rounded-clay-3xl p-6 sm:p-8 space-y-5 animate-fade-in">
           {/* Normal File Preparation Loading State (Standard Spinner & Progress Bar) */}
           {isUploadingFile && (
             <div className="p-3.5 rounded-2xl bg-indigo-50/80 border border-indigo-200 text-indigo-900 text-xs flex items-center gap-3 animate-pulse">

@@ -673,11 +673,11 @@ export const TranscriptionStudio: React.FC<TranscriptionStudioProps> = ({
                   )}
                 </div>
 
-                {/* 4 TOP METRIC CARDS (Replicating MedSync Statistics: Gradient Accent Card + Neutral Cards) */}
-                <section className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                  {/* Metric 1: Gradient Accent Card */}
+                {/* 4 TOP METRIC CARDS (Box structure matching Casual Leave Card in Image 3 & Reference HTML) */}
+                <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {/* Metric 1: Pending Transcripts (Gradient Accent Card) */}
                   <article
-                    className="p-5 rounded-2xl text-white shadow-lg flex flex-col justify-between relative overflow-hidden group"
+                    className="rounded-clay-3xl p-5 text-white flex flex-col justify-between relative overflow-hidden group hover:scale-[1.01] transition-all min-h-[130px]"
                     style={{
                       background: 'linear-gradient(90deg, #23ac98 0%, #3a8cbe 35%, #457bd0 68%, #595df2 100%)',
                       boxShadow: '0 14px 28px -8px rgba(69, 123, 208, 0.42), inset 0 1px 1px 0 rgba(255, 255, 255, 0.35)',
@@ -696,7 +696,7 @@ export const TranscriptionStudio: React.FC<TranscriptionStudioProps> = ({
                   </article>
 
                   {/* Metric 2: Processed Files */}
-                  <article className="clay-surface-card p-5 rounded-2xl flex flex-col justify-between">
+                  <article className="clay-card-surface rounded-clay-3xl p-5 flex flex-col justify-between hover:scale-[1.01] transition-all group min-h-[130px]">
                     <div className="flex items-start justify-between">
                       <div>
                         <span className="text-3xl font-extrabold text-stone-900 tabular-nums">
@@ -712,7 +712,7 @@ export const TranscriptionStudio: React.FC<TranscriptionStudioProps> = ({
                   </article>
 
                   {/* Metric 3: Avg Split Time */}
-                  <article className="clay-surface-card p-5 rounded-2xl flex flex-col justify-between">
+                  <article className="clay-card-surface rounded-clay-3xl p-5 flex flex-col justify-between hover:scale-[1.01] transition-all group min-h-[130px]">
                     <div className="flex items-start justify-between">
                       <div>
                         <span className="text-3xl font-extrabold text-stone-900 tabular-nums">
@@ -728,7 +728,7 @@ export const TranscriptionStudio: React.FC<TranscriptionStudioProps> = ({
                   </article>
 
                   {/* Metric 4: AI Accuracy */}
-                  <article className="clay-surface-card p-5 rounded-2xl flex flex-col justify-between">
+                  <article className="clay-card-surface rounded-clay-3xl p-5 flex flex-col justify-between hover:scale-[1.01] transition-all group min-h-[130px]">
                     <div className="flex items-start justify-between">
                       <div>
                         <span className="text-3xl font-extrabold text-stone-900 tabular-nums">99.4%</span>

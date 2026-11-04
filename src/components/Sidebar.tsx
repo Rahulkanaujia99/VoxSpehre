@@ -114,13 +114,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <span>New Transcription</span>
         </button>
 
-        {/* Navigation Clay Card */}
-        <div className="clay-surface-card rounded-3xl p-3.5 space-y-3.5">
-          <div className="px-2 pt-1 text-[10px] font-bold tracking-wider text-stone-400 uppercase">
-            Studio & Tools
-          </div>
+        {/* Navigation Ceramic Clay Card (matching Employee Portal in Image 2) */}
+        <div className="clay-card-surface rounded-clay-3xl p-4 space-y-6">
+          <div>
+            <div className="px-3 mb-2.5 flex items-center justify-between">
+              <span className="text-[11px] font-bold tracking-wider text-stone-400 uppercase">
+                Studio & Tools
+              </span>
+            </div>
 
-          <nav className="space-y-1">
+            <nav className="space-y-1.5">
             {/* Active or Inactive Dashboard */}
             {activeTab === 'dashboard' ? (
               <button
@@ -220,9 +223,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
               );
             })}
           </nav>
+        </div>
 
-          {/* System Settings & Back to Home */}
-          <div className="pt-3 border-t border-stone-100 space-y-1">
+        {/* System Settings & Back to Home */}
+        <div className="pt-3 border-t border-stone-100 space-y-1.5">
             <button
               type="button"
               onClick={() => handleSelectTab('settings')}

@@ -908,9 +908,9 @@ export const TranscriptionStudio: React.FC<TranscriptionStudioProps> = ({
                       setSearchRecordingsQuery(e.target.value);
                       setCurrentPage(1);
                     }}
-                    className="w-full pl-9 pr-14 py-2 text-xs sm:text-sm bg-white border border-slate-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-indigo-500 shadow-2xs"
+                    className="w-full pl-9 pr-14 py-2 text-xs sm:text-sm bg-white border border-slate-200/90 rounded-full focus:outline-hidden focus:ring-2 focus:ring-teal-500/25 focus:border-teal-400 shadow-sm transition-all"
                   />
-                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-mono text-slate-400 border border-slate-200 bg-slate-50 px-1.5 py-0.5 rounded">
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-mono text-slate-400 border border-slate-200 bg-slate-50 px-1.5 py-0.5 rounded-md">
                     Ctrl K
                   </span>
                 </div>
@@ -918,7 +918,7 @@ export const TranscriptionStudio: React.FC<TranscriptionStudioProps> = ({
                 {/* Status Filter Pills + Filter Button + Sort Dropdown */}
                 <div className="flex flex-wrap items-center gap-2 self-start lg:self-auto">
                   {/* Status Pills Group */}
-                  <div className="inline-flex items-center bg-slate-100/80 p-0.5 rounded-xl border border-slate-200/60 text-xs font-semibold">
+                  <div className="inline-flex items-center bg-slate-100/90 p-1 rounded-full border border-slate-200/70 text-xs font-semibold shadow-inner">
                     {(['all', 'processing', 'transcribed', 'failed'] as const).map((status) => {
                       const isActive = recordingsStatusFilter === status;
                       const label =
@@ -937,7 +937,7 @@ export const TranscriptionStudio: React.FC<TranscriptionStudioProps> = ({
                             setRecordingsStatusFilter(status);
                             setCurrentPage(1);
                           }}
-                          className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer capitalize ${
+                          className={`px-3 py-1.5 rounded-full transition-all cursor-pointer capitalize ${
                             isActive
                               ? 'bg-[#0f172a] text-white shadow-xs font-bold'
                               : 'text-slate-600 hover:text-slate-900'
@@ -953,7 +953,7 @@ export const TranscriptionStudio: React.FC<TranscriptionStudioProps> = ({
                   <button
                     type="button"
                     onClick={() => setShowFilterDropdown(!showFilterDropdown)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-xs font-semibold text-slate-700 shadow-2xs cursor-pointer transition-colors"
+                    className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white border border-slate-200/80 hover:bg-slate-50 text-xs font-semibold text-slate-700 shadow-clay-pill cursor-pointer transition-colors"
                   >
                     <SlidersHorizontal className="w-3.5 h-3.5 text-slate-500" />
                     <span>Filter</span>
@@ -964,7 +964,7 @@ export const TranscriptionStudio: React.FC<TranscriptionStudioProps> = ({
                     <button
                       type="button"
                       onClick={() => setShowSortDropdown(!showSortDropdown)}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-xs font-semibold text-slate-700 shadow-2xs cursor-pointer transition-colors"
+                      className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white border border-slate-200/80 hover:bg-slate-50 text-xs font-semibold text-slate-700 shadow-clay-pill cursor-pointer transition-colors"
                     >
                       <span>
                         {recordingsSort === 'newest'
@@ -1061,7 +1061,7 @@ export const TranscriptionStudio: React.FC<TranscriptionStudioProps> = ({
               {/* 3. Recording Cards List */}
               <div className="space-y-3 pt-1">
                 {paginatedRecordings.length === 0 ? (
-                  <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center space-y-3 shadow-2xs">
+                  <div className="clay-card-surface rounded-clay-3xl p-10 sm:p-14 text-center space-y-3.5">
                     <FileAudio className="w-12 h-12 text-slate-300 mx-auto" />
                     <h3 className="text-base font-bold text-slate-800">No recordings found</h3>
                     <p className="text-xs text-slate-500 max-w-sm mx-auto">
@@ -1071,7 +1071,7 @@ export const TranscriptionStudio: React.FC<TranscriptionStudioProps> = ({
                     </p>
                     <button
                       onClick={handleNewTranscription}
-                      className="mt-2 inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 text-white font-bold text-xs rounded-xl shadow-xs hover:bg-indigo-700 cursor-pointer"
+                      className="mt-2 inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 text-white font-bold text-xs rounded-full shadow-xs hover:bg-indigo-700 cursor-pointer transition-colors"
                     >
                       <Plus className="w-3.5 h-3.5" />
                       <span>Start Your First Transcription</span>
@@ -1088,8 +1088,8 @@ export const TranscriptionStudio: React.FC<TranscriptionStudioProps> = ({
                     return (
                       <div
                         key={doc.id}
-                        className={`bg-white rounded-2xl border transition-all p-5 shadow-2xs space-y-3 ${
-                          isSelected ? 'border-indigo-400 ring-1 ring-indigo-400' : 'border-slate-200/90 hover:border-slate-300'
+                        className={`clay-card-surface rounded-clay-2xl transition-all p-4.5 sm:p-5 space-y-3.5 ${
+                          isSelected ? 'ring-2 ring-indigo-500/40 border-indigo-400' : 'hover:scale-[1.003]'
                         }`}
                       >
                         {/* Top Row: Details (Left) & Action Buttons (Right) */}

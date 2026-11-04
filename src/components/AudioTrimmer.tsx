@@ -395,7 +395,7 @@ export const AudioTrimmer: React.FC<AudioTrimmerProps> = ({
   const selectedClipDuration = Math.max(0, endTime - startTime);
 
   return (
-    <div className="space-y-6 max-w-5xl animate-fade-in">
+    <div className="space-y-5 w-full animate-fade-in">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200">
         <div>
@@ -461,7 +461,7 @@ export const AudioTrimmer: React.FC<AudioTrimmerProps> = ({
       )}
 
       {/* Main Trimmer Workbench Card */}
-      <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/90 shadow-sm space-y-6">
+      <div className="clay-card-surface rounded-clay-3xl p-5 sm:p-7 space-y-5">
         {/* Active Audio File Info Bar */}
         <div className="flex flex-wrap items-center justify-between gap-3 p-4 rounded-2xl bg-slate-50 border border-slate-200/80">
           <div className="flex items-center gap-3 min-w-0">
@@ -518,7 +518,7 @@ export const AudioTrimmer: React.FC<AudioTrimmerProps> = ({
                 onPointerDown={handlePointerDown}
                 onPointerMove={handlePointerMove}
                 onPointerUp={handlePointerUp}
-                className="w-full h-32 sm:h-36 block touch-none"
+                className="w-full h-28 sm:h-32 block touch-none"
               />
             </div>
 

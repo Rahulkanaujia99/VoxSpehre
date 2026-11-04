@@ -177,7 +177,7 @@ export const AIChatView: React.FC<AIChatViewProps> = ({
   };
 
   return (
-    <div className="space-y-6 max-w-5xl animate-fade-in">
+    <div className="space-y-5 w-full animate-fade-in">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200">
         <div>
@@ -226,7 +226,7 @@ export const AIChatView: React.FC<AIChatViewProps> = ({
       </div>
 
       {/* Main Chat Container */}
-      <div className="bg-white rounded-3xl border border-slate-200/90 shadow-sm overflow-hidden flex flex-col h-[640px]">
+      <div className="clay-card-surface rounded-clay-3xl overflow-hidden flex flex-col h-[520px] sm:h-[550px] lg:h-[560px]">
         {/* Active Recording Banner */}
         <div className="p-3.5 px-5 bg-gradient-to-r from-purple-50/70 via-indigo-50/50 to-white border-b border-purple-100 flex items-center justify-between gap-3 text-xs">
           <div className="flex items-center gap-2 min-w-0">
@@ -246,7 +246,7 @@ export const AIChatView: React.FC<AIChatViewProps> = ({
         <div className="flex-1 p-5 overflow-y-auto space-y-4">
           {messages.length === 0 ? (
             /* Empty State with Suggested Questions */
-            <div className="h-full flex flex-col items-center justify-center text-center p-6 space-y-4 max-w-lg mx-auto">
+            <div className="h-full flex flex-col items-center justify-center text-center p-6 space-y-4 max-w-2xl mx-auto">
               <div className="w-14 h-14 rounded-3xl bg-purple-100 text-purple-700 flex items-center justify-center shadow-inner">
                 <Sparkles className="w-7 h-7" />
               </div>
@@ -259,17 +259,17 @@ export const AIChatView: React.FC<AIChatViewProps> = ({
                 </p>
               </div>
 
-              {/* Suggested Pills */}
+              {/* Suggested Pills in compact responsive grid */}
               <div className="w-full space-y-2 pt-2">
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
                   Suggested Prompts
                 </span>
-                <div className="flex flex-wrap gap-2 justify-center">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                   {DEFAULT_SUGGESTIONS.map((sug, i) => (
                     <button
                       key={i}
                       onClick={() => handleSendMessage(sug)}
-                      className="text-xs font-semibold px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-purple-50 hover:text-purple-700 text-slate-700 border border-slate-200 hover:border-purple-200 transition-all cursor-pointer text-left shadow-2xs"
+                      className="text-xs font-semibold px-3 py-2 rounded-xl bg-slate-50 hover:bg-purple-50 hover:text-purple-700 text-slate-700 border border-slate-200 hover:border-purple-200 transition-all cursor-pointer text-left shadow-2xs"
                     >
                       {sug}
                     </button>

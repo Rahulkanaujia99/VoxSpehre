@@ -119,7 +119,7 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
   }, [filteredRecordings]);
 
   return (
-    <div className="space-y-8 max-w-6xl animate-fade-in">
+    <div className="space-y-5 w-full animate-fade-in">
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200">
         <div>
@@ -160,9 +160,9 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
       </div>
 
       {/* TOP 6 METRIC CARDS */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3.5">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3.5">
         {/* Metric 1: Total Uploads */}
-        <div className="p-4 rounded-3xl bg-white border border-slate-200/90 shadow-2xs space-y-1">
+        <div className="clay-card-surface rounded-clay-2xl p-4 space-y-1.5 hover:scale-[1.01] transition-all">
           <div className="flex items-center justify-between text-slate-400">
             <span className="text-[10px] font-bold uppercase tracking-wider">Total Uploads</span>
             <FileAudio className="w-3.5 h-3.5 text-indigo-600" />
@@ -172,7 +172,7 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
         </div>
 
         {/* Metric 2: Successfully Transcribed */}
-        <div className="p-4 rounded-3xl bg-white border border-slate-200/90 shadow-2xs space-y-1">
+        <div className="clay-card-surface rounded-clay-2xl p-4 space-y-1.5 hover:scale-[1.01] transition-all">
           <div className="flex items-center justify-between text-slate-400">
             <span className="text-[10px] font-bold uppercase tracking-wider">Transcribed</span>
             <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
@@ -184,7 +184,7 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
         </div>
 
         {/* Metric 3: Total Duration */}
-        <div className="p-4 rounded-3xl bg-white border border-slate-200/90 shadow-2xs space-y-1">
+        <div className="clay-card-surface rounded-clay-2xl p-4 space-y-1.5 hover:scale-[1.01] transition-all">
           <div className="flex items-center justify-between text-slate-400">
             <span className="text-[10px] font-bold uppercase tracking-wider">Total Time</span>
             <Clock className="w-3.5 h-3.5 text-purple-600" />
@@ -194,7 +194,7 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
         </div>
 
         {/* Metric 4: Average Duration */}
-        <div className="p-4 rounded-3xl bg-white border border-slate-200/90 shadow-2xs space-y-1">
+        <div className="clay-card-surface rounded-clay-2xl p-4 space-y-1.5 hover:scale-[1.01] transition-all">
           <div className="flex items-center justify-between text-slate-400">
             <span className="text-[10px] font-bold uppercase tracking-wider">Avg Duration</span>
             <TrendingUp className="w-3.5 h-3.5 text-teal-600" />
@@ -206,7 +206,7 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
         </div>
 
         {/* Metric 5: Total Words */}
-        <div className="p-4 rounded-3xl bg-white border border-slate-200/90 shadow-2xs space-y-1">
+        <div className="clay-card-surface rounded-clay-2xl p-4 space-y-1.5 hover:scale-[1.01] transition-all">
           <div className="flex items-center justify-between text-slate-400">
             <span className="text-[10px] font-bold uppercase tracking-wider">Total Words</span>
             <Sparkles className="w-3.5 h-3.5 text-amber-500" />
@@ -220,7 +220,7 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
         </div>
 
         {/* Metric 6: Failed Transcriptions */}
-        <div className="p-4 rounded-3xl bg-white border border-slate-200/90 shadow-2xs space-y-1">
+        <div className="clay-card-surface rounded-clay-2xl p-4 space-y-1.5 hover:scale-[1.01] transition-all">
           <div className="flex items-center justify-between text-slate-400">
             <span className="text-[10px] font-bold uppercase tracking-wider">Failed</span>
             <XCircle className="w-3.5 h-3.5 text-rose-500" />
@@ -232,129 +232,8 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
         </div>
       </div>
 
-      {/* VISUAL CHARTS GRID */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Chart 1: Monthly Transcription Activity */}
-        <div className="lg:col-span-2 bg-white rounded-3xl p-6 sm:p-7 border border-slate-200/90 shadow-sm space-y-5">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
-                <BarChart3 className="w-4 h-4 text-indigo-600" />
-                <span>Monthly Transcription Volume</span>
-              </h3>
-              <p className="text-[11px] text-slate-500 mt-0.5">
-                Number of audio files and duration processed over time
-              </p>
-            </div>
-            <span className="text-[11px] font-mono font-bold text-indigo-700 bg-indigo-50 px-2.5 py-0.5 rounded-full">
-              {metrics.monthlyActivity.length} Months Active
-            </span>
-          </div>
-
-          {metrics.monthlyActivity.length === 0 ? (
-            <div className="h-44 flex flex-col items-center justify-center text-center p-4 bg-slate-50/70 rounded-2xl border border-dashed border-slate-200">
-              <BarChart3 className="w-8 h-8 text-slate-300 mb-1" />
-              <p className="text-xs font-bold text-slate-600">No activity in this date range</p>
-              <p className="text-[11px] text-slate-400">Upload audio to begin tracking analytics</p>
-            </div>
-          ) : (
-            <div className="space-y-3 pt-2">
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                {metrics.monthlyActivity.map((item, idx) => (
-                  <div key={idx} className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
-                    <span className="text-xs font-bold text-slate-700">{item.month}</span>
-                    <p className="text-lg font-extrabold text-indigo-700">{item.count} Files</p>
-                    <span className="text-[10px] font-mono text-slate-400">
-                      Duration: {formatTime(item.duration)}
-                    </span>
-                  </div>
-                ))}
-              </div>
-
-              {/* Responsive Progress Visualization */}
-              <div className="p-4 rounded-2xl bg-indigo-50/40 border border-indigo-100 flex items-center justify-between">
-                <div>
-                  <span className="text-xs font-bold text-indigo-900">Total Audio Time Processed</span>
-                  <p className="text-[11px] text-indigo-700/80">Sum across all transcribed recordings</p>
-                </div>
-                <span className="text-lg font-mono font-extrabold text-indigo-700">
-                  {formatTime(metrics.totalDuration)}
-                </span>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Chart 2: Language Distribution & Status Breakdown */}
-        <div className="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200/90 shadow-sm space-y-5 flex flex-col justify-between">
-          <div className="space-y-5">
-            <div>
-              <h3 className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
-                <Globe className="w-4 h-4 text-teal-600" />
-                <span>Language Distribution</span>
-              </h3>
-              <p className="text-[11px] text-slate-500 mt-0.5">
-                Breakdown of speech recognition languages
-              </p>
-            </div>
-
-            {metrics.languages.length === 0 ? (
-              <p className="text-xs text-slate-400 py-6 text-center">No language data recorded</p>
-            ) : (
-              <div className="space-y-3">
-                {metrics.languages.slice(0, 4).map((lang, idx) => (
-                  <div key={idx} className="space-y-1">
-                    <div className="flex items-center justify-between text-xs font-bold">
-                      <span className="text-slate-700">{lang.language}</span>
-                      <span className="text-teal-700 font-mono">
-                        {lang.count} ({lang.percentage}%)
-                      </span>
-                    </div>
-                    <div className="w-full h-2 rounded-full bg-slate-100 overflow-hidden">
-                      <div
-                        className="h-full bg-teal-500 rounded-full transition-all duration-500"
-                        style={{ width: `${lang.percentage}%` }}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Status Breakdown Bar */}
-          <div className="pt-4 border-t border-slate-100 space-y-2">
-            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
-              Processing Status Ratio
-            </span>
-            <div className="w-full h-3 rounded-full bg-slate-100 overflow-hidden flex">
-              <div
-                className="h-full bg-emerald-500"
-                style={{ width: `${metrics.transcribedPct}%` }}
-                title={`Transcribed: ${metrics.transcribedPct}%`}
-              />
-              <div
-                className="h-full bg-rose-400"
-                style={{ width: `${metrics.failedPct}%` }}
-                title={`Failed: ${metrics.failedPct}%`}
-              />
-            </div>
-            <div className="flex items-center justify-between text-[10px] text-slate-400 font-medium">
-              <span className="flex items-center gap-1">
-                <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                Transcribed ({metrics.totalTranscribed})
-              </span>
-              <span className="flex items-center gap-1">
-                <span className="w-2 h-2 rounded-full bg-rose-400" />
-                Failed ({metrics.failedCount})
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* RECENT TRANSCRIPTION ACTIVITY TABLE */}
-      <div className="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200/90 shadow-sm space-y-4">
+      <div className="clay-card-surface rounded-clay-3xl p-5 sm:p-6 space-y-4">
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-sm font-bold text-slate-900">

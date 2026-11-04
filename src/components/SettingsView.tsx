@@ -158,14 +158,14 @@ export const SettingsView: React.FC = () => {
   };
 
   return (
-    <div className="space-y-8 max-w-5xl animate-fade-in">
+    <div className="space-y-5 w-full animate-fade-in">
       {/* Header */}
-      <div className="pb-4 border-b border-slate-200">
+      <div className="pb-3 border-b border-slate-200/80">
         <div className="flex items-center gap-2">
           <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
             Settings & Preferences
           </h2>
-          <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200">
+          <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200 shadow-2xs">
             System Configuration
           </span>
         </div>
@@ -189,13 +189,13 @@ export const SettingsView: React.FC = () => {
       )}
 
       {/* SECTION A: AUDIO PLAYER PREFERENCES */}
-      <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/90 shadow-sm space-y-6">
+      <div className="clay-card-surface rounded-clay-3xl p-5 sm:p-6 space-y-4">
         <div>
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-purple-50 text-purple-700 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-xl bg-purple-50 text-purple-700 flex items-center justify-center shadow-2xs">
               <Palette className="w-4 h-4" />
             </div>
-            <h3 className="text-lg font-extrabold text-slate-900">
+            <h3 className="text-base sm:text-lg font-extrabold text-slate-900">
               Section A: Audio Player Preferences
             </h3>
           </div>
@@ -205,11 +205,11 @@ export const SettingsView: React.FC = () => {
         </div>
 
         {/* Dual Player Preview Cards */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
           {/* Card 1: Player Design 1 – Purple Glass */}
           <div
             onClick={() => handleSelectPlayerDesign('purple-glass')}
-            className={`relative rounded-3xl p-5 border-2 transition-all cursor-pointer flex flex-col justify-between group ${
+            className={`relative rounded-2xl p-4.5 border-2 transition-all cursor-pointer flex flex-col justify-between group ${
               playerDesign === 'purple-glass'
                 ? 'border-purple-600 bg-purple-50/25 shadow-md shadow-purple-500/10 ring-2 ring-purple-500/20'
                 : 'border-slate-200 hover:border-purple-300 bg-white hover:shadow-xs'
@@ -283,7 +283,7 @@ export const SettingsView: React.FC = () => {
           {/* Card 2: Player Design 2 – Teal Glass */}
           <div
             onClick={() => handleSelectPlayerDesign('teal-glass')}
-            className={`relative rounded-3xl p-5 border-2 transition-all cursor-pointer flex flex-col justify-between group ${
+            className={`relative rounded-2xl p-4.5 border-2 transition-all cursor-pointer flex flex-col justify-between group ${
               playerDesign === 'teal-glass'
                 ? 'border-teal-600 bg-teal-50/25 shadow-md shadow-teal-500/10 ring-2 ring-teal-500/20'
                 : 'border-slate-200 hover:border-teal-300 bg-white hover:shadow-xs'
@@ -356,209 +356,215 @@ export const SettingsView: React.FC = () => {
         </div>
       </div>
 
-      {/* SECTION B: TRANSCRIPTION PREFERENCES */}
-      <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/90 shadow-sm space-y-6">
-        <div>
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-700 flex items-center justify-center">
-              <SlidersHorizontal className="w-4 h-4" />
-            </div>
-            <h3 className="text-lg font-extrabold text-slate-900">
-              Section B: Transcription Preferences
-            </h3>
-          </div>
-          <p className="text-xs text-slate-500 mt-1 max-w-2xl leading-relaxed">
-            Configure your default transcription model style, primary language, diarization settings, and export format.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-          {/* Default Style */}
+      {/* 2-Column Responsive Layout for Sections B, C, D */}
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-5 items-start">
+        {/* SECTION B: TRANSCRIPTION PREFERENCES */}
+        <div className="clay-card-surface rounded-clay-3xl p-5 sm:p-6 space-y-4">
           <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1.5">
-              Default Transcription Style
-            </label>
-            <select
-              value={defaultStyle}
-              onChange={(e) => setDefaultStyle(e.target.value as TranscriptionStyle)}
-              className="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-800 focus:outline-indigo-500 shadow-2xs"
-            >
-              {TRANSCRIPTION_STYLES.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.label} – {s.desc}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Default Language */}
-          <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1.5">
-              Default Recognition Language
-            </label>
-            <select
-              value={defaultLanguage}
-              onChange={(e) => setDefaultLanguage(e.target.value)}
-              className="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-800 focus:outline-indigo-500 shadow-2xs"
-            >
-              {SUPPORTED_LANGUAGES.map((l) => (
-                <option key={l.code} value={l.code}>
-                  {l.label}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        {/* Toggles */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4 border-t border-slate-100">
-          <label className="flex items-center gap-3 p-3.5 rounded-2xl bg-slate-50 border border-slate-200 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={enableDiarization}
-              onChange={(e) => setEnableDiarization(e.target.checked)}
-              className="w-4 h-4 text-indigo-600 rounded-md focus:ring-indigo-500 cursor-pointer"
-            />
-            <div>
-              <p className="text-xs font-bold text-slate-800">Speaker Diarization</p>
-              <p className="text-[11px] text-slate-500">Detect & label speakers</p>
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-700 flex items-center justify-center shadow-2xs">
+                <SlidersHorizontal className="w-4 h-4" />
+              </div>
+              <h3 className="text-base sm:text-lg font-extrabold text-slate-900">
+                Section B: Transcription Preferences
+              </h3>
             </div>
-          </label>
-
-          <label className="flex items-center gap-3 p-3.5 rounded-2xl bg-slate-50 border border-slate-200 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={enableTimestamps}
-              onChange={(e) => setEnableTimestamps(e.target.checked)}
-              className="w-4 h-4 text-indigo-600 rounded-md focus:ring-indigo-500 cursor-pointer"
-            />
-            <div>
-              <p className="text-xs font-bold text-slate-800">Verbatim Timestamps</p>
-              <p className="text-[11px] text-slate-500">Millisecond accuracy</p>
-            </div>
-          </label>
-
-          <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
-            <p className="text-xs font-bold text-slate-800">Preferred Export Format</p>
-            <select
-              value={defaultExportFormat}
-              onChange={(e) => setDefaultExportFormat(e.target.value as 'docx' | 'pdf' | 'txt')}
-              className="w-full bg-white border border-slate-200 rounded-lg px-2 py-1 text-xs font-bold text-slate-800 focus:outline-indigo-500"
-            >
-              <option value="docx">Word (.docx)</option>
-              <option value="pdf">PDF Document (.pdf)</option>
-              <option value="txt">Plain Text (.txt)</option>
-            </select>
+            <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+              Configure your default transcription model style, primary language, diarization settings, and export format.
+            </p>
           </div>
-        </div>
 
-        <div className="pt-2 flex justify-end">
-          <button
-            onClick={handleSaveTranscriptionPrefs}
-            className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-xs transition-colors cursor-pointer"
-          >
-            Save Transcription Preferences
-          </button>
-        </div>
-      </div>
-
-      {/* SECTION C: ACCOUNT & SECURITY */}
-      <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/90 shadow-sm space-y-6">
-        <div>
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center">
-              <Shield className="w-4 h-4" />
-            </div>
-            <h3 className="text-lg font-extrabold text-slate-900">
-              Section C: Account & Security
-            </h3>
-          </div>
-          <p className="text-xs text-slate-500 mt-1 max-w-2xl leading-relaxed">
-            Update your authentication password and manage active session security.
-          </p>
-        </div>
-
-        {/* Change Password Form */}
-        <form onSubmit={handleChangePassword} className="space-y-4 max-w-lg">
-          <div className="space-y-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Default Style */}
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">
-                New Password
+              <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                Default Transcription Style
               </label>
-              <input
-                type="password"
-                placeholder="Minimum 6 characters"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                className="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-800 focus:outline-indigo-500 shadow-2xs"
-              />
+              <select
+                value={defaultStyle}
+                onChange={(e) => setDefaultStyle(e.target.value as TranscriptionStyle)}
+                className="w-full bg-white border border-slate-200/90 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-indigo-500 shadow-2xs"
+              >
+                {TRANSCRIPTION_STYLES.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.label} – {s.desc}
+                  </option>
+                ))}
+              </select>
             </div>
+
+            {/* Default Language */}
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">
-                Confirm New Password
+              <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                Default Recognition Language
               </label>
+              <select
+                value={defaultLanguage}
+                onChange={(e) => setDefaultLanguage(e.target.value)}
+                className="w-full bg-white border border-slate-200/90 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-indigo-500 shadow-2xs"
+              >
+                {SUPPORTED_LANGUAGES.map((l) => (
+                  <option key={l.code} value={l.code}>
+                    {l.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Toggles */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-3 border-t border-slate-100">
+            <label className="flex items-center gap-2.5 p-3 rounded-2xl bg-white/70 border border-slate-200/80 shadow-2xs cursor-pointer">
               <input
-                type="password"
-                placeholder="Re-enter password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-800 focus:outline-indigo-500 shadow-2xs"
+                type="checkbox"
+                checked={enableDiarization}
+                onChange={(e) => setEnableDiarization(e.target.checked)}
+                className="w-4 h-4 text-indigo-600 rounded-md focus:ring-indigo-500 cursor-pointer"
               />
+              <div>
+                <p className="text-xs font-bold text-slate-800">Speaker Diarization</p>
+                <p className="text-[10px] text-slate-500">Detect & label speakers</p>
+              </div>
+            </label>
+
+            <label className="flex items-center gap-2.5 p-3 rounded-2xl bg-white/70 border border-slate-200/80 shadow-2xs cursor-pointer">
+              <input
+                type="checkbox"
+                checked={enableTimestamps}
+                onChange={(e) => setEnableTimestamps(e.target.checked)}
+                className="w-4 h-4 text-indigo-600 rounded-md focus:ring-indigo-500 cursor-pointer"
+              />
+              <div>
+                <p className="text-xs font-bold text-slate-800">Verbatim Timestamps</p>
+                <p className="text-[10px] text-slate-500">Millisecond accuracy</p>
+              </div>
+            </label>
+
+            <div className="p-3 rounded-2xl bg-white/70 border border-slate-200/80 shadow-2xs space-y-1">
+              <p className="text-xs font-bold text-slate-800">Preferred Export</p>
+              <select
+                value={defaultExportFormat}
+                onChange={(e) => setDefaultExportFormat(e.target.value as 'docx' | 'pdf' | 'txt')}
+                className="w-full bg-white border border-slate-200 rounded-lg px-2 py-1 text-xs font-bold text-slate-800 focus:outline-indigo-500"
+              >
+                <option value="docx">Word (.docx)</option>
+                <option value="pdf">PDF Document (.pdf)</option>
+                <option value="txt">Plain Text (.txt)</option>
+              </select>
             </div>
           </div>
 
-          <button
-            type="submit"
-            disabled={isChangingPassword || !newPassword}
-            className="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-black text-white font-bold text-xs transition-colors cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
-          >
-            {isChangingPassword ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Key className="w-3.5 h-3.5" />}
-            <span>Update Password</span>
-          </button>
-        </form>
-
-        <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
-          <div>
-            <p className="text-xs font-bold text-slate-800">Sign Out of VoxSphere</p>
-            <p className="text-[11px] text-slate-400">Ends your active session on this device</p>
+          <div className="pt-2 flex justify-end">
+            <button
+              onClick={handleSaveTranscriptionPrefs}
+              className="px-5 py-2.5 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-sm transition-colors cursor-pointer"
+            >
+              Save Transcription Preferences
+            </button>
           </div>
-          <button
-            onClick={() => signOut()}
-            className="px-4 py-2 rounded-xl text-xs font-bold text-rose-600 bg-rose-50 hover:bg-rose-100 border border-rose-200 transition-colors cursor-pointer flex items-center gap-1.5"
-          >
-            <LogOut className="w-3.5 h-3.5" />
-            <span>Sign Out</span>
-          </button>
         </div>
-      </div>
 
-      {/* SECTION D: APPEARANCE */}
-      <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/90 shadow-sm space-y-4">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center">
-            <Sun className="w-4 h-4" />
-          </div>
-          <h3 className="text-lg font-extrabold text-slate-900">
-            Section D: Appearance & Branding
-          </h3>
-        </div>
-        <p className="text-xs text-slate-500 leading-relaxed max-w-2xl">
-          VoxSphere utilizes a clean, high-contrast light theme with subtle backdrop blurs, pastel status accents, and clean card containers for maximum readability in executive and studio environments.
-        </p>
-
-        <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-amber-500 shadow-2xs">
-              <Sun className="w-4 h-4" />
-            </div>
+        {/* Column 2: SECTION C & D */}
+        <div className="space-y-5">
+          {/* SECTION C: ACCOUNT & SECURITY */}
+          <div className="clay-card-surface rounded-clay-3xl p-5 sm:p-6 space-y-4">
             <div>
-              <p className="text-xs font-bold text-slate-800">Active Theme: Light Studio</p>
-              <p className="text-[11px] text-slate-400">Strictly adheres to VoxSphere branding guidelines</p>
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center shadow-2xs">
+                  <Shield className="w-4 h-4" />
+                </div>
+                <h3 className="text-base sm:text-lg font-extrabold text-slate-900">
+                  Section C: Account & Security
+                </h3>
+              </div>
+              <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                Update your authentication password and manage active session security.
+              </p>
+            </div>
+
+            {/* Change Password Form */}
+            <form onSubmit={handleChangePassword} className="space-y-3.5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    New Password
+                  </label>
+                  <input
+                    type="password"
+                    placeholder="Minimum 6 characters"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    className="w-full bg-white border border-slate-200/90 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-800 focus:outline-indigo-500 shadow-2xs"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Confirm Password
+                  </label>
+                  <input
+                    type="password"
+                    placeholder="Re-enter password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="w-full bg-white border border-slate-200/90 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-800 focus:outline-indigo-500 shadow-2xs"
+                  />
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={isChangingPassword || !newPassword}
+                className="px-5 py-2.5 rounded-full bg-slate-900 hover:bg-black text-white font-bold text-xs transition-colors cursor-pointer disabled:opacity-50 flex items-center gap-1.5 shadow-sm"
+              >
+                {isChangingPassword ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Key className="w-3.5 h-3.5" />}
+                <span>Update Password</span>
+              </button>
+            </form>
+
+            <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
+              <div>
+                <p className="text-xs font-bold text-slate-800">Sign Out of VoxSphere</p>
+                <p className="text-[10px] text-slate-400">Ends your active session on this device</p>
+              </div>
+              <button
+                onClick={() => signOut()}
+                className="px-4 py-2 rounded-full text-xs font-bold text-rose-600 bg-rose-50 hover:bg-rose-100 border border-rose-200 transition-colors cursor-pointer flex items-center gap-1.5 shadow-clay-pill"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                <span>Sign Out</span>
+              </button>
             </div>
           </div>
-          <span className="text-[11px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-2.5 py-0.5 rounded-full">
-            Default
-          </span>
+
+          {/* SECTION D: APPEARANCE */}
+          <div className="clay-card-surface rounded-clay-3xl p-5 sm:p-6 space-y-3">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center shadow-2xs">
+                <Sun className="w-4 h-4" />
+              </div>
+              <h3 className="text-base sm:text-lg font-extrabold text-slate-900">
+                Section D: Appearance & Branding
+              </h3>
+            </div>
+            <p className="text-xs text-slate-500 leading-relaxed">
+              VoxSphere utilizes a clean, high-contrast light theme with subtle backdrop blurs, pastel status accents, and clean card containers for maximum readability in executive and studio environments.
+            </p>
+
+            <div className="p-3.5 rounded-2xl bg-white/70 border border-slate-200/80 shadow-2xs flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-amber-500 shadow-2xs">
+                  <Sun className="w-4 h-4" />
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-slate-800">Active Theme: Light Studio</p>
+                  <p className="text-[10px] text-slate-400">Strictly adheres to VoxSphere branding guidelines</p>
+                </div>
+              </div>
+              <span className="text-[10px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-200/80 px-2.5 py-0.5 rounded-full shadow-2xs">
+                Default
+              </span>
+            </div>
+          </div>
         </div>
       </div>
     </div>

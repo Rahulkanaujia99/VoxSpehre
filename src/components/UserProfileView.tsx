@@ -101,14 +101,14 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({
   const userInitial = displayName ? displayName.charAt(0).toUpperCase() : 'U';
 
   return (
-    <div className="space-y-6 max-w-4xl animate-fade-in">
+    <div className="space-y-5 w-full animate-fade-in">
       {/* Header */}
-      <div className="pb-4 border-b border-slate-200">
+      <div className="pb-3 border-b border-slate-200/80">
         <div className="flex items-center gap-2">
           <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
             User Profile
           </h2>
-          <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200">
+          <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200 shadow-2xs">
             Account Info
           </span>
         </div>
@@ -136,8 +136,8 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({
       )}
 
       {/* Profile Overview Card */}
-      <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/90 shadow-sm space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 pb-6 border-b border-slate-100">
+      <div className="clay-card-surface rounded-clay-3xl p-6 sm:p-7 space-y-5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 pb-5 border-b border-slate-100">
           <div className="flex items-center gap-4">
             {/* Avatar with Upload Badge */}
             <div className="relative group">
@@ -174,7 +174,7 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({
             <div>
               <div className="flex items-center gap-2">
                 <h3 className="text-xl font-extrabold text-slate-900">{displayName}</h3>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 shadow-2xs">
                   Active
                 </span>
               </div>
@@ -197,14 +197,14 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({
                 <button
                   onClick={() => setIsEditing(false)}
                   disabled={isSaving}
-                  className="px-4 py-2 text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors cursor-pointer"
+                  className="px-4 py-2 text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-full transition-colors cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleSaveProfile}
                   disabled={isSaving}
-                  className="px-5 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                  className="px-5 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-full shadow-sm transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
                 >
                   {isSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle className="w-3.5 h-3.5" />}
                   <span>Save Changes</span>
@@ -213,7 +213,7 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({
             ) : (
               <button
                 onClick={() => setIsEditing(true)}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 transition-colors shadow-2xs cursor-pointer"
+                className="flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 transition-colors shadow-clay-pill cursor-pointer"
               >
                 <Edit2 className="w-3.5 h-3.5" />
                 <span>Edit Profile</span>
@@ -278,7 +278,7 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({
         {/* Detailed Account Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
           {/* Email Address */}
-          <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
+          <div className="p-4 rounded-2xl bg-white/80 border border-slate-200/90 shadow-2xs space-y-1.5 transition-all">
             <div className="flex items-center gap-1.5 text-slate-400 font-medium">
               <Mail className="w-3.5 h-3.5" />
               <span>Email Address</span>
@@ -286,13 +286,13 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({
             <p className="font-bold text-slate-800 font-mono text-xs truncate">
               {user?.email || profile?.email || 'rahul@penguin-international.com'}
             </p>
-            <span className="inline-block text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.2 rounded-md">
+            <span className="inline-block text-[10px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200/70 px-2 py-0.5 rounded-full shadow-2xs">
               Verified
             </span>
           </div>
 
           {/* Authentication Method */}
-          <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
+          <div className="p-4 rounded-2xl bg-white/80 border border-slate-200/90 shadow-2xs space-y-1.5 transition-all">
             <div className="flex items-center gap-1.5 text-slate-400 font-medium">
               <Key className="w-3.5 h-3.5" />
               <span>Authentication Method</span>
@@ -300,26 +300,26 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({
             <p className="font-bold text-slate-800">
               {isGoogle ? 'Google OAuth 2.0' : 'Email & Encrypted Password'}
             </p>
-            <span className="inline-block text-[10px] font-semibold text-indigo-700 bg-indigo-50 px-2 py-0.2 rounded-md">
+            <span className="inline-block text-[10px] font-semibold text-indigo-700 bg-indigo-50 border border-indigo-200/70 px-2 py-0.5 rounded-full shadow-2xs">
               Supabase Auth
             </span>
           </div>
 
           {/* Plan & Usage */}
-          <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
+          <div className="p-4 rounded-2xl bg-white/80 border border-slate-200/90 shadow-2xs space-y-1.5 transition-all">
             <div className="flex items-center gap-1.5 text-slate-400 font-medium">
               <Sparkles className="w-3.5 h-3.5 text-amber-500" />
               <span>Subscription Tier</span>
             </div>
             <p className="font-bold text-slate-800">Pro Studio Plan</p>
-            <span className="inline-block text-[10px] font-semibold text-amber-700 bg-amber-50 px-2 py-0.2 rounded-md">
+            <span className="inline-block text-[10px] font-semibold text-amber-700 bg-amber-50 border border-amber-200/70 px-2 py-0.5 rounded-full shadow-2xs">
               Unlimited Transcriptions
             </span>
           </div>
         </div>
 
         {/* Usage & Data Statistics */}
-        <div className="p-5 rounded-2xl bg-gradient-to-br from-indigo-50/50 via-slate-50 to-purple-50/40 border border-indigo-100 grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
+        <div className="p-5 rounded-2xl bg-gradient-to-br from-indigo-50/50 via-white to-purple-50/40 border border-indigo-100/90 shadow-xs grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
           <div>
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
               Total Recordings
@@ -349,7 +349,7 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({
         </div>
 
         {/* Security & RLS Notice */}
-        <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-start gap-3">
+        <div className="p-4 rounded-2xl bg-emerald-50/90 border border-emerald-200/90 flex items-start gap-3 shadow-2xs">
           <ShieldCheck className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
           <div className="text-xs text-emerald-950 space-y-0.5">
             <p className="font-bold">Row-Level Security & Private Encrypted Storage</p>
@@ -372,7 +372,7 @@ export const UserProfileView: React.FC<UserProfileViewProps> = ({
 
           <button
             onClick={() => signOut()}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-rose-600 bg-rose-50 hover:bg-rose-100 border border-rose-200 transition-colors cursor-pointer ml-auto"
+            className="flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold text-rose-600 bg-rose-50 hover:bg-rose-100 border border-rose-200 transition-colors cursor-pointer ml-auto shadow-clay-pill"
           >
             <LogOut className="w-3.5 h-3.5" />
             <span>Sign Out</span>
